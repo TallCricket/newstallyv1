@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getStorage } from 'firebase/storage';
 
@@ -13,14 +13,6 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-
-// App Check — uncomment karo jab newstally1.netlify.app
-// reCAPTCHA admin me add ho jaaye (g.co/recaptcha/admin)
-// import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
-// initializeAppCheck(app, {
-//   provider: new ReCaptchaV3Provider('6LdTUJQsAAAAADKO-4cTLCOqlV7jH02fg3srsoFD'),
-//   isTokenAutoRefreshEnabled: true
-// });
 
 export const db = getFirestore(app);
 export const auth = getAuth(app);

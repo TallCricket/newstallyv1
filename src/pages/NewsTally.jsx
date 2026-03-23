@@ -24,23 +24,41 @@ export default function NewsTally() {
   const [allNews, setAllNews]       = useState([])
   const [filtered, setFiltered]     = useState([])
   const [loading, setLoading]       = useState(true)
+  const [error, setError]           = useState('')
   const [activecat, setActiveCat]   = useState('All')
   const [search, setSearch]         = useState('')
   const [showSearch, setShowSearch] = useState(false)
 
-  // Fetch from Firestore
   const loadNews = useCallback(async () => {
     setLoading(true)
+    setError('')
     try {
+      console.log('Fetching from Firestore...')
+      // Simple query — no orderBy to avoid index issues
       const snap = await getDocs(query(collection(db, 'news'), limit(200)))
+      console.log('Docs fetched:', snap.size)
+
+      if (snap.empty) {
+        setError('No data in Firestore yet. Run syncAllNews in Apps Script first.')
+        setLoading(false)
+        return
+      }
+
       const items = snap.docs
         .map(d => ({ id: d.id, ...d.data() }))
         .filter(n => n.title)
-        .sort((a, b) => new Date(b.pubDate || b.fetchedAt || b.savedAt || 0) - new Date(a.pubDate || a.fetchedAt || a.savedAt || 0))
+        .sort((a, b) => {
+          const da = new Date(a.pubDate || a.fetchedAt || a.savedAt || 0)
+          const db_ = new Date(b.pubDate || b.fetchedAt || b.savedAt || 0)
+          return db_ - da
+        })
+
+      console.log('Items processed:', items.length)
       setAllNews(items)
       setFiltered(items)
     } catch (e) {
-      console.error('Firestore fetch error:', e)
+      console.error('Firestore error:', e)
+      setError('Error: ' + e.message)
     } finally {
       setLoading(false)
     }
@@ -48,7 +66,6 @@ export default function NewsTally() {
 
   useEffect(() => { loadNews() }, [loadNews])
 
-  // Filter by category + search
   useEffect(() => {
     let result = allNews
     if (activecat !== 'All') {
@@ -66,14 +83,10 @@ export default function NewsTally() {
 
   return (
     <>
-      <Header
-        title="NewsTally"
-        onSearchClick={() => setShowSearch(s => !s)}
-      />
+      <Header title="NewsTally" onSearchClick={() => setShowSearch(s => !s)} />
 
       <div className="main-wrapper">
 
-        {/* Search bar */}
         {showSearch && (
           <div style={{ padding: '10px 16px', background: '#fff', borderBottom: '1px solid #e0e0e0' }}>
             <div style={{ position: 'relative' }}>
@@ -92,19 +105,10 @@ export default function NewsTally() {
                   fontSize: 14, outline: 'none', color: '#202124'
                 }}
               />
-              {search && (
-                <button onClick={() => setSearch('')} style={{
-                  position: 'absolute', right: 10, top: '50%',
-                  transform: 'translateY(-50%)', color: '#9aa0a6', fontSize: 14
-                }}>
-                  <i className="fas fa-times" />
-                </button>
-              )}
             </div>
           </div>
         )}
 
-        {/* Category Filter */}
         <div className="cat-bar">
           {CATEGORIES.map(cat => (
             <button
@@ -117,29 +121,24 @@ export default function NewsTally() {
           ))}
         </div>
 
-        {/* News Grid */}
         <div style={{ padding: '0 16px 20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-
           {loading ? (
-            // Skeleton
             Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)
+          ) : error ? (
+            <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+              <i className="fas fa-exclamation-circle" style={{ fontSize: 36, color: '#ea4335', marginBottom: 12, display: 'block' }} />
+              <p style={{ fontWeight: 600, marginBottom: 8, color: '#202124' }}>Could not load news</p>
+              <p style={{ fontSize: 12, color: '#9aa0a6', marginBottom: 16, wordBreak: 'break-word' }}>{error}</p>
+              <button onClick={loadNews} style={{
+                padding: '10px 24px', background: '#1a73e8', color: '#fff',
+                border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: 'pointer'
+              }}>↺ Retry</button>
+            </div>
           ) : filtered.length === 0 ? (
-            // Empty
             <div style={{ textAlign: 'center', padding: '60px 20px', color: '#9aa0a6' }}>
               <i className="fas fa-newspaper" style={{ fontSize: 40, marginBottom: 12, display: 'block', opacity: 0.4 }} />
               <p style={{ fontWeight: 600, marginBottom: 6 }}>No news found</p>
-              <p style={{ fontSize: 13 }}>Try a different category or search term</p>
-              <button
-                onClick={loadNews}
-                style={{
-                  marginTop: 16, padding: '10px 24px',
-                  background: '#1a73e8', color: '#fff',
-                  border: 'none', borderRadius: 8,
-                  fontSize: 14, fontWeight: 600, cursor: 'pointer'
-                }}
-              >
-                ↺ Retry
-              </button>
+              <p style={{ fontSize: 13 }}>Try a different category</p>
             </div>
           ) : (
             filtered.map((item, i) => (

@@ -3,11 +3,12 @@ import Socialgati from './pages/Socialgati'
 import NewsTally from './pages/NewsTally'
 import Shorts from './pages/Shorts'
 import NewsOpen from './pages/NewsOpen'
+import Alerts from './pages/Alerts'
+import Profile from './pages/Profile'
 import About from './pages/About'
 import Privacy from './pages/Privacy'
 import Terms from './pages/Terms'
 import Contact from './pages/Contact'
-import Alerts from './pages/Alerts'
 import NotFound from './pages/NotFound'
 
 export default function App() {
@@ -18,6 +19,7 @@ export default function App() {
       <Route path="/shorts"    element={<Shorts />} />
       <Route path="/news/:id"  element={<NewsOpen />} />
       <Route path="/alerts"    element={<Alerts />} />
+      <Route path="/profile"   element={<Profile />} />
       <Route path="/about"     element={<About />} />
       <Route path="/privacy"   element={<Privacy />} />
       <Route path="/terms"     element={<Terms />} />

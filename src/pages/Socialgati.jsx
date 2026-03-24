@@ -128,7 +128,7 @@ export default function Socialgati() {
               padding:'8px 16px', fontSize:13, fontWeight:600,
               color: feedType===t ? '#0f0f0f' : '#606060',
               borderBottom: feedType===t ? '2px solid #0f0f0f' : '2px solid transparent',
-              background:'none', border:'none', borderBottom: feedType===t ? '2px solid #0f0f0f' : '2px solid transparent',
+              background:'none', borderBottom: feedType===t ? '2px solid #0f0f0f' : '2px solid transparent',
               cursor:'pointer', textTransform:'capitalize'
             }}>{t === 'all' ? 'For All' : t.charAt(0).toUpperCase()+t.slice(1)}</button>
           ))}

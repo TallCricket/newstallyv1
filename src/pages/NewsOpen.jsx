@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { useEffect, useState, useRef } from 'react'
-import { doc, getDoc, collection, query, limit, getDocs, where, orderBy } from 'firebase/firestore'
+import { doc, getDoc, collection, query, limit, getDocs, where } from 'firebase/firestore'
 import { db } from '../firebase/config'
 import { timeAgo, catIcon, showToast } from '../utils'
 import NewsCard from '../components/NewsCard'
@@ -66,7 +66,7 @@ export default function NewsOpen() {
           if (d.category) {
             try {
               const catSnap = await getDocs(
-                query(collection(db, 'news'), where('category', '==', d.category), orderBy('savedAt', 'desc'), limit(8))
+                query(collection(db, 'news'), where('category', '==', d.category), limit(8))
               )
               rel = catSnap.docs.map(dc => ({ id: dc.id, ...dc.data() })).filter(n => n.id !== id && n.title)
             } catch {}

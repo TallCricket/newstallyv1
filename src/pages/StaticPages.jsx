@@ -7,7 +7,7 @@ function StaticLayout({ title, children }) {
     <>
       <header className="header">
         <div className="logo" onClick={()=>navigate('/')}>
-          <img src="https://i.postimg.cc/dLTgRxbL/cropped-circle-image.png" alt="NewsTally"/>
+          <img src="https://i.postimg.cc/dLTgRxbL/cropped-circle-image.png" alt="Socialgati"/>
           <span className="logo-text">NewsTally</span>
         </div>
       </header>

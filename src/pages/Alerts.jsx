@@ -45,7 +45,7 @@ export default function Alerts() {
     <>
       <header className="header">
         <div className="logo">
-          <img src="https://i.postimg.cc/dLTgRxbL/cropped-circle-image.png" alt="NewsTally"/>
+          <img src="https://i.postimg.cc/dLTgRxbL/cropped-circle-image.png" alt="Socialgati"/>
           <span className="logo-text">Notifications</span>
         </div>
         {!user && <button className="btn-signin" onClick={() => setShowAuth(true)}>Sign In</button>}

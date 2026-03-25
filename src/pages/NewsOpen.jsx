@@ -168,7 +168,7 @@ export default function NewsOpen() {
         <div style={{ padding:'12px 16px', display:'flex', alignItems:'center', gap:10, borderBottom:'1px solid #f0f0f0', position:'sticky', top:0, background:'rgba(255,255,255,.97)', backdropFilter:'blur(20px)', zIndex:100 }}>
           <button onClick={()=>navigate(-1)} className="page-back-btn"><i className="fas fa-arrow-left"/></button>
           <div style={{ display:'flex', alignItems:'center', gap:8, flex:1, overflow:'hidden', cursor:'pointer' }} onClick={()=>navigate('/news')}>
-            <img src="https://i.postimg.cc/dLTgRxbL/cropped-circle-image.png" alt="NewsTally" style={{ width:26, height:26, borderRadius:'50%', objectFit:'cover', flexShrink:0 }}/>
+            <img src="https://i.postimg.cc/dLTgRxbL/cropped-circle-image.png" alt="Socialgati" style={{ width:26, height:26, borderRadius:'50%', objectFit:'cover', flexShrink:0 }}/>
             <span style={{ fontSize:16, fontWeight:700, color:'#1a73e8', letterSpacing:'-.3px' }}>NewsTally</span>
           </div>
           <div style={{ display:'flex', gap:4, alignItems:'center' }}>

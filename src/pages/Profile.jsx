@@ -72,8 +72,8 @@ export default function Profile() {
     <>
       <header className="header">
         <div className="logo">
-          <img src="https://i.postimg.cc/dLTgRxbL/cropped-circle-image.png" alt="NewsTally"/>
-          <span className="logo-text">Profile</span>
+          <img src="https://i.postimg.cc/dLTgRxbL/cropped-circle-image.png" alt="Socialgati"/>
+          <div><span style={{ fontSize:18, fontWeight:800, color:"#9334e6", display:"block", lineHeight:1.1 }}>My Profile</span><span style={{ fontSize:10, color:"#9aa0a6" }}>Socialgati</span></div>
         </div>
         {user && (
           <button onClick={handleLogout} className="icon-btn" title="Sign out">

@@ -179,7 +179,7 @@ function GridCard({ item }) {
 }
 
 // ===== CATEGORY SECTION =====
-function CategorySection({ title, items, accent, onRepost }) {
+function CategorySection({ title, items, accent, onRepost, onSeeAll }) {
   const navigate = useNavigate()
   if (!items.length) return null
   const [main, ...rest] = items
@@ -192,8 +192,8 @@ function CategorySection({ title, items, accent, onRepost }) {
           <div style={{ width:4, height:22, background:accent, borderRadius:2 }}/>
           <h2 style={{ fontSize:16, fontWeight:700, color:'#202124' }}>{title}</h2>
         </div>
-        <button onClick={() => {}} style={{ fontSize:12, color:accent, fontWeight:600, background:'none', border:'none', cursor:'pointer' }}>
-          See all →
+        <button onClick={() => onSeeAll && onSeeAll(title)} style={{ fontSize:12, color:accent, fontWeight:600, background:'none', border:'none', cursor:'pointer', display:'flex', alignItems:'center', gap:4 }}>
+          See all <i className="fas fa-arrow-right" style={{ fontSize:10 }}/>
         </button>
       </div>
 
@@ -268,7 +268,15 @@ export default function NewsTally() {
       const snap = await getDocs(query(collection(db, 'news'), limit(200)))
       if (snap.empty) { setError('No news yet. Run syncAllNews in Apps Script.'); return }
       const items = snap.docs.map(d => ({ id:d.id, ...d.data() })).filter(n => n.title)
-        .sort((a,b) => new Date(b.pubDate||b.fetchedAt||b.savedAt||0) - new Date(a.pubDate||a.fetchedAt||a.savedAt||0))
+        .sort((a,b) => {
+          const getDate = n => {
+            const d = n.pubDate || n.fetchedAt || n.savedAt || n.date || ''
+            if (!d) return 0
+            const t = new Date(d).getTime()
+            return isNaN(t) ? 0 : t
+          }
+          return getDate(b) - getDate(a)
+        })
       setAllNews(items); setFiltered(items)
     } catch(e) { setError(e.message) }
     finally { setLoading(false) }
@@ -442,6 +450,7 @@ export default function NewsTally() {
                     items={items}
                     accent={CAT_COLORS[category] || '#1a73e8'}
                     onRepost={handleRepost}
+                    onSeeAll={(cat) => { setCat(cat); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
                   />
                 ))
             })()}

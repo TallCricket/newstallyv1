@@ -11,7 +11,7 @@ function Steps({ current, total }) {
       {Array.from({ length: total }).map((_, i) => (
         <div key={i} style={{
           height:3, borderRadius:99, flex:1,
-          background: i < current ? '#9334e6' : '#e0e0e0',
+          background: i < current ? '#1a73e8' : '#e0e0e0',
           transition: 'background .3s'
         }}/>
       ))}
@@ -35,7 +35,7 @@ function Input({ label, type='text', value, onChange, placeholder, error, autoFo
             border: error ? '1.5px solid #e53935' : '1.5px solid #e0e0e0',
             borderRadius:12, fontSize:15, outline:'none', fontFamily:'inherit',
             background:'#fafafa', transition:'border .2s', color:'#202124' }}
-          onFocus={e => e.target.style.borderColor = error ? '#e53935' : '#9334e6'}
+          onFocus={e => e.target.style.borderColor = error ? '#e53935' : '#1a73e8'}
           onBlur={e => e.target.style.borderColor = error ? '#e53935' : '#e0e0e0'}
         />
         {isPass && (
@@ -56,7 +56,7 @@ function Check({ checked, onChange, children }) {
     <label style={{ display:'flex', alignItems:'flex-start', gap:10, cursor:'pointer', marginBottom:12 }}>
       <div onClick={() => onChange(!checked)}
         style={{ width:20, height:20, borderRadius:6, border: checked ? 'none' : '1.5px solid #ccc',
-          background: checked ? '#9334e6' : '#fff', flexShrink:0, marginTop:1,
+          background: checked ? '#1a73e8' : '#fff', flexShrink:0, marginTop:1,
           display:'flex', alignItems:'center', justifyContent:'center', transition:'all .2s' }}>
         {checked && <i className="fas fa-check" style={{ color:'#fff', fontSize:10 }}/>}
       </div>
@@ -113,7 +113,7 @@ function SignIn({ onSwitch, onClose }) {
         placeholder="Your password" error={errors.password}/>
 
       <button onClick={submit} disabled={loading}
-        style={{ width:'100%', padding:14, background: loading ? '#c4a4e8' : 'linear-gradient(135deg,#9334e6,#7c2dc9)',
+        style={{ width:'100%', padding:14, background: loading ? '#8bb8f4' : 'linear-gradient(135deg,#1a73e8,#1557b0)',
           color:'#fff', border:'none', borderRadius:12, fontSize:15, fontWeight:700, cursor: loading?'not-allowed':'pointer',
           display:'flex', alignItems:'center', justifyContent:'center', gap:8, marginTop:4 }}>
         {loading ? <><i className="fas fa-spinner fa-spin"/> Signing in...</> : 'Sign In'}
@@ -121,7 +121,7 @@ function SignIn({ onSwitch, onClose }) {
 
       <p style={{ textAlign:'center', marginTop:20, fontSize:14, color:'#606060' }}>
         Don't have an account?{' '}
-        <span style={{ color:'#9334e6', fontWeight:700, cursor:'pointer' }} onClick={onSwitch}>Sign up</span>
+        <span style={{ color:'#1a73e8', fontWeight:700, cursor:'pointer' }} onClick={onSwitch}>Sign up</span>
       </p>
     </div>
   )
@@ -217,7 +217,7 @@ function SignUp({ onSwitch, onClose }) {
       {/* ── STEP 1: Name + Username ── */}
       {step === 1 && (
         <div>
-          <p style={{ fontSize:13, fontWeight:700, color:'#9334e6', marginBottom:16, textAlign:'center' }}>Step 1 of 3 — Your identity</p>
+          <p style={{ fontSize:13, fontWeight:700, color:'#1a73e8', marginBottom:16, textAlign:'center' }}>Step 1 of 3 — Your identity</p>
           <Input label="Full name" value={form.name} onChange={e => setField('name', e.target.value)}
             placeholder="Rahul Sharma" error={errors.name} autoFocus/>
           <Input label="Username" value={form.username} onChange={e => setField('username', e.target.value.toLowerCase().replace(/\s/g,''))}
@@ -228,7 +228,7 @@ function SignUp({ onSwitch, onClose }) {
             </p>
           )}
           <button onClick={handleNext}
-            style={{ width:'100%', padding:14, background:'linear-gradient(135deg,#9334e6,#7c2dc9)', color:'#fff', border:'none', borderRadius:12, fontSize:15, fontWeight:700, cursor:'pointer' }}>
+            style={{ width:'100%', padding:14, background:'linear-gradient(135deg,#1a73e8,#1557b0)', color:'#fff', border:'none', borderRadius:12, fontSize:15, fontWeight:700, cursor:'pointer' }}>
             Continue →
           </button>
         </div>
@@ -237,7 +237,7 @@ function SignUp({ onSwitch, onClose }) {
       {/* ── STEP 2: Email + Password ── */}
       {step === 2 && (
         <div>
-          <p style={{ fontSize:13, fontWeight:700, color:'#9334e6', marginBottom:16, textAlign:'center' }}>Step 2 of 3 — Secure your account</p>
+          <p style={{ fontSize:13, fontWeight:700, color:'#1a73e8', marginBottom:16, textAlign:'center' }}>Step 2 of 3 — Secure your account</p>
           <Input label="Email address" type="email" value={form.email} onChange={e => setField('email', e.target.value)}
             placeholder="you@example.com" error={errors.email} autoFocus/>
           <Input label="Password" type="password" value={form.password} onChange={e => setField('password', e.target.value)}
@@ -264,7 +264,7 @@ function SignUp({ onSwitch, onClose }) {
               ← Back
             </button>
             <button onClick={handleNext}
-              style={{ flex:2, padding:14, background:'linear-gradient(135deg,#9334e6,#7c2dc9)', color:'#fff', border:'none', borderRadius:12, fontSize:15, fontWeight:700, cursor:'pointer' }}>
+              style={{ flex:2, padding:14, background:'linear-gradient(135deg,#1a73e8,#1557b0)', color:'#fff', border:'none', borderRadius:12, fontSize:15, fontWeight:700, cursor:'pointer' }}>
               Continue →
             </button>
           </div>
@@ -274,17 +274,17 @@ function SignUp({ onSwitch, onClose }) {
       {/* ── STEP 3: Agreements ── */}
       {step === 3 && (
         <div>
-          <p style={{ fontSize:13, fontWeight:700, color:'#9334e6', marginBottom:16, textAlign:'center' }}>Step 3 of 3 — Almost done!</p>
+          <p style={{ fontSize:13, fontWeight:700, color:'#1a73e8', marginBottom:16, textAlign:'center' }}>Step 3 of 3 — Almost done!</p>
 
-          <div style={{ background:'#faf5ff', border:'1px solid #e9d5ff', borderRadius:12, padding:'14px 16px', marginBottom:20 }}>
+          <div style={{ background:'#f0f7ff', border:'1px solid #c5d9f8', borderRadius:12, padding:'14px 16px', marginBottom:20 }}>
             <Check checked={checks.terms} onChange={v => setCheck('terms', v)}>
               I agree to the{' '}
-              <a href="/terms" target="_blank" rel="noopener" style={{ color:'#9334e6', fontWeight:700 }}>Terms of Service</a>
+              <a href="/terms" target="_blank" rel="noopener" style={{ color:'#1a73e8', fontWeight:700 }}>Terms of Service</a>
               {' '}of Socialgati
             </Check>
             <Check checked={checks.privacy} onChange={v => setCheck('privacy', v)}>
               I agree to the{' '}
-              <a href="/privacy" target="_blank" rel="noopener" style={{ color:'#9334e6', fontWeight:700 }}>Privacy Policy</a>
+              <a href="/privacy" target="_blank" rel="noopener" style={{ color:'#1a73e8', fontWeight:700 }}>Privacy Policy</a>
               {' '}and consent to data processing
             </Check>
             <Check checked={checks.age} onChange={v => setCheck('age', v)}>
@@ -307,7 +307,7 @@ function SignUp({ onSwitch, onClose }) {
             <button onClick={handleCreate} disabled={loading || !checks.terms || !checks.privacy || !checks.age}
               style={{ flex:2, padding:14,
                 background: (checks.terms && checks.privacy && checks.age && !loading)
-                  ? 'linear-gradient(135deg,#9334e6,#7c2dc9)' : '#c4a4e8',
+                  ? 'linear-gradient(135deg,#1a73e8,#1557b0)' : '#8bb8f4',
                 color:'#fff', border:'none', borderRadius:12, fontSize:15, fontWeight:700,
                 cursor: (checks.terms && checks.privacy && checks.age && !loading) ? 'pointer' : 'not-allowed',
                 display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
@@ -319,7 +319,7 @@ function SignUp({ onSwitch, onClose }) {
 
       <p style={{ textAlign:'center', marginTop:20, fontSize:14, color:'#606060' }}>
         Already have an account?{' '}
-        <span style={{ color:'#9334e6', fontWeight:700, cursor:'pointer' }} onClick={onSwitch}>Sign in</span>
+        <span style={{ color:'#1a73e8', fontWeight:700, cursor:'pointer' }} onClick={onSwitch}>Sign in</span>
       </p>
     </div>
   )

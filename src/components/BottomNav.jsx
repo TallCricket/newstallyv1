@@ -26,8 +26,8 @@ export default function BottomNav({ darkMode = false }) {
     <nav className="bottom-nav" style={style}>
       {/* Community */}
       <button className={`nav-btn ${pathname === '/' ? 'active' : ''}`} style={{ color: btnColor(pathname === '/') }} onClick={() => navigate('/')}>
-        <i className="fas fa-bolt" />
-        <span>Community</span>
+        <i className="fas fa-house" />
+        <span>Home</span>
       </button>
 
       {/* News */}

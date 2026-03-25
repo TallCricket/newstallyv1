@@ -16,7 +16,7 @@ input,textarea{font-family:inherit}
 :root{
   --blue:#1a73e8;
   --blue-dark:#1557b0;
-  --purple:#9334e6;
+  --purple:#1a73e8;
   --red:#e53935;
   --green:#34a853;
   --ink:#202124;
@@ -143,7 +143,7 @@ input,textarea{font-family:inherit}
 .comment-time{font-size:11px;color:#9aa0a6;margin-top:3px}
 
 /* ===== PROFILE ===== */
-.profile-cover{height:90px;background:linear-gradient(135deg,#1a73e8,#9334e6)}
+.profile-cover{height:90px;background:linear-gradient(135deg,#1a73e8,#1a73e8)}
 .profile-av{width:80px;height:80px;border-radius:50%;border:3px solid #fff;object-fit:cover;margin-top:-40px;margin-left:16px}
 .profile-stat{text-align:center;cursor:pointer}
 .profile-stat .num{font-size:18px;font-weight:700;color:#0f0f0f;display:block}

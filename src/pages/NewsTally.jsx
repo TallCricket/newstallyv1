@@ -262,107 +262,165 @@ function LoadMoreSpinner() {
   )
 }
 
+// ===== LOAD MORE BUTTON =====
+function LoadMoreButton({ onClick, loading }) {
+  return (
+    <div style={{ display:'flex', justifyContent:'center', padding:'16px 0 8px' }}>
+      <button
+        onClick={onClick}
+        disabled={loading}
+        style={{
+          padding:'10px 28px', background:'#fff', border:'1.5px solid #1a73e8',
+          borderRadius:24, fontSize:14, fontWeight:700, color:'#1a73e8',
+          cursor: loading ? 'not-allowed' : 'pointer',
+          display:'flex', alignItems:'center', gap:8,
+          opacity: loading ? 0.6 : 1
+        }}>
+        {loading
+          ? <><i className="fas fa-spinner fa-spin"/> Loading...</>
+          : <><i className="fas fa-arrow-down"/> Load More</>
+        }
+      </button>
+    </div>
+  )
+}
+
 // ===== MAIN PAGE =====
 export default function NewsTally() {
   const { user } = useAuth()
   const navigate = useNavigate()
 
-  // All fetched news (grows as user scrolls)
-  const [allNews, setAllNews] = useState([])
-  // What's displayed after filter/search
-  const [filtered, setFiltered] = useState([])
+  // ── "All" news store (grows page by page) ──
+  const [allNews, setAllNews]       = useState([])
+  const lastDocRef                  = useRef(null)
+  const orderFieldRef               = useRef(null)
+  const [hasMore, setHasMore]       = useState(true)
 
-  const [loading, setLoading] = useState(true)      // initial load
-  const [loadingMore, setLoadingMore] = useState(false) // infinite scroll
-  const [hasMore, setHasMore] = useState(true)
-  const [error, setError] = useState('')
+  // ── Category-specific store ──
+  const [catItems, setCatItems]     = useState([])
+  const catLastDocRef               = useRef(null)
+  const [catHasMore, setCatHasMore] = useState(true)
 
-  const [cat, setCat] = useState('All')
-  const [search, setSearch] = useState('')
+  // ── Derived / display ──
+  const [filtered, setFiltered]     = useState([])
+
+  const [loading, setLoading]         = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [error, setError]             = useState('')
+
+  const [cat, setCat]               = useState('All')
+  const [search, setSearch]         = useState('')
   const [showSearch, setShowSearch] = useState(false)
-  const [showAuth, setShowAuth] = useState(false)
+  const [showAuth, setShowAuth]     = useState(false)
   const [repostItem, setRepostItem] = useState(null)
-  const [reposting, setReposting] = useState(false)
+  const [reposting, setReposting]   = useState(false)
 
-  // Pagination cursor
-  const lastDocRef = useRef(null)
-  // Which field has ordering (detect once)
-  const orderFieldRef = useRef(null)
-  // Sentinel div ref for IntersectionObserver
   const sentinelRef = useRef(null)
 
   // ===== DETECT ORDER FIELD =====
-  // Try pubDate, then fetchedAt, then savedAt — use whichever works
   const detectOrderField = useCallback(async () => {
     const fields = ['pubDate', 'fetchedAt', 'savedAt']
     for (const field of fields) {
       try {
         const snap = await getDocs(query(collection(db, 'news'), orderBy(field, 'desc'), limit(1)))
-        if (!snap.empty) {
-          orderFieldRef.current = field
-          return field
-        }
+        if (!snap.empty) { orderFieldRef.current = field; return field }
       } catch(e) { /* index missing, try next */ }
     }
     orderFieldRef.current = null
     return null
   }, [])
 
-  // ===== FETCH BATCH =====
+  // ===== FETCH BATCH — "All" (ordered / unordered) =====
   const fetchBatch = useCallback(async (isFirst = false) => {
     const field = orderFieldRef.current
-
     let q
     if (field) {
-      // Ordered query — true latest first
       q = isFirst
         ? query(collection(db, 'news'), orderBy(field, 'desc'), limit(PAGE_SIZE))
         : lastDocRef.current
           ? query(collection(db, 'news'), orderBy(field, 'desc'), startAfter(lastDocRef.current), limit(PAGE_SIZE))
           : null
     } else {
-      // Fallback — no ordering (fetch all, sort in JS)
       q = isFirst
         ? query(collection(db, 'news'), limit(PAGE_SIZE))
         : lastDocRef.current
           ? query(collection(db, 'news'), startAfter(lastDocRef.current), limit(PAGE_SIZE))
           : null
     }
-
     if (!q) return []
 
     const snap = await getDocs(q)
     if (snap.empty) { setHasMore(false); return [] }
-
     if (snap.docs.length < PAGE_SIZE) setHasMore(false)
     lastDocRef.current = snap.docs[snap.docs.length - 1]
-
     return snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(n => n.title)
   }, [])
 
-  // ===== INITIAL LOAD =====
+  // ===== FETCH BATCH — Category-specific =====
+  // BUG FIX: Separate category fetch so ALL platforms' news load per category
+  const fetchCategoryBatch = useCallback(async (category, isFirst = false) => {
+    let constraints = [where('category', '==', category)]
+
+    // Try adding orderBy only if we know a working field
+    if (orderFieldRef.current) {
+      try {
+        constraints.push(orderBy(orderFieldRef.current, 'desc'))
+      } catch(e) { /* skip orderBy if index missing */ }
+    }
+
+    if (!isFirst && catLastDocRef.current) {
+      constraints.push(startAfter(catLastDocRef.current))
+    }
+    constraints.push(limit(PAGE_SIZE))
+
+    // If orderBy might cause index error, fallback to plain where + limit
+    let snap
+    try {
+      snap = await getDocs(query(collection(db, 'news'), ...constraints))
+    } catch(e) {
+      // Fallback: no orderBy, just where + startAfter + limit
+      const fallback = [where('category', '==', category)]
+      if (!isFirst && catLastDocRef.current) fallback.push(startAfter(catLastDocRef.current))
+      fallback.push(limit(PAGE_SIZE))
+      snap = await getDocs(query(collection(db, 'news'), ...fallback))
+    }
+
+    if (snap.empty) { setCatHasMore(false); return [] }
+    if (snap.docs.length < PAGE_SIZE) setCatHasMore(false)
+    catLastDocRef.current = snap.docs[snap.docs.length - 1]
+    return snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(n => n.title)
+  }, [])
+
+  // ===== INITIAL LOAD (All) =====
   const loadInitial = useCallback(async () => {
     setLoading(true); setError(''); setHasMore(true)
     lastDocRef.current = null
-
     try {
-      // Detect best sort field first
       await detectOrderField()
       const items = await fetchBatch(true)
-
       if (!items.length) { setError('No news yet. Run syncAllNews in Apps Script.'); return }
-
-      // Sort in JS as safety net
       const sorted = sortByDate(items)
       setAllNews(sorted)
-      setFiltered(sorted)
     } catch(e) { setError(e.message) }
     finally { setLoading(false) }
   }, [detectOrderField, fetchBatch])
 
-  // ===== LOAD MORE =====
-  const loadMore = useCallback(async () => {
-    if (loadingMore || !hasMore || cat !== 'All' || search.trim()) return
+  // ===== LOAD CATEGORY (called on cat change) =====
+  // BUG FIX: Category data now fetched directly from Firestore, not just filtered from allNews
+  const loadCategoryInitial = useCallback(async (category) => {
+    setLoading(true); setError('')
+    setCatItems([]); setCatHasMore(true)
+    catLastDocRef.current = null
+    try {
+      const items = await fetchCategoryBatch(category, true)
+      setCatItems(sortByDate(items))
+    } catch(e) { setError(e.message) }
+    finally { setLoading(false) }
+  }, [fetchCategoryBatch])
+
+  // ===== LOAD MORE — "All" =====
+  const loadMoreAll = useCallback(async () => {
+    if (loadingMore || !hasMore) return
     setLoadingMore(true)
     try {
       const items = await fetchBatch(false)
@@ -373,30 +431,69 @@ export default function NewsTally() {
           return sortByDate([...prev, ...newItems])
         })
       }
-    } catch(e) { console.error('loadMore error:', e) }
+    } catch(e) { console.error('loadMoreAll error:', e) }
     finally { setLoadingMore(false) }
-  }, [loadingMore, hasMore, cat, search, fetchBatch])
+  }, [loadingMore, hasMore, fetchBatch])
 
+  // ===== LOAD MORE — Category =====
+  // BUG FIX: Load more now works in every category, fetching all platforms' data
+  const loadMoreCat = useCallback(async () => {
+    if (loadingMore || !catHasMore || !cat || cat === 'All') return
+    setLoadingMore(true)
+    try {
+      const items = await fetchCategoryBatch(cat, false)
+      if (items.length) {
+        setCatItems(prev => {
+          const ids = new Set(prev.map(n => n.id))
+          return sortByDate([...prev, ...items.filter(n => !ids.has(n.id))])
+        })
+      }
+    } catch(e) { console.error('loadMoreCat error:', e) }
+    finally { setLoadingMore(false) }
+  }, [loadingMore, catHasMore, cat, fetchCategoryBatch])
+
+  // ===== UNIFIED LOAD MORE =====
+  // BUG FIX: Was completely blocking load more when cat !== 'All'
+  const loadMore = useCallback(() => {
+    if (search.trim()) return           // no pagination during search
+    if (cat === 'All') return loadMoreAll()
+    return loadMoreCat()
+  }, [cat, search, loadMoreAll, loadMoreCat])
+
+  // ===== INITIAL LOAD ON MOUNT =====
   useEffect(() => { loadInitial() }, [loadInitial])
 
-  // ===== FILTER =====
+  // ===== LOAD CATEGORY DATA ON CAT CHANGE =====
+  // BUG FIX: Each category now loads its own fresh data from Firestore
   useEffect(() => {
-    let r = allNews
-    if (cat !== 'All') r = r.filter(n => n.category === cat)
+    if (cat !== 'All') {
+      loadCategoryInitial(cat)
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [cat]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ===== FILTER / DERIVE `filtered` =====
+  // BUG FIX: Uses catItems for category view, allNews for All
+  useEffect(() => {
+    let base = cat !== 'All' ? catItems : allNews
     if (search.trim()) {
       const q = search.toLowerCase()
-      r = r.filter(n => n.title?.toLowerCase().includes(q) || n.description?.toLowerCase().includes(q))
+      base = base.filter(n =>
+        n.title?.toLowerCase().includes(q) ||
+        n.description?.toLowerCase().includes(q)
+      )
     }
-    setFiltered(r)
-  }, [cat, search, allNews])
+    setFiltered(base)
+  }, [cat, search, allNews, catItems])
 
   // ===== INFINITE SCROLL — IntersectionObserver =====
+  // BUG FIX: loadMore now works for all categories
   useEffect(() => {
     const sentinel = sentinelRef.current
     if (!sentinel) return
     const observer = new IntersectionObserver(
       entries => { if (entries[0].isIntersecting) loadMore() },
-      { threshold: 0.1, rootMargin: '200px' }
+      { threshold: 0.1, rootMargin: '300px' }
     )
     observer.observe(sentinel)
     return () => observer.disconnect()
@@ -407,8 +504,11 @@ export default function NewsTally() {
     if (!user) return setShowAuth(true)
     setReposting(true)
     try {
-      const dup = await getDocs(query(collection(db,'artifacts',APP_ID,'public','data','reposts'),
-        where('userId','==',user.uid), where('headline','==',item.title), where('type','==','repost'), limit(1)))
+      const dup = await getDocs(query(
+        collection(db,'artifacts',APP_ID,'public','data','reposts'),
+        where('userId','==',user.uid), where('headline','==',item.title),
+        where('type','==','repost'), limit(1)
+      ))
       if (!dup.empty) { showToast('Already reposted!'); setRepostItem(null); return }
       const uSnap = await getDoc(doc(db,'users',user.uid)).catch(()=>null)
       const uData = uSnap?.data() || {}
@@ -431,7 +531,10 @@ export default function NewsTally() {
     return map
   }
 
-  const isFiltering = cat !== 'All' || search.trim()
+  // Current pagination state for hasMore display
+  const currentHasMore = cat === 'All' ? hasMore : catHasMore
+  const currentTotal   = cat === 'All' ? allNews.length : catItems.length
+  const isFiltering    = cat !== 'All' || !!search.trim()
 
   return (
     <>
@@ -475,7 +578,7 @@ export default function NewsTally() {
         <div className="cat-bar" style={{ position:'sticky', top: showSearch ? 98 : 56, zIndex:49, background:'#fff', borderBottom:'1px solid #f0f0f0', paddingTop:10, paddingBottom:10 }}>
           {CATS.map(c => (
             <button key={c} className={`cat-btn ${cat===c?'active':''}`}
-              onClick={() => { setCat(c); window.scrollTo({ top:0, behavior:'smooth' }) }}>
+              onClick={() => setCat(c)}>
               {c}
             </button>
           ))}
@@ -503,15 +606,38 @@ export default function NewsTally() {
             <p style={{ fontSize:13 }}>Try a different search or category</p>
           </div>
         ) : isFiltering ? (
-          // FILTERED VIEW
+          // ── FILTERED / CATEGORY VIEW ──
+          // BUG FIX: Sentinel + Load More button added here so pagination works in every category
           <div style={{ padding:'8px 16px' }}>
             <p style={{ fontSize:12, color:'#9aa0a6', padding:'8px 0', fontWeight:500 }}>
               {filtered.length} results{cat !== 'All' ? ` in ${cat}` : ''}{search ? ` for "${search}"` : ''}
             </p>
+
             {filtered.map(item => <CompactCard key={item.id} item={item}/>)}
+
+            {/* Sentinel for IntersectionObserver */}
+            <div ref={sentinelRef} style={{ height:1 }}/>
+
+            {/* Loading spinner */}
+            {loadingMore && <LoadMoreSpinner/>}
+
+            {/* Explicit Load More button (fallback & accessibility) */}
+            {!loadingMore && currentHasMore && !search.trim() && (
+              <LoadMoreButton onClick={loadMore} loading={loadingMore}/>
+            )}
+
+            {/* End of results message */}
+            {!currentHasMore && currentTotal > PAGE_SIZE && (
+              <p style={{ textAlign:'center', color:'#9aa0a6', fontSize:13, padding:'20px 0' }}>
+                {cat !== 'All'
+                  ? `All ${filtered.length} ${cat} articles loaded ✓`
+                  : `You've read all ${filtered.length} articles ✓`
+                }
+              </p>
+            )}
           </div>
         ) : (
-          // HOME VIEW — professional layout
+          // ── HOME VIEW — professional layout ──
           <div>
             {/* Hero */}
             {filtered[0] && <HeroCard item={filtered[0]} onRepost={handleRepost}/>}
@@ -557,7 +683,7 @@ export default function NewsTally() {
                     items={items}
                     accent={CAT_COLORS[category] || '#1a73e8'}
                     onRepost={handleRepost}
-                    onSeeAll={c => { setCat(c); window.scrollTo({ top:0, behavior:'smooth' }) }}
+                    onSeeAll={c => setCat(c)}
                   />
                 ))
             })()}
@@ -573,9 +699,16 @@ export default function NewsTally() {
               </div>
             )}
 
-            {/* INFINITE SCROLL SENTINEL */}
+            {/* Sentinel for IntersectionObserver */}
             <div ref={sentinelRef} style={{ height:1 }}/>
+
             {loadingMore && <LoadMoreSpinner/>}
+
+            {/* Explicit Load More button */}
+            {!loadingMore && hasMore && (
+              <LoadMoreButton onClick={loadMoreAll} loading={loadingMore}/>
+            )}
+
             {!hasMore && allNews.length > PAGE_SIZE && (
               <p style={{ textAlign:'center', color:'#9aa0a6', fontSize:13, padding:'20px 0' }}>
                 You've read all {allNews.length} articles ✓

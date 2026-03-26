@@ -1,20 +1,27 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { useEffect, useState, useRef } from 'react'
-import { doc, getDoc, collection, query, limit, getDocs, where } from 'firebase/firestore'
-import { db } from '../firebase/config'
+import {
+  doc, getDoc, collection, query, limit, getDocs, where,
+  addDoc, updateDoc, arrayUnion, increment as fbIncrement, serverTimestamp
+} from 'firebase/firestore'
+import { db, APP_ID } from '../firebase/config'
+import { useAuth } from '../context/AuthContext'
 import { timeAgo, catIcon, showToast } from '../utils'
-import NewsCard from '../components/NewsCard'
 import BottomNav from '../components/BottomNav'
+import AuthModal from '../components/AuthModal'
 
-// ===== SAVE/BOOKMARK helpers =====
+const CAT_COLORS = {
+  National:'#e53935', World:'#1a73e8', Business:'#34a853',
+  Technology:'#9334e6', Health:'#f4a261', Education:'#0077b6',
+  Sports:'#ff6d00', General:'#546e7a', Entertainment:'#ad1457'
+}
+
 function getSavedIds() {
   try { return JSON.parse(localStorage.getItem('nt_saved_news') || '[]') } catch { return [] }
 }
 function setSavedIds(ids) {
   localStorage.setItem('nt_saved_news', JSON.stringify(ids))
 }
-
-// ===== READING HISTORY helper =====
 function saveToHistory(item) {
   try {
     const history = JSON.parse(localStorage.getItem('nt_history') || '[]')
@@ -25,18 +32,67 @@ function saveToHistory(item) {
   } catch {}
 }
 
+// ── Repost Modal ──
+function RepostModal({ item, onClose, onConfirm, reposting }) {
+  if (!item) return null
+  const accent = CAT_COLORS[item.category] || '#1a73e8'
+  return (
+    <div onClick={e => e.target === e.currentTarget && onClose()}
+      style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.5)', zIndex:500,
+        display:'flex', alignItems:'flex-end', justifyContent:'center' }}>
+      <div style={{ width:'100%', maxWidth:560, background:'#fff', borderRadius:'20px 20px 0 0',
+        padding:'20px 20px 36px' }}>
+        <div style={{ width:40, height:4, background:'#e0e0e0', borderRadius:99, margin:'0 auto 16px' }}/>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
+          <span style={{ fontSize:16, fontWeight:700, color:'#202124' }}>Share to Socialgati?</span>
+          <button onClick={onClose} style={{ background:'none', border:'none', fontSize:18, cursor:'pointer', color:'#9aa0a6' }}>
+            <i className="fas fa-times"/>
+          </button>
+        </div>
+        <div style={{ display:'flex', gap:12, marginBottom:20, background:'#f8f9fa', padding:12, borderRadius:12 }}>
+          {item.image && <img src={item.image} style={{ width:64, height:64, borderRadius:8, objectFit:'cover', flexShrink:0 }} alt=""/>}
+          <div style={{ flex:1, minWidth:0 }}>
+            <div style={{ fontSize:11, color:accent, fontWeight:800, textTransform:'uppercase', letterSpacing:'.06em', marginBottom:4 }}>{item.category}</div>
+            <div style={{ fontSize:13, fontWeight:600, color:'#202124', lineHeight:1.4,
+              display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{item.title}</div>
+            <div style={{ fontSize:11, color:'#9aa0a6', marginTop:4 }}>{item.source}</div>
+          </div>
+        </div>
+        <div style={{ display:'flex', gap:10 }}>
+          <button onClick={onClose}
+            style={{ flex:1, padding:'13px 0', background:'#f1f3f4', border:'none', borderRadius:12,
+              fontSize:14, fontWeight:600, color:'#5f6368', cursor:'pointer' }}>
+            Cancel
+          </button>
+          <button onClick={() => onConfirm(item)} disabled={reposting}
+            style={{ flex:2, padding:'13px 0', background:'linear-gradient(135deg,#1a73e8,#1557b0)',
+              border:'none', borderRadius:12, color:'#fff', fontSize:14, fontWeight:700,
+              cursor: reposting ? 'not-allowed' : 'pointer',
+              display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
+            {reposting ? <><i className="fas fa-spinner fa-spin"/> Posting...</> : <><i className="fas fa-retweet"/> Repost</>}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function NewsOpen() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const [item, setItem] = useState(null)
-  const [related, setRelated] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [saved, setSaved] = useState(false)
+  const { user } = useAuth()
+
+  const [item, setItem]           = useState(null)
+  const [related, setRelated]     = useState([])
+  const [loading, setLoading]     = useState(true)
+  const [saved, setSaved]         = useState(false)
   const [showShare, setShowShare] = useState(false)
-  const [readPct, setReadPct] = useState(0)
+  const [readPct, setReadPct]     = useState(0)
+  const [showAuth, setShowAuth]   = useState(false)
+  const [repostItem, setRepostItem] = useState(null)
+  const [reposting, setReposting] = useState(false)
   const articleRef = useRef(null)
 
-  // ===== Reading Progress Bar =====
   useEffect(() => {
     const onScroll = () => {
       const scrollTop = window.scrollY
@@ -47,7 +103,6 @@ export default function NewsOpen() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  // ===== Fetch Article =====
   useEffect(() => {
     async function load() {
       if (!id) return
@@ -56,26 +111,18 @@ export default function NewsOpen() {
         if (snap.exists()) {
           const d = { id: snap.id, ...snap.data() }
           setItem(d)
-          // Check if saved
           setSaved(getSavedIds().includes(snap.id))
-          // Save to reading history
           saveToHistory(d)
-
-          // Load related by same category first, then fallback
           let rel = []
           if (d.category) {
             try {
-              const catSnap = await getDocs(
-                query(collection(db, 'news'), where('category', '==', d.category), limit(8))
-              )
+              const catSnap = await getDocs(query(collection(db, 'news'), where('category', '==', d.category), limit(8)))
               rel = catSnap.docs.map(dc => ({ id: dc.id, ...dc.data() })).filter(n => n.id !== id && n.title)
             } catch {}
           }
-          // Fallback: latest news if not enough related
           if (rel.length < 3) {
             const fallSnap = await getDocs(query(collection(db, 'news'), limit(12)))
             const fallback = fallSnap.docs.map(dc => ({ id: dc.id, ...dc.data() })).filter(n => n.id !== id && n.title)
-            // Merge, deduplicate
             const relIds = new Set(rel.map(r => r.id))
             rel = [...rel, ...fallback.filter(n => !relIds.has(n.id))].slice(0, 5)
           }
@@ -88,145 +135,184 @@ export default function NewsOpen() {
     window.scrollTo(0, 0)
   }, [id])
 
-  // ===== Save / Bookmark =====
   const toggleSave = () => {
     const ids = getSavedIds()
-    if (saved) {
-      setSavedIds(ids.filter(i => i !== id))
-      setSaved(false)
-      showToast('Removed from saved')
-    } else {
-      setSavedIds([id, ...ids])
-      setSaved(true)
-      showToast('🔖 Saved!')
-    }
+    if (saved) { setSavedIds(ids.filter(i => i !== id)); setSaved(false); showToast('Removed from saved') }
+    else { setSavedIds([id, ...ids]); setSaved(true); showToast('🔖 Saved!') }
   }
 
-  // ===== Share =====
   const shareUrl = () => `${window.location.origin}/news/${id}`
-
-  const shareWA = () => {
-    if (!item) return
-    const u = shareUrl()
-    const desc = (item.description || '').substring(0, 120)
-    window.open(`https://wa.me/?text=${encodeURIComponent(`📰 *${item.title}*\n\n${desc}...\n\n🔗 ${u}\n\n📲 *NewsTally*`)}`, '_blank')
-  }
-  const shareTW = () => {
-    if (!item) return
-    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent('📰 ' + item.title)}&url=${encodeURIComponent(shareUrl())}&via=newstallyofficial`, '_blank')
-  }
-  const shareTG = () => {
-    if (!item) return
-    const u = shareUrl()
-    const desc = (item.description || '').substring(0, 100)
-    window.open(`https://t.me/share/url?url=${encodeURIComponent(u)}&text=${encodeURIComponent(`📰 ${item.title}\n\n${desc}...`)}`, '_blank')
-  }
+  const shareWA  = () => item && window.open(`https://wa.me/?text=${encodeURIComponent(`📰 *${item.title}*\n\n${(item.description||'').substring(0,120)}...\n\n🔗 ${shareUrl()}\n\n📲 *NewsTally*`)}`, '_blank')
+  const shareTW  = () => item && window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent('📰 '+item.title)}&url=${encodeURIComponent(shareUrl())}&via=newstallyofficial`, '_blank')
+  const shareTG  = () => item && window.open(`https://t.me/share/url?url=${encodeURIComponent(shareUrl())}&text=${encodeURIComponent(`📰 ${item.title}\n\n${(item.description||'').substring(0,100)}...`)}`, '_blank')
   const shareCopy = () => {
-    const u = shareUrl()
-    navigator.clipboard?.writeText(u).then(() => showToast('🔗 Link copied!')).catch(() => {
+    navigator.clipboard?.writeText(shareUrl()).then(() => showToast('🔗 Link copied!')).catch(() => {
       const ta = document.createElement('textarea')
-      ta.value = u; ta.style.cssText = 'position:fixed;opacity:0'
+      ta.value = shareUrl(); ta.style.cssText = 'position:fixed;opacity:0'
       document.body.appendChild(ta); ta.select(); document.execCommand('copy')
       document.body.removeChild(ta); showToast('🔗 Link copied!')
     })
   }
   const handleNativeShare = () => {
-    if (navigator.share && item) {
-      navigator.share({ title: item.title, url: shareUrl() })
-    } else {
-      setShowShare(s => !s)
-    }
+    if (navigator.share && item) navigator.share({ title: item.title, url: shareUrl() })
+    else setShowShare(s => !s)
   }
 
-  // ===== Calc read time =====
-  const readTime = item ? Math.max(1, Math.ceil(((item.title || '').length + (item.description || '').length) / 200)) : 1
+  // ── Smart Repost ──
+  const handleRepost = async (newsItem) => {
+    if (!user) { setShowAuth(true); return }
+    setReposting(true)
+    try {
+      const uSnap = await getDoc(doc(db, 'users', user.uid)).catch(() => null)
+      const uData = uSnap?.data() || {}
+      const myInfo = {
+        uid: user.uid,
+        username: uData.username || user.displayName || 'User',
+        avatar: user.photoURL || '',
+        timestamp: new Date().toISOString()
+      }
+      const myRepost = await getDocs(query(
+        collection(db, 'artifacts', APP_ID, 'public', 'data', 'reposts'),
+        where('newsId', '==', String(newsItem.id || newsItem.title)),
+        where('repostedBy', 'array-contains', user.uid),
+        limit(1)
+      )).catch(() => ({ empty: true }))
+      if (!myRepost.empty) { showToast('You already reposted this!'); setRepostItem(null); return }
+
+      const existing = await getDocs(query(
+        collection(db, 'artifacts', APP_ID, 'public', 'data', 'reposts'),
+        where('newsId', '==', String(newsItem.id || newsItem.title)),
+        where('type', '==', 'repost'),
+        limit(1)
+      ))
+      if (!existing.empty) {
+        await updateDoc(existing.docs[0].ref, {
+          repostCount: fbIncrement(1),
+          repostedBy: arrayUnion(user.uid),
+          repostedUsers: arrayUnion(myInfo)
+        })
+        showToast('✅ You reposted this news!')
+      } else {
+        await addDoc(collection(db, 'artifacts', APP_ID, 'public', 'data', 'reposts'), {
+          userId: user.uid, username: myInfo.username, userAvatar: myInfo.avatar,
+          image: newsItem.image || '', headline: newsItem.title,
+          newsUrl: newsItem.url || '', newsSource: newsItem.source || '',
+          newsCategory: newsItem.category || '', newsId: String(newsItem.id || newsItem.title),
+          likes: [], commentsCount: 0, repostCount: 1,
+          repostedBy: [user.uid], repostedUsers: [myInfo],
+          timestamp: serverTimestamp(), type: 'repost'
+        })
+        showToast('✅ Reposted to Socialgati!')
+      }
+      setRepostItem(null)
+    } catch(e) { console.error(e); showToast('Repost failed') }
+    finally { setReposting(false) }
+  }
+
+  const readTime = item ? Math.max(1, Math.ceil(((item.title||'').length + (item.description||'').length) / 200)) : 1
+  const accent   = CAT_COLORS[item?.category] || '#1a73e8'
 
   if (loading) return (
     <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100dvh' }}>
       <i className="fas fa-spinner fa-spin" style={{ fontSize:32, color:'#1a73e8' }}/>
     </div>
   )
-
   if (!item) return (
     <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'100dvh', gap:16, padding:20 }}>
       <i className="fas fa-newspaper" style={{ fontSize:48, color:'#e0e0e0' }}/>
       <p style={{ fontWeight:600, color:'#606060' }}>Article not found</p>
-      <button onClick={()=>navigate('/news')} style={{ padding:'10px 24px', background:'#1a73e8', color:'#fff', border:'none', borderRadius:8, fontWeight:600, cursor:'pointer' }}>← Back to News</button>
+      <button onClick={() => navigate('/news')} style={{ padding:'10px 24px', background:'#1a73e8', color:'#fff', border:'none', borderRadius:8, fontWeight:600, cursor:'pointer' }}>← Back to News</button>
     </div>
   )
 
   return (
     <>
-      {/* ===== READING PROGRESS BAR ===== */}
+      {/* Reading progress */}
       <div style={{ position:'fixed', top:0, left:0, right:0, height:3, background:'#e8eaed', zIndex:201 }}>
-        <div style={{ height:'100%', width:`${readPct}%`, background:'linear-gradient(90deg,#1a73e8,#9334e6)', transition:'width .1s', borderRadius:2 }}/>
+        <div style={{ height:'100%', width:`${readPct}%`, background:`linear-gradient(90deg,${accent},#9334e6)`, transition:'width .1s', borderRadius:2 }}/>
       </div>
 
       <div style={{ maxWidth:720, margin:'0 auto', minHeight:'100dvh', background:'#fff', paddingBottom:80 }}>
 
-        {/* ===== STICKY HEADER ===== */}
-        <div style={{ padding:'12px 16px', display:'flex', alignItems:'center', gap:10, borderBottom:'1px solid #f0f0f0', position:'sticky', top:0, background:'rgba(255,255,255,.97)', backdropFilter:'blur(20px)', zIndex:100 }}>
-          <button onClick={()=>navigate(-1)} className="page-back-btn"><i className="fas fa-arrow-left"/></button>
-          <div style={{ display:'flex', alignItems:'center', gap:8, flex:1, overflow:'hidden', cursor:'pointer' }} onClick={()=>navigate('/news')}>
-            <img src="https://i.postimg.cc/dLTgRxbL/cropped-circle-image.png" alt="Socialgati" style={{ width:26, height:26, borderRadius:'50%', objectFit:'cover', flexShrink:0 }}/>
+        {/* Sticky Header */}
+        <div style={{ padding:'12px 16px', display:'flex', alignItems:'center', gap:10, borderBottom:'1px solid #f0f0f0',
+          position:'sticky', top:0, background:'rgba(255,255,255,.97)', backdropFilter:'blur(20px)', zIndex:100 }}>
+          <button onClick={() => navigate(-1)} className="page-back-btn"><i className="fas fa-arrow-left"/></button>
+          <div style={{ display:'flex', alignItems:'center', gap:8, flex:1, overflow:'hidden', cursor:'pointer' }} onClick={() => navigate('/news')}>
+            <img src="https://i.postimg.cc/dLTgRxbL/cropped-circle-image.png" alt="NewsTally"
+              style={{ width:26, height:26, borderRadius:'50%', objectFit:'cover', flexShrink:0 }}/>
             <span style={{ fontSize:16, fontWeight:700, color:'#1a73e8', letterSpacing:'-.3px' }}>NewsTally</span>
           </div>
           <div style={{ display:'flex', gap:4, alignItems:'center' }}>
-            {/* Save button in header */}
             <button className="icon-btn" onClick={toggleSave} title={saved ? 'Remove from saved' : 'Save article'}>
               <i className={saved ? 'fas fa-bookmark' : 'far fa-bookmark'} style={{ color: saved ? '#1a73e8' : undefined }}/>
             </button>
-            {/* Share button in header */}
+            <button className="icon-btn" onClick={() => setRepostItem(item)} title="Repost to Socialgati">
+              <i className="fas fa-retweet" style={{ color:'#34a853' }}/>
+            </button>
             <button className="icon-btn" onClick={handleNativeShare} title="Share">
               <i className="fas fa-share-alt"/>
             </button>
           </div>
         </div>
 
-        {/* ===== HERO IMAGE ===== */}
+        {/* Hero Image */}
         {item.image && (
           <div style={{ width:'100%', aspectRatio:'16/9', overflow:'hidden', background:'#f1f3f4' }}>
             <img src={item.image} alt={item.title} style={{ width:'100%', height:'100%', objectFit:'cover' }}
-              onError={e=>e.target.style.display='none'}/>
+              onError={e => e.target.style.display='none'}/>
           </div>
         )}
 
         <div style={{ padding:'20px 16px 0' }}>
 
-          {/* ===== CATEGORY + READ TIME ===== */}
+          {/* Category + read time */}
           <div style={{ display:'flex', alignItems:'center', gap:10, flexWrap:'wrap', marginBottom:14 }}>
-            <span style={{ background:'#e8f0fe', color:'#1a73e8', fontSize:11, fontWeight:700, padding:'4px 12px', borderRadius:99, textTransform:'uppercase', letterSpacing:'.07em', display:'flex', alignItems:'center', gap:5 }}>
-              <i className="fas fa-tag" style={{ fontSize:10 }}/> {item.category || 'News'}
+            <span style={{ background:`${accent}18`, color:accent, fontSize:11, fontWeight:700,
+              padding:'4px 12px', borderRadius:99, textTransform:'uppercase', letterSpacing:'.07em',
+              display:'flex', alignItems:'center', gap:5 }}>
+              <i className={catIcon(item.category)} style={{ fontSize:10 }}/> {item.category || 'News'}
             </span>
             <span style={{ fontSize:12, color:'#9aa0a6', display:'flex', alignItems:'center', gap:4 }}>
               <i className="far fa-clock" style={{ fontSize:11 }}/> {readTime} min read
             </span>
           </div>
 
-          {/* ===== TITLE ===== */}
+          {/* Title */}
           <h1 style={{ fontSize:'clamp(20px,4.5vw,28px)', fontWeight:700, lineHeight:1.4, color:'#0a0a14', letterSpacing:'-.3px', marginBottom:16 }}>
             {item.title}
           </h1>
 
-          {/* ===== SOURCE BAR with Save & Share ===== */}
-          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 14px', background:'#f8f9fa', borderRadius:10, borderLeft:'3px solid #1a73e8', marginBottom:20, gap:10, flexWrap:'wrap' }}>
+          {/* Source bar */}
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 14px',
+            background:'#f8f9fa', borderRadius:10, borderLeft:`3px solid ${accent}`, marginBottom:20, gap:10, flexWrap:'wrap' }}>
             <div>
               <div style={{ fontSize:13, fontWeight:700, color:'#202124' }}>{item.source || 'NewsTally'}</div>
               <div style={{ fontSize:11, color:'#9aa0a6', marginTop:2 }}>{timeAgo(item.date || item.pubDate)}</div>
             </div>
             <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
               <button onClick={toggleSave}
-                style={{ display:'flex', alignItems:'center', gap:5, padding:'7px 14px', borderRadius:8, background: saved ? '#e8f0fe' : '#fff', border: saved ? '1.5px solid #aecbfa' : '1.5px solid #e8eaed', fontSize:12, fontWeight:600, color: saved ? '#1a73e8' : '#3c4043', cursor:'pointer', transition:'all .15s' }}>
+                style={{ display:'flex', alignItems:'center', gap:5, padding:'7px 14px', borderRadius:8,
+                  background: saved ? '#e8f0fe' : '#fff', border: saved ? '1.5px solid #aecbfa' : '1.5px solid #e8eaed',
+                  fontSize:12, fontWeight:600, color: saved ? '#1a73e8' : '#3c4043', cursor:'pointer' }}>
                 <i className={saved ? 'fas fa-bookmark' : 'far fa-bookmark'}/> {saved ? 'Saved' : 'Save'}
               </button>
+              {/* ✅ Repost button in article */}
+              <button onClick={() => setRepostItem(item)}
+                style={{ display:'flex', alignItems:'center', gap:5, padding:'7px 14px', borderRadius:8,
+                  background:'#e8f5e9', border:'1.5px solid #a5d6a7',
+                  fontSize:12, fontWeight:700, color:'#2e7d32', cursor:'pointer' }}>
+                <i className="fas fa-retweet"/> Repost
+              </button>
               <button onClick={() => setShowShare(s => !s)}
-                style={{ display:'flex', alignItems:'center', gap:5, padding:'7px 14px', borderRadius:8, background:'#fff', border:'1.5px solid #e8eaed', fontSize:12, fontWeight:600, color:'#3c4043', cursor:'pointer', transition:'all .15s' }}>
+                style={{ display:'flex', alignItems:'center', gap:5, padding:'7px 14px', borderRadius:8,
+                  background:'#fff', border:'1.5px solid #e8eaed', fontSize:12, fontWeight:600, color:'#3c4043', cursor:'pointer' }}>
                 <i className="fas fa-share-alt"/> Share
               </button>
             </div>
           </div>
 
-          {/* ===== SHARE PANEL ===== */}
+          {/* Share panel */}
           {showShare && (
             <div style={{ display:'flex', gap:8, flexWrap:'wrap', paddingBottom:16, marginBottom:4, borderBottom:'1px solid #e8eaed' }}>
               <button onClick={shareWA} style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 16px', borderRadius:99, background:'#25d366', color:'#fff', fontSize:13, fontWeight:600, border:'none', cursor:'pointer' }}>
@@ -244,7 +330,7 @@ export default function NewsOpen() {
             </div>
           )}
 
-          {/* ===== DESCRIPTION / ARTICLE BODY ===== */}
+          {/* Article body */}
           {item.description ? (
             <div ref={articleRef} style={{ fontSize:16, lineHeight:1.85, color:'#3c4043', marginBottom:24 }}>
               {item.description.split(/(?<=[.!?])\s+/).filter(s => s.trim().length > 5).map((s, i) => (
@@ -258,20 +344,28 @@ export default function NewsOpen() {
             </div>
           )}
 
-          {/* ===== READ FULL ARTICLE BUTTON ===== */}
-          {item.url && item.url !== '#' && (
-            <a href={item.url} target="_blank" rel="noopener noreferrer"
-              style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8, width:'100%', padding:13, background:'#1a73e8', color:'#fff', borderRadius:10, fontSize:15, fontWeight:700, marginBottom:20, textDecoration:'none', transition:'all .2s' }}
-              onMouseOver={e=>e.currentTarget.style.background='#1557b0'}
-              onMouseOut={e=>e.currentTarget.style.background='#1a73e8'}>
-              <i className="fas fa-external-link-alt"/> Read Full Article on {item.source || 'Source'}
-            </a>
-          )}
+          {/* Action buttons row */}
+          <div style={{ display:'flex', gap:10, marginBottom:20 }}>
+            {item.url && item.url !== '#' && (
+              <a href={item.url} target="_blank" rel="noopener noreferrer"
+                style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:8,
+                  padding:'13px 0', background:'#1a73e8', color:'#fff', borderRadius:10,
+                  fontSize:14, fontWeight:700, textDecoration:'none' }}>
+                <i className="fas fa-external-link-alt"/> Read Full Article
+              </a>
+            )}
+            <button onClick={() => setRepostItem(item)}
+              style={{ padding:'13px 20px', background:'#e8f5e9', border:'1.5px solid #a5d6a7',
+                borderRadius:10, fontSize:14, fontWeight:700, color:'#2e7d32', cursor:'pointer',
+                display:'flex', alignItems:'center', gap:8 }}>
+              <i className="fas fa-retweet"/> Repost
+            </button>
+          </div>
 
-          {/* ===== TAGS (Category + Source) ===== */}
+          {/* Tags */}
           <div style={{ display:'flex', flexWrap:'wrap', gap:8, marginBottom:20, alignItems:'center', paddingTop:12, borderTop:'1px solid #f1f3f4' }}>
             {item.category && (
-              <span style={{ fontSize:12, fontWeight:600, color:'#1a73e8', background:'#e8f0fe', padding:'4px 12px', borderRadius:99, cursor:'pointer' }}>
+              <span style={{ fontSize:12, fontWeight:600, color:accent, background:`${accent}18`, padding:'4px 12px', borderRadius:99 }}>
                 #{item.category}
               </span>
             )}
@@ -282,7 +376,6 @@ export default function NewsOpen() {
             )}
           </div>
 
-          {/* ===== POWERED BY ===== */}
           <div style={{ textAlign:'center', padding:'20px 0', marginTop:8 }}>
             <a href="/" style={{ display:'inline-flex', alignItems:'center', gap:7, background:'#f0ebff', padding:'10px 20px', borderRadius:99, fontSize:13, fontWeight:700, color:'#9334e6', textDecoration:'none' }}>
               <i className="fas fa-bolt"/> Powered by Socialgati
@@ -290,7 +383,7 @@ export default function NewsOpen() {
           </div>
         </div>
 
-        {/* ===== RELATED ARTICLES ===== */}
+        {/* Related articles */}
         {related.length > 0 && (
           <div style={{ padding:'0 16px 20px' }}>
             <h2 style={{ fontSize:16, fontWeight:700, color:'#202124', marginBottom:14, display:'flex', alignItems:'center', gap:8 }}>
@@ -298,43 +391,32 @@ export default function NewsOpen() {
               More like this
             </h2>
             <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
-              {related.map(r => (
-                <RelatedCard key={r.id} item={r} onNavigate={() => navigate(`/news/${r.id}`)} />
-              ))}
+              {related.map(r => <RelatedCard key={r.id} item={r} onNavigate={() => navigate(`/news/${r.id}`)}/>)}
             </div>
           </div>
         )}
-
       </div>
+
+      <RepostModal item={repostItem} onClose={() => setRepostItem(null)} onConfirm={handleRepost} reposting={reposting}/>
+      {showAuth && <AuthModal onClose={() => setShowAuth(false)}/>}
       <BottomNav/>
     </>
   )
 }
 
-// ===== Related Card (horizontal layout like HTML version) =====
 function RelatedCard({ item, onNavigate }) {
   const [imgErr, setImgErr] = useState(false)
   return (
-    <div onClick={onNavigate} style={{ display:'flex', gap:12, padding:'12px 0', borderBottom:'1px solid #f1f3f4', cursor:'pointer', transition:'opacity .15s' }}
-      onMouseOver={e=>e.currentTarget.style.opacity='.75'}
-      onMouseOut={e=>e.currentTarget.style.opacity='1'}>
-      <img
-        src={imgErr ? 'https://placehold.co/80x60/e8f0fe/1a73e8?text=NT' : (item.image || 'https://placehold.co/80x60/e8f0fe/1a73e8?text=NT')}
-        alt={item.title}
-        loading="lazy"
-        onError={() => setImgErr(true)}
-        style={{ width:80, height:60, borderRadius:8, objectFit:'cover', flexShrink:0, background:'#f1f3f4' }}
-      />
+    <div onClick={onNavigate} style={{ display:'flex', gap:12, padding:'12px 0', borderBottom:'1px solid #f1f3f4', cursor:'pointer' }}
+      onMouseOver={e => e.currentTarget.style.opacity='.75'}
+      onMouseOut={e => e.currentTarget.style.opacity='1'}>
+      <img src={imgErr ? 'https://placehold.co/80x60/e8f0fe/1a73e8?text=NT' : (item.image || 'https://placehold.co/80x60/e8f0fe/1a73e8?text=NT')}
+        alt={item.title} loading="lazy" onError={() => setImgErr(true)}
+        style={{ width:80, height:60, borderRadius:8, objectFit:'cover', flexShrink:0, background:'#f1f3f4' }}/>
       <div style={{ flex:1, minWidth:0 }}>
-        <div style={{ fontSize:10, fontWeight:700, color:'#1a73e8', textTransform:'uppercase', letterSpacing:'.05em', marginBottom:4 }}>
-          {item.category}
-        </div>
-        <div style={{ fontSize:13, fontWeight:600, color:'#202124', lineHeight:1.4, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>
-          {item.title}
-        </div>
-        <div style={{ fontSize:11, color:'#9aa0a6', marginTop:4 }}>
-          {item.source} · {timeAgo(item.date)}
-        </div>
+        <div style={{ fontSize:10, fontWeight:700, color:'#1a73e8', textTransform:'uppercase', letterSpacing:'.05em', marginBottom:4 }}>{item.category}</div>
+        <div style={{ fontSize:13, fontWeight:600, color:'#202124', lineHeight:1.4, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{item.title}</div>
+        <div style={{ fontSize:11, color:'#9aa0a6', marginTop:4 }}>{item.source} · {timeAgo(item.date)}</div>
       </div>
     </div>
   )

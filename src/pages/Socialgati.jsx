@@ -168,8 +168,6 @@ export default function Socialgati() {
 
   // 3️⃣ @ mention — open profile when mention clicked in a post
   // 4️⃣ # hashtag — filter feed
-  const [activeHashtag, setActiveHashtag] = useState(null)
-
   const unsubRef = useRef(null)
 
   const av = user?.photoURL
@@ -179,42 +177,18 @@ export default function Socialgati() {
   const loadFeed = useCallback(() => {
     if (unsubRef.current) { unsubRef.current(); unsubRef.current = null }
     setLoading(true)
-
-    let q
-
-    if (activeHashtag) {
-      // 4️⃣ Hashtag feed — posts containing this hashtag
-      q = query(
-        collection(db, 'artifacts', APP_ID, 'public', 'data', 'reposts'),
-        where('hashtags', 'array-contains', activeHashtag.toLowerCase()),
-        orderBy('timestamp', 'desc'),
-        limit(30)
-      )
-    } else {
-      q = query(
-        collection(db, 'artifacts', APP_ID, 'public', 'data', 'reposts'),
-        orderBy('timestamp', 'desc'),
-        limit(30)
-      )
-    }
-
+    const q = query(
+      collection(db, 'artifacts', APP_ID, 'public', 'data', 'reposts'),
+      orderBy('timestamp', 'desc'),
+      limit(30)
+    )
     unsubRef.current = onSnapshot(q, snap => {
       let p = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-
-      if (activeHashtag) {
-        // Also client-side filter for headline containing #tag (in case hashtags field not set)
-        const tag = '#' + activeHashtag.toLowerCase()
-        p = p.filter(post =>
-          (post.headline || '').toLowerCase().includes(tag) ||
-          (post.hashtags || []).includes(activeHashtag.toLowerCase())
-        )
-      }
-
       if (feedType === 'trending') p.sort((a, b) => (b.likes?.length || 0) - (a.likes?.length || 0))
       setPosts(p)
       setLoading(false)
     }, err => { console.error(err); setLoading(false) })
-  }, [feedType, activeHashtag])
+  }, [feedType])
 
   useEffect(() => {
     loadFeed()
@@ -293,9 +267,7 @@ export default function Socialgati() {
 
   // 4️⃣ Handle #hashtag click — filter feed
   const handleHashtagClick = (tag) => {
-    setActiveHashtag(tag.toLowerCase())
-    setFeedType('all')
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    navigate(`/hashtag/${tag.toLowerCase()}`)
   }
 
   const TABS = [['all', 'For You'], ['trending', '🔥 Trending'], ['following', 'Following']]
@@ -379,14 +351,9 @@ export default function Socialgati() {
           </div>
         )}
 
-        {/* 4️⃣ Hashtag banner — show when hashtag is active */}
-        {activeHashtag && (
-          <HashtagBanner hashtag={activeHashtag} onClear={() => setActiveHashtag(null)}/>
-        )}
 
-        {/* Feed Tabs — hide when hashtag active */}
-        {!activeHashtag && (
-          <div style={{ display:'flex', background:'#fff', borderBottom:'1px solid #e8eaed', position:'sticky', top:56, zIndex:40 }}>
+        {/* Feed Tabs */}
+        <div style={{ display:'flex', background:'var(--surface)', borderBottom:'1px solid var(--border)', position:'sticky', top:56, zIndex:40 }}>
             {TABS.map(([k, label]) => (
               <button key={k} onClick={() => setFeedType(k)}
                 style={{ flex:1, padding:'12px 4px', fontSize:13, fontWeight:600,
@@ -402,7 +369,7 @@ export default function Socialgati() {
         )}
 
         {/* Compose bar */}
-        <div style={{ display:'flex', gap:10, padding:'12px 16px', background:'#fff', borderBottom:'1px solid #e8eaed', alignItems:'center' }}>
+        <div style={{ display:'flex', gap:10, padding:'12px 16px', background:'var(--surface)', borderBottom:'1px solid var(--border)', alignItems:'center' }}>
           <img src={av} style={{ width:38, height:38, borderRadius:'50%', objectFit:'cover', flexShrink:0 }} alt=""
             onError={e => e.target.src=`https://ui-avatars.com/api/?name=U&background=1a73e8&color=fff`}/>
           <button onClick={() => user ? setShowCreateModal(true) : setShowAuth(true)}
@@ -421,27 +388,18 @@ export default function Socialgati() {
               ? (
                 <div style={{ textAlign:'center', padding:'64px 20px' }}>
                   <div style={{ width:72, height:72, borderRadius:'50%', background:'#e8f0fe', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 16px' }}>
-                    {activeHashtag
-                      ? <span style={{ fontSize:28, fontWeight:800, color:'#1a73e8' }}>#</span>
-                      : <i className="fas fa-bolt" style={{ fontSize:28, color:'#1a73e8' }}/>
-                    }
+                      <i className="fas fa-bolt" style={{ fontSize:28, color:'#1a73e8' }}/>
                   </div>
                   <p style={{ fontSize:17, fontWeight:700, color:'#202124', marginBottom:8 }}>
-                    {activeHashtag ? `No posts for #${activeHashtag}` : 'Nothing here yet'}
+                    Nothing here yet
                   </p>
                   <p style={{ fontSize:14, color:'#9aa0a6', marginBottom:20 }}>
-                    {activeHashtag ? 'Be the first to post with this hashtag!' : 'Be the first to post on Socialgati!'}
+                    Be the first to post on Socialgati!
                   </p>
-                  {activeHashtag
-                    ? <button onClick={() => setActiveHashtag(null)}
-                        style={{ padding:'10px 28px', background:'#f1f3f4', color:'#202124', border:'none', borderRadius:99, fontSize:14, fontWeight:700, cursor:'pointer' }}>
-                        ← Back to Feed
-                      </button>
-                    : <button onClick={() => user ? setShowCreateModal(true) : setShowAuth(true)}
-                        style={{ padding:'10px 28px', background:'#1a73e8', color:'#fff', border:'none', borderRadius:99, fontSize:14, fontWeight:700, cursor:'pointer' }}>
-                        Create Post
-                      </button>
-                  }
+                  <button onClick={() => user ? setShowCreateModal(true) : setShowAuth(true)}
+                    style={{ padding:'10px 28px', background:'#1a73e8', color:'#fff', border:'none', borderRadius:99, fontSize:14, fontWeight:700, cursor:'pointer' }}>
+                    Create Post
+                  </button>
                 </div>
               )
               : posts.map(p => (

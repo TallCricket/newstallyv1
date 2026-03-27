@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import {
   collection, query, orderBy, limit, onSnapshot,
-  addDoc, serverTimestamp, where, getDocs
+  addDoc, serverTimestamp, where, getDocs, getDoc, doc
 } from 'firebase/firestore'
 import { db, APP_ID } from '../firebase/config'
 import { useAuth } from '../context/AuthContext'
@@ -12,7 +12,7 @@ import CommentsPage from '../components/CommentsPage'
 import ProfilePage from '../components/ProfilePage'
 import NotificationsPage from '../components/NotificationsPage'
 import AuthModal from '../components/AuthModal'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 
 // ── Skeleton ──────────────────────────────────────────────────────
 function PostSkeleton() {
@@ -129,6 +129,13 @@ function MentionInput({ value, onChange, placeholder }) {
 export default function Socialgati() {
   const { user, userData } = useAuth()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+
+  // ── Deep-link: /?post=ID opens that post directly ──
+  useEffect(() => {
+    const postId = searchParams.get('post')
+    if (postId) setOpenCommentPost(postId)
+  }, [searchParams])
 
   const [posts, setPosts]                     = useState([])
   const [loading, setLoading]                 = useState(true)
@@ -255,7 +262,7 @@ export default function Socialgati() {
             style={{ width: 36, height: 36, borderRadius: 8, border: 'none', background: 'transparent', color: 'var(--muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>
             <i className="fas fa-magnifying-glass" />
           </button>
-          <button onClick={() => user ? setShowNotifs(true) : setShowAuth(true)}
+          <button onClick={() => user ? navigate('/alerts') : setShowAuth(true)}
             style={{ width: 36, height: 36, borderRadius: 8, border: 'none', background: 'transparent', color: 'var(--muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>
             <i className="fas fa-bell" />
           </button>

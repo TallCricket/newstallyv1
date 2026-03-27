@@ -69,31 +69,23 @@ function HeroCard({ item, onRepost }) {
           <img src={item.image} alt={item.title} loading="eager" style={{ width:'100%', height:'100%', objectFit:'cover' }} onError={() => setImgErr(true)}/>
           <div style={{ position:'absolute', inset:0, background:'linear-gradient(to top,rgba(0,0,0,.75) 0%,rgba(0,0,0,.1) 60%,transparent 100%)' }}/>
           <div style={{ position:'absolute', top:12, left:12 }}>
-            <span style={{ background:accent, color:'#fff', fontSize:10, fontWeight:800, padding:'4px 10px', borderRadius:99, textTransform:'uppercase', letterSpacing:'.05em' }}>
-              {item.category}
-            </span>
+            <span style={{ background:accent, color:'#fff', fontSize:10, fontWeight:800, padding:'4px 10px', borderRadius:99, textTransform:'uppercase', letterSpacing:'.05em' }}>{item.category}</span>
           </div>
           <div style={{ position:'absolute', bottom:12, left:14, right:14 }}>
-            <p style={{ color:'rgba(255,255,255,.7)', fontSize:11, fontWeight:600, marginBottom:4 }}>{item.source} · {timeAgo(item.date || item.pubDate)}</p>
-            <h2 style={{ color:'#fff', fontSize:18, fontWeight:700, lineHeight:1.4, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>
-              {item.title}
-            </h2>
+            <p style={{ color:'rgba(255,255,255,.75)', fontSize:11, fontWeight:600, marginBottom:4 }}>{item.source} · {timeAgo(item.date || item.pubDate)}</p>
+            <h2 style={{ color:'#fff', fontSize:18, fontWeight:700, lineHeight:1.4, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{item.title}</h2>
           </div>
         </div>
       ) : (
         <div style={{ background:`linear-gradient(135deg,${accent}22,${accent}44)`, padding:'28px 20px' }}>
-          <span style={{ background:accent, color:'#fff', fontSize:10, fontWeight:800, padding:'4px 10px', borderRadius:99, textTransform:'uppercase', display:'inline-block', marginBottom:12 }}>
-            {item.category}
-          </span>
+          <span style={{ background:accent, color:'#fff', fontSize:10, fontWeight:800, padding:'4px 10px', borderRadius:99, textTransform:'uppercase', display:'inline-block', marginBottom:12 }}>{item.category}</span>
           <h2 style={{ fontSize:20, fontWeight:700, color:'var(--ink)', lineHeight:1.4, marginBottom:8 }}>{item.title}</h2>
           <p style={{ fontSize:12, color:'var(--muted)' }}>{item.source} · {timeAgo(item.date || item.pubDate)}</p>
         </div>
       )}
       <div style={{ padding:'14px 16px' }}>
         {item.description && (
-          <p style={{ fontSize:14, color:'var(--muted)', lineHeight:1.6, marginBottom:12, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>
-            {item.description}
-          </p>
+          <p style={{ fontSize:14, color:'var(--muted)', lineHeight:1.6, marginBottom:12, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{item.description}</p>
         )}
         <div style={{ display:'flex', gap:8 }} onClick={e => e.stopPropagation()}>
           <a href={item.url} target="_blank" rel="noopener" onClick={e => e.stopPropagation()}
@@ -121,14 +113,10 @@ function CompactCard({ item, onRepost }) {
       <div style={{ flex:1, minWidth:0 }}>
         <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:5 }}>
           <span style={{ width:7, height:7, borderRadius:'50%', background:accent, flexShrink:0 }}/>
-          <span style={{ fontSize:10, fontWeight:700, color:accent, textTransform:'uppercase', letterSpacing:'.04em', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
-            {item.category}
-          </span>
+          <span style={{ fontSize:10, fontWeight:700, color:accent, textTransform:'uppercase', letterSpacing:'.04em', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{item.category}</span>
           <span style={{ fontSize:10, color:'var(--muted2)', marginLeft:'auto', flexShrink:0 }}>{timeAgo(item.date || item.pubDate)}</span>
         </div>
-        <p style={{ fontSize:14, fontWeight:600, color:'var(--ink)', lineHeight:1.45, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden', marginBottom:4 }}>
-          {item.title}
-        </p>
+        <p style={{ fontSize:14, fontWeight:600, color:'var(--ink)', lineHeight:1.45, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden', marginBottom:4 }}>{item.title}</p>
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
           <p style={{ fontSize:11, color:'var(--muted2)', fontWeight:500 }}>{item.source}</p>
           {onRepost && (
@@ -159,9 +147,7 @@ function GridCard({ item }) {
         <div style={{ height:110, overflow:'hidden', background:'var(--surface2)', position:'relative' }}>
           <img src={item.image} alt="" loading="lazy" onError={() => setImgErr(true)} style={{ width:'100%', height:'100%', objectFit:'cover' }}/>
           <div style={{ position:'absolute', top:6, left:6 }}>
-            <span style={{ background:accent, color:'#fff', fontSize:9, fontWeight:800, padding:'2px 7px', borderRadius:99, textTransform:'uppercase' }}>
-              {item.category}
-            </span>
+            <span style={{ background:accent, color:'#fff', fontSize:9, fontWeight:800, padding:'2px 7px', borderRadius:99, textTransform:'uppercase' }}>{item.category}</span>
           </div>
         </div>
       ) : (
@@ -170,9 +156,7 @@ function GridCard({ item }) {
         </div>
       )}
       <div style={{ padding:'10px 10px 12px' }}>
-        <p style={{ fontSize:12, fontWeight:700, color:'var(--ink)', lineHeight:1.4, marginBottom:6, display:'-webkit-box', WebkitLineClamp:3, WebkitBoxOrient:'vertical', overflow:'hidden' }}>
-          {item.title}
-        </p>
+        <p style={{ fontSize:12, fontWeight:700, color:'var(--ink)', lineHeight:1.4, marginBottom:6, display:'-webkit-box', WebkitLineClamp:3, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{item.title}</p>
         <div style={{ fontSize:10, color:'var(--muted2)', display:'flex', justifyContent:'space-between' }}>
           <span style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:'60%' }}>{item.source}</span>
           <span>{timeAgo(item.date || item.pubDate)}</span>
@@ -182,7 +166,7 @@ function GridCard({ item }) {
   )
 }
 
-// ─── Category Section ─────────────────────────────────────────────
+// ─── Category Section (inside home layout) ────────────────────────
 function CategorySection({ title, items, accent, onRepost, onSeeAll }) {
   const navigate = useNavigate()
   if (!items.length) return null
@@ -199,18 +183,14 @@ function CategorySection({ title, items, accent, onRepost, onSeeAll }) {
           See all <i className="fas fa-arrow-right" style={{ fontSize:10 }}/>
         </button>
       </div>
-      {/* Main story */}
       <div style={{ margin:'0 16px', borderRadius:12, overflow:'hidden', background:'var(--surface)', border:'1px solid var(--border)', boxShadow:'var(--shadow-sm)', cursor:'pointer', marginBottom:1 }}
         onClick={() => navigate(`/news/${main.id}`)}>
         {main.image && (
           <div style={{ height:160, overflow:'hidden', background:'var(--surface2)', position:'relative' }}>
-            <img src={main.image} alt="" loading="lazy" style={{ width:'100%', height:'100%', objectFit:'cover' }}
-              onError={e => e.target.style.display='none'}/>
+            <img src={main.image} alt="" loading="lazy" style={{ width:'100%', height:'100%', objectFit:'cover' }} onError={e => e.target.style.display='none'}/>
             <div style={{ position:'absolute', inset:0, background:'linear-gradient(to top,rgba(0,0,0,.6) 0%,transparent 60%)' }}/>
             <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:12 }}>
-              <p style={{ color:'#fff', fontSize:15, fontWeight:700, lineHeight:1.4, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>
-                {main.title}
-              </p>
+              <p style={{ color:'#fff', fontSize:15, fontWeight:700, lineHeight:1.4, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{main.title}</p>
               <p style={{ color:'rgba(255,255,255,.7)', fontSize:11, marginTop:4 }}>{main.source} · {timeAgo(main.date || main.pubDate)}</p>
             </div>
           </div>
@@ -222,21 +202,15 @@ function CategorySection({ title, items, accent, onRepost, onSeeAll }) {
           </div>
         )}
       </div>
-      {/* Sub stories */}
       <div style={{ margin:'0 16px', background:'var(--surface)', border:'1px solid var(--border)', borderTop:'none', borderRadius:'0 0 12px 12px', padding:'0 14px' }}>
         {rest.slice(0,3).map((item, i) => (
           <div key={item.id} style={{ display:'flex', gap:10, padding:'10px 0', borderBottom: i < 2 ? '1px solid var(--border2)' : 'none', cursor:'pointer' }}
             onClick={() => navigate(`/news/${item.id}`)}>
             <div style={{ flex:1, minWidth:0 }}>
-              <p style={{ fontSize:13, fontWeight:600, color:'var(--ink)', lineHeight:1.4, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>
-                {item.title}
-              </p>
+              <p style={{ fontSize:13, fontWeight:600, color:'var(--ink)', lineHeight:1.4, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{item.title}</p>
               <p style={{ fontSize:11, color:'var(--muted)', marginTop:3 }}>{item.source} · {timeAgo(item.date || item.pubDate)}</p>
             </div>
-            {item.image && (
-              <img src={item.image} alt="" loading="lazy" style={{ width:68, height:52, borderRadius:6, objectFit:'cover', flexShrink:0 }}
-                onError={e => e.target.style.display='none'}/>
-            )}
+            {item.image && <img src={item.image} alt="" loading="lazy" style={{ width:68, height:52, borderRadius:6, objectFit:'cover', flexShrink:0 }} onError={e => e.target.style.display='none'}/>}
           </div>
         ))}
       </div>
@@ -244,21 +218,100 @@ function CategorySection({ title, items, accent, onRepost, onSeeAll }) {
   )
 }
 
-// ─── Spinners / Buttons ───────────────────────────────────────────
-function LoadMoreSpinner() {
-  return (
-    <div style={{ display:'flex', justifyContent:'center', padding:'20px 0', gap:8, color:'var(--muted)', fontSize:13 }}>
-      <i className="fas fa-spinner fa-spin"/><span>Loading more news...</span>
+// ─── Home/Category layout — same for ALL and every specific category ──
+function NewsLayout({ items, cat, onRepost, onSeeAll, sentinelRef, loadingMore, hasMore, onLoadMore, totalLoaded }) {
+  const groupByCategory = (arr) => {
+    const map = {}
+    arr.forEach(n => { if (!map[n.category]) map[n.category] = []; map[n.category].push(n) })
+    return map
+  }
+  if (!items.length) return (
+    <div style={{ textAlign:'center', padding:'60px 20px', color:'var(--muted)' }}>
+      <i className="fas fa-newspaper" style={{ fontSize:40, marginBottom:12, display:'block', opacity:.3 }}/>
+      <p style={{ fontWeight:600, color:'var(--ink)', marginBottom:6 }}>No news found</p>
+      <p style={{ fontSize:13 }}>Check back later for the latest updates</p>
     </div>
   )
-}
-function LoadMoreButton({ onClick, loading }) {
+
   return (
-    <div style={{ display:'flex', justifyContent:'center', padding:'16px 0 8px' }}>
-      <button onClick={onClick} disabled={loading}
-        style={{ padding:'10px 28px', background:'var(--surface)', border:'1.5px solid #1a73e8', borderRadius:24, fontSize:14, fontWeight:700, color:'#1a73e8', cursor: loading ? 'not-allowed' : 'pointer', display:'flex', alignItems:'center', gap:8, opacity: loading ? .6 : 1 }}>
-        {loading ? <><i className="fas fa-spinner fa-spin"/> Loading...</> : <><i className="fas fa-arrow-down"/> Load More</>}
-      </button>
+    <div style={{ background:'var(--bg)' }}>
+      {/* Hero — always the most recent */}
+      <HeroCard item={items[0]} onRepost={onRepost}/>
+
+      {/* Latest Updates strip — items 1–4 */}
+      {items.length > 1 && (
+        <div style={{ margin:'4px 16px 16px', background:'var(--surface)', borderRadius:12, border:'1px solid var(--border)', overflow:'hidden' }}>
+          <div style={{ background:'#1a73e8', padding:'8px 14px', display:'flex', alignItems:'center', gap:8 }}>
+            <span style={{ width:8, height:8, borderRadius:'50%', background:'#ff1744', animation:'pulse 1s infinite' }}/>
+            <span style={{ color:'#fff', fontSize:11, fontWeight:800, textTransform:'uppercase', letterSpacing:'.06em' }}>Latest Updates</span>
+          </div>
+          <div style={{ padding:'0 14px' }}>
+            {items.slice(1, 5).map(item => <CompactCard key={item.id} item={item} onRepost={onRepost}/>)}
+          </div>
+        </div>
+      )}
+
+      {/* 2-col grid — items 5–10 */}
+      {items.length > 5 && (
+        <div style={{ padding:'0 16px', marginBottom:20 }}>
+          <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:12 }}>
+            <div style={{ width:4, height:22, background:'#9334e6', borderRadius:2 }}/>
+            <h2 style={{ fontSize:16, fontWeight:700, color:'var(--ink)' }}>More Stories</h2>
+          </div>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+            {items.slice(5, 11).map(item => <GridCard key={item.id} item={item}/>)}
+          </div>
+        </div>
+      )}
+
+      {/* Category sections — only on "All" tab */}
+      {cat === 'All' && items.length > 11 && (() => {
+        const grouped = groupByCategory(items.slice(11))
+        return Object.entries(grouped)
+          .filter(([, arr]) => arr.length >= 2)
+          .slice(0, 6)
+          .map(([category, arr]) => (
+            <CategorySection key={category} title={category} items={arr}
+              accent={CAT_COLORS[category] || '#1a73e8'}
+              onRepost={onRepost} onSeeAll={onSeeAll}/>
+          ))
+      })()}
+
+      {/* Remaining articles — for specific category or after category sections */}
+      {(() => {
+        const startIdx = cat === 'All' ? 40 : 11
+        const remaining = items.slice(startIdx)
+        return remaining.length > 0 ? (
+          <div style={{ margin:'8px 16px 0', background:'var(--surface)', borderRadius:12, border:'1px solid var(--border)', padding:'4px 14px' }}>
+            <div style={{ padding:'10px 0 6px', display:'flex', alignItems:'center', gap:8 }}>
+              <div style={{ width:4, height:18, background:'#34a853', borderRadius:2 }}/>
+              <h2 style={{ fontSize:15, fontWeight:700, color:'var(--ink)' }}>More News</h2>
+            </div>
+            {remaining.map(item => <CompactCard key={item.id} item={item} onRepost={onRepost}/>)}
+          </div>
+        ) : null
+      })()}
+
+      {/* Pagination */}
+      <div ref={sentinelRef} style={{ height:1 }}/>
+      {loadingMore && (
+        <div style={{ display:'flex', justifyContent:'center', padding:'20px 0', gap:8, color:'var(--muted)', fontSize:13 }}>
+          <i className="fas fa-spinner fa-spin"/><span>Loading more news...</span>
+        </div>
+      )}
+      {!loadingMore && hasMore && (
+        <div style={{ display:'flex', justifyContent:'center', padding:'16px 0 8px' }}>
+          <button onClick={onLoadMore}
+            style={{ padding:'10px 28px', background:'var(--surface)', border:'1.5px solid #1a73e8', borderRadius:24, fontSize:14, fontWeight:700, color:'#1a73e8', cursor:'pointer', display:'flex', alignItems:'center', gap:8 }}>
+            <i className="fas fa-arrow-down"/> Load More
+          </button>
+        </div>
+      )}
+      {!hasMore && totalLoaded >= PAGE_SIZE && (
+        <p style={{ textAlign:'center', color:'var(--muted)', fontSize:13, padding:'20px 0' }}>
+          You've read all {totalLoaded} articles ✓
+        </p>
+      )}
     </div>
   )
 }
@@ -292,63 +345,51 @@ function RepostModal({ item, onClose, onConfirm, reposting }) {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// MAIN PAGE
-// ═══════════════════════════════════════════════════════════════════
 export default function NewsTally() {
   const { user } = useAuth()
   const navigate = useNavigate()
 
-  const [allNews, setAllNews]           = useState([])
-  const lastDocRef                      = useRef(null)
-  const orderFieldRef                   = useRef(null)
-  const [hasMore, setHasMore]           = useState(true)
+  const [allNews, setAllNews]         = useState([])
+  const lastDocRef                    = useRef(null)
+  const orderFieldRef                 = useRef(null)
+  const [hasMore, setHasMore]         = useState(true)
 
-  const [catItems, setCatItems]         = useState([])
-  const catLastDocRef                   = useRef(null)
-  const [catHasMore, setCatHasMore]     = useState(true)
+  const [catItems, setCatItems]       = useState([])
+  const catLastDocRef                 = useRef(null)
+  const [catHasMore, setCatHasMore]   = useState(true)
 
-  const [filtered, setFiltered]         = useState([])
-  const [loading, setLoading]           = useState(true)
-  const [loadingMore, setLoadingMore]   = useState(false)
-  const [error, setError]               = useState('')
+  const [filtered, setFiltered]       = useState([])
+  const [loading, setLoading]         = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [error, setError]             = useState('')
 
-  const [cat, setCat]                   = useState('All')
-  const [search, setSearch]             = useState('')
-  const [showSearch, setShowSearch]     = useState(false)
-  const [showAuth, setShowAuth]         = useState(false)
-  const [repostItem, setRepostItem]     = useState(null)
-  const [reposting, setReposting]       = useState(false)
-
+  const [cat, setCat]                 = useState('All')
+  const [search, setSearch]           = useState('')
+  const [showSearch, setShowSearch]   = useState(false)
+  const [showAuth, setShowAuth]       = useState(false)
+  const [repostItem, setRepostItem]   = useState(null)
+  const [reposting, setReposting]     = useState(false)
   const sentinelRef = useRef(null)
 
-  // ── Detect order field ──
   const detectOrderField = useCallback(async () => {
     for (const field of ['pubDate', 'fetchedAt', 'savedAt']) {
       try {
-        const snap = await getDocs(query(collection(db, 'news'), orderBy(field, 'desc'), limit(1)))
+        const snap = await getDocs(query(collection(db,'news'), orderBy(field,'desc'), limit(1)))
         if (!snap.empty) { orderFieldRef.current = field; return field }
       } catch {}
     }
     orderFieldRef.current = null; return null
   }, [])
 
-  // ── Fetch batch — All ──
   const fetchBatch = useCallback(async (isFirst = false) => {
     const field = orderFieldRef.current
-    let q
-    if (field) {
-      q = isFirst
-        ? query(collection(db,'news'), orderBy(field,'desc'), limit(PAGE_SIZE))
-        : lastDocRef.current
-          ? query(collection(db,'news'), orderBy(field,'desc'), startAfter(lastDocRef.current), limit(PAGE_SIZE))
-          : null
-    } else {
-      q = isFirst
-        ? query(collection(db,'news'), limit(PAGE_SIZE))
-        : lastDocRef.current
-          ? query(collection(db,'news'), startAfter(lastDocRef.current), limit(PAGE_SIZE))
-          : null
-    }
+    let q = field
+      ? (isFirst
+          ? query(collection(db,'news'), orderBy(field,'desc'), limit(PAGE_SIZE))
+          : lastDocRef.current ? query(collection(db,'news'), orderBy(field,'desc'), startAfter(lastDocRef.current), limit(PAGE_SIZE)) : null)
+      : (isFirst
+          ? query(collection(db,'news'), limit(PAGE_SIZE))
+          : lastDocRef.current ? query(collection(db,'news'), startAfter(lastDocRef.current), limit(PAGE_SIZE)) : null)
     if (!q) return []
     const snap = await getDocs(q)
     if (snap.empty) { setHasMore(false); return [] }
@@ -357,10 +398,11 @@ export default function NewsTally() {
     return snap.docs.map(d => ({ id:d.id, ...d.data() })).filter(n => n.title)
   }, [])
 
-  // ── Fetch batch — Category ──
   const fetchCategoryBatch = useCallback(async (category, isFirst = false) => {
+    const field = orderFieldRef.current
     let constraints = [where('category','==',category)]
-    if (orderFieldRef.current) { try { constraints.push(orderBy(orderFieldRef.current,'desc')) } catch {} }
+    // ORDER BY DATE for category too
+    if (field) { try { constraints.push(orderBy(field,'desc')) } catch {} }
     if (!isFirst && catLastDocRef.current) constraints.push(startAfter(catLastDocRef.current))
     constraints.push(limit(PAGE_SIZE))
     let snap
@@ -377,7 +419,6 @@ export default function NewsTally() {
     return snap.docs.map(d => ({ id:d.id, ...d.data() })).filter(n => n.title)
   }, [])
 
-  // ── Load initial ──
   const loadInitial = useCallback(async () => {
     setLoading(true); setError(''); setHasMore(true); lastDocRef.current = null
     try {
@@ -389,7 +430,6 @@ export default function NewsTally() {
     finally { setLoading(false) }
   }, [detectOrderField, fetchBatch])
 
-  // ── Load category ──
   const loadCategoryInitial = useCallback(async (category) => {
     setLoading(true); setError(''); setCatItems([]); setCatHasMore(true); catLastDocRef.current = null
     try { setCatItems(sortByDate(await fetchCategoryBatch(category, true))) }
@@ -443,7 +483,6 @@ export default function NewsTally() {
     setFiltered(base)
   }, [cat, search, allNews, catItems])
 
-  // ── Intersection observer ──
   useEffect(() => {
     const sentinel = sentinelRef.current
     if (!sentinel) return
@@ -455,7 +494,6 @@ export default function NewsTally() {
     return () => observer.disconnect()
   }, [loadMore])
 
-  // ── Smart repost ──
   const handleRepost = async (item) => {
     if (!user) return setShowAuth(true)
     setReposting(true)
@@ -463,27 +501,14 @@ export default function NewsTally() {
       const uSnap = await getDoc(doc(db,'users',user.uid)).catch(() => null)
       const uData = uSnap?.data() || {}
       const myInfo = { uid:user.uid, username:uData.username||user.displayName||'User', avatar:user.photoURL||'', timestamp:new Date().toISOString() }
-      const myRepost = await getDocs(query(
-        collection(db,'artifacts',APP_ID,'public','data','reposts'),
-        where('newsId','==',String(item.id||item.title)),
-        where('repostedBy','array-contains',user.uid), limit(1)
-      )).catch(() => ({ empty:true }))
+      const myRepost = await getDocs(query(collection(db,'artifacts',APP_ID,'public','data','reposts'), where('newsId','==',String(item.id||item.title)), where('repostedBy','array-contains',user.uid), limit(1))).catch(() => ({ empty:true }))
       if (!myRepost.empty) { showToast('Already reposted!'); setRepostItem(null); return }
-      const existing = await getDocs(query(
-        collection(db,'artifacts',APP_ID,'public','data','reposts'),
-        where('newsId','==',String(item.id||item.title)), where('type','==','repost'), limit(1)
-      ))
+      const existing = await getDocs(query(collection(db,'artifacts',APP_ID,'public','data','reposts'), where('newsId','==',String(item.id||item.title)), where('type','==','repost'), limit(1)))
       if (!existing.empty) {
         await updateDoc(existing.docs[0].ref, { repostCount:fbIncrement(1), repostedBy:arrayUnion(user.uid), repostedUsers:arrayUnion(myInfo) })
         showToast('✅ You reposted this news!')
       } else {
-        await addDoc(collection(db,'artifacts',APP_ID,'public','data','reposts'), {
-          userId:user.uid, username:myInfo.username, userAvatar:myInfo.avatar,
-          image:item.image||'', headline:item.title, newsUrl:item.url||'',
-          newsSource:item.source||'', newsCategory:item.category||'',
-          newsId:String(item.id||item.title), likes:[], commentsCount:0, repostCount:1,
-          repostedBy:[user.uid], repostedUsers:[myInfo], timestamp:serverTimestamp(), type:'repost'
-        })
+        await addDoc(collection(db,'artifacts',APP_ID,'public','data','reposts'), { userId:user.uid, username:myInfo.username, userAvatar:myInfo.avatar, image:item.image||'', headline:item.title, newsUrl:item.url||'', newsSource:item.source||'', newsCategory:item.category||'', newsId:String(item.id||item.title), likes:[], commentsCount:0, repostCount:1, repostedBy:[user.uid], repostedUsers:[myInfo], timestamp:serverTimestamp(), type:'repost' })
         showToast('✅ Reposted to Socialgati!')
       }
       setRepostItem(null)
@@ -491,18 +516,11 @@ export default function NewsTally() {
     finally { setReposting(false) }
   }
 
-  const groupByCategory = items => {
-    const map = {}
-    items.forEach(n => { if (!map[n.category]) map[n.category] = []; map[n.category].push(n) })
-    return map
-  }
-
-  const currentHasMore = cat === 'All' ? hasMore : catHasMore
-  const isFiltering    = cat !== 'All' || !!search.trim()
+  const currentHasMore  = cat === 'All' ? hasMore : catHasMore
+  const currentTotal    = cat === 'All' ? allNews.length : catItems.length
 
   return (
     <>
-      {/* ── Header ── */}
       <header className="header">
         <div className="logo">
           <img src="https://i.postimg.cc/dLTgRxbL/cropped-circle-image.png" alt="NewsTally"/>
@@ -522,37 +540,27 @@ export default function NewsTally() {
       </header>
 
       <div className="main-wrapper" style={{ paddingBottom:80 }}>
-
-        {/* ── Search bar ── */}
         {showSearch && (
           <div style={{ padding:'10px 16px', background:'var(--surface)', borderBottom:'1px solid var(--border)', position:'sticky', top:56, zIndex:50 }}>
             <div style={{ position:'relative' }}>
               <i className="fas fa-search" style={{ position:'absolute', left:12, top:'50%', transform:'translateY(-50%)', color:'var(--muted)', fontSize:14, pointerEvents:'none' }}/>
               <input autoFocus value={search} onChange={e => setSearch(e.target.value)} placeholder="Search news, topics..."
                 style={{ width:'100%', padding:'10px 36px', background:'var(--surface2)', border:'none', borderRadius:10, fontSize:14, outline:'none', color:'var(--ink)' }}/>
-              {search && (
-                <button onClick={() => setSearch('')} style={{ position:'absolute', right:10, top:'50%', transform:'translateY(-50%)', color:'var(--muted)', background:'none', border:'none', cursor:'pointer', padding:4 }}>
-                  <i className="fas fa-times-circle"/>
-                </button>
-              )}
+              {search && <button onClick={() => setSearch('')} style={{ position:'absolute', right:10, top:'50%', transform:'translateY(-50%)', color:'var(--muted)', background:'none', border:'none', cursor:'pointer', padding:4 }}><i className="fas fa-times-circle"/></button>}
             </div>
           </div>
         )}
 
-        {/* ── Category filter ── */}
         <div className="cat-bar" style={{ position:'sticky', top: showSearch ? 98 : 56, zIndex:49 }}>
           {CATS.map(c => (
             <button key={c} className={`cat-btn ${cat===c?'active':''}`} onClick={() => setCat(c)}>{c}</button>
           ))}
         </div>
 
-        {/* ── Content ── */}
         {loading ? (
           <div style={{ background:'var(--bg)' }}>
             <HeroSkeleton/>
-            <div style={{ padding:'0 16px' }}>
-              {Array.from({length:4}).map((_,i) => <SmallSkeleton key={i}/>)}
-            </div>
+            <div style={{ padding:'0 16px' }}>{Array.from({length:4}).map((_,i) => <SmallSkeleton key={i}/>)}</div>
           </div>
         ) : error ? (
           <div style={{ textAlign:'center', padding:'60px 20px' }}>
@@ -561,89 +569,30 @@ export default function NewsTally() {
             <p style={{ fontSize:12, color:'var(--muted)', marginBottom:16 }}>{error}</p>
             <button onClick={loadInitial} style={{ padding:'10px 24px', background:'#1a73e8', color:'#fff', border:'none', borderRadius:8, fontSize:14, fontWeight:600, cursor:'pointer' }}>↺ Retry</button>
           </div>
-        ) : filtered.length === 0 ? (
-          <div style={{ textAlign:'center', padding:'60px 20px', color:'var(--muted)' }}>
-            <i className="fas fa-search" style={{ fontSize:40, marginBottom:12, display:'block', opacity:.4 }}/>
-            <p style={{ fontWeight:600, marginBottom:6, color:'var(--ink)' }}>No results found</p>
-            <p style={{ fontSize:13 }}>Try a different search or category</p>
-          </div>
-        ) : isFiltering ? (
-          /* ── Filtered view ── */
+        ) : search.trim() ? (
+          /* Search results — compact list */
           <div style={{ padding:'8px 16px', background:'var(--bg)' }}>
             <p style={{ fontSize:12, color:'var(--muted)', padding:'8px 0', fontWeight:500 }}>
-              {filtered.length} results{cat !== 'All' ? ` in ${cat}` : ''}{search ? ` for "${search}"` : ''}
+              {filtered.length} results for "{search}"
             </p>
-            {filtered.map(item => <CompactCard key={item.id} item={item} onRepost={setRepostItem}/>)}
-            <div ref={sentinelRef} style={{ height:1 }}/>
-            {loadingMore && <LoadMoreSpinner/>}
-            {!loadingMore && currentHasMore && !search.trim() && <LoadMoreButton onClick={loadMore} loading={loadingMore}/>}
-            {!currentHasMore && filtered.length >= PAGE_SIZE && !loading && (
-              <p style={{ textAlign:'center', color:'var(--muted)', fontSize:13, padding:'20px 0' }}>
-                All {filtered.length} {cat !== 'All' ? cat : ''} articles loaded ✓
-              </p>
-            )}
+            {filtered.length === 0
+              ? <div style={{ textAlign:'center', padding:'40px 20px', color:'var(--muted)' }}><i className="fas fa-search" style={{ fontSize:36, display:'block', marginBottom:12, opacity:.3 }}/><p>No results found</p></div>
+              : filtered.map(item => <CompactCard key={item.id} item={item} onRepost={setRepostItem}/>)
+            }
           </div>
         ) : (
-          /* ── Home view ── */
-          <div style={{ background:'var(--bg)' }}>
-            {filtered[0] && <HeroCard item={filtered[0]} onRepost={setRepostItem}/>}
-
-            {filtered.length > 1 && (
-              <div style={{ margin:'4px 16px 16px', background:'var(--surface)', borderRadius:12, border:'1px solid var(--border)', overflow:'hidden' }}>
-                <div style={{ background:'#1a73e8', padding:'8px 14px', display:'flex', alignItems:'center', gap:8 }}>
-                  <span style={{ width:8, height:8, borderRadius:'50%', background:'#ff1744', animation:'pulse 1s infinite' }}/>
-                  <span style={{ color:'#fff', fontSize:11, fontWeight:800, textTransform:'uppercase', letterSpacing:'.06em' }}>Latest Updates</span>
-                </div>
-                <div style={{ padding:'0 14px' }}>
-                  {filtered.slice(1, 5).map(item => <CompactCard key={item.id} item={item} onRepost={setRepostItem}/>)}
-                </div>
-              </div>
-            )}
-
-            {filtered.length > 5 && (
-              <div style={{ padding:'0 16px', marginBottom:20 }}>
-                <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:12 }}>
-                  <div style={{ width:4, height:22, background:'#9334e6', borderRadius:2 }}/>
-                  <h2 style={{ fontSize:16, fontWeight:700, color:'var(--ink)' }}>More Stories</h2>
-                </div>
-                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
-                  {filtered.slice(5, 11).map(item => <GridCard key={item.id} item={item}/>)}
-                </div>
-              </div>
-            )}
-
-            {(() => {
-              const grouped = groupByCategory(filtered.slice(11))
-              return Object.entries(grouped)
-                .filter(([, items]) => items.length >= 2)
-                .slice(0, 6)
-                .map(([category, items]) => (
-                  <CategorySection key={category} title={category} items={items}
-                    accent={CAT_COLORS[category] || '#1a73e8'}
-                    onRepost={setRepostItem}
-                    onSeeAll={c => setCat(c)}/>
-                ))
-            })()}
-
-            {filtered.length > 40 && (
-              <div style={{ margin:'8px 16px 0', background:'var(--surface)', borderRadius:12, border:'1px solid var(--border)', padding:'4px 14px' }}>
-                <div style={{ padding:'10px 0 6px', display:'flex', alignItems:'center', gap:8 }}>
-                  <div style={{ width:4, height:18, background:'#34a853', borderRadius:2 }}/>
-                  <h2 style={{ fontSize:15, fontWeight:700, color:'var(--ink)' }}>More News</h2>
-                </div>
-                {filtered.slice(40).map(item => <CompactCard key={item.id} item={item} onRepost={setRepostItem}/>)}
-              </div>
-            )}
-
-            <div ref={sentinelRef} style={{ height:1 }}/>
-            {loadingMore && <LoadMoreSpinner/>}
-            {!loadingMore && hasMore && <LoadMoreButton onClick={loadMoreAll} loading={loadingMore}/>}
-            {!hasMore && allNews.length >= PAGE_SIZE && (
-              <p style={{ textAlign:'center', color:'var(--muted)', fontSize:13, padding:'20px 0' }}>
-                You've read all {allNews.length} articles ✓
-              </p>
-            )}
-          </div>
+          /* Main layout — same for ALL and every category */
+          <NewsLayout
+            items={filtered}
+            cat={cat}
+            onRepost={setRepostItem}
+            onSeeAll={c => setCat(c)}
+            sentinelRef={sentinelRef}
+            loadingMore={loadingMore}
+            hasMore={currentHasMore}
+            onLoadMore={loadMore}
+            totalLoaded={currentTotal}
+          />
         )}
       </div>
 

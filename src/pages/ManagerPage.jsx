@@ -1,0 +1,322 @@
+import { useState } from 'react'
+import {
+  collection, addDoc, serverTimestamp, query,
+  orderBy, limit, getDocs, deleteDoc, doc
+} from 'firebase/firestore'
+import { signInWithEmailAndPassword, signOut } from 'firebase/auth'
+import { db, auth } from '../firebase/config'
+import { useAuth } from '../context/AuthContext'
+import { showToast, timeAgo } from '../utils'
+import { useNavigate } from 'react-router-dom'
+
+// ✅ Only this email can access manager
+const MANAGER_EMAIL = 'newstallyofficial@gmail.com'
+
+const CAT_OPTIONS = ['National','World','Business','Technology','Health','Education','Sports','General','Entertainment']
+
+const EMPTY_FORM = {
+  title: '', description: '', url: '', image: '',
+  category: 'National', source: '', pubDate: '', author: ''
+}
+
+function LoginScreen({ onLogin }) {
+  const [email, setEmail]       = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading]   = useState(false)
+  const [error, setError]       = useState('')
+
+  const handleLogin = async e => {
+    e.preventDefault()
+    if (email !== MANAGER_EMAIL) { setError('Access denied. Unauthorized email.'); return }
+    setLoading(true); setError('')
+    try {
+      await signInWithEmailAndPassword(auth, email, password)
+    } catch(err) {
+      setError(err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential'
+        ? 'Invalid password' : 'Login failed: ' + err.message)
+    }
+    setLoading(false)
+  }
+
+  return (
+    <div style={{ minHeight:'100dvh', display:'flex', alignItems:'center', justifyContent:'center', background:'var(--bg)', padding:20 }}>
+      <div style={{ width:'100%', maxWidth:380, background:'var(--surface)', borderRadius:20, padding:32, border:'1px solid var(--border)', boxShadow:'var(--shadow-lg)' }}>
+        <div style={{ textAlign:'center', marginBottom:28 }}>
+          <img src="https://i.postimg.cc/dLTgRxbL/cropped-circle-image.png" style={{ width:56, height:56, borderRadius:'50%', marginBottom:12 }} alt=""/>
+          <h1 style={{ fontSize:22, fontWeight:800, color:'var(--ink)', marginBottom:4 }}>NewsTally Manager</h1>
+          <p style={{ fontSize:13, color:'var(--muted)' }}>Authorised access only</p>
+        </div>
+
+        <form onSubmit={handleLogin}>
+          <div style={{ marginBottom:14 }}>
+            <label style={{ fontSize:12, fontWeight:600, color:'var(--muted)', display:'block', marginBottom:6, textTransform:'uppercase', letterSpacing:'.04em' }}>Email</label>
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} required
+              placeholder="manager email"
+              style={{ width:'100%', padding:'11px 14px', border:'1.5px solid var(--border)', borderRadius:10, fontSize:14, outline:'none', background:'var(--surface2)', color:'var(--ink)', boxSizing:'border-box' }}
+              onFocus={e => e.target.style.borderColor='#1a73e8'}
+              onBlur={e => e.target.style.borderColor='var(--border)'}/>
+          </div>
+          <div style={{ marginBottom:20 }}>
+            <label style={{ fontSize:12, fontWeight:600, color:'var(--muted)', display:'block', marginBottom:6, textTransform:'uppercase', letterSpacing:'.04em' }}>Password</label>
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} required
+              placeholder="••••••••"
+              style={{ width:'100%', padding:'11px 14px', border:'1.5px solid var(--border)', borderRadius:10, fontSize:14, outline:'none', background:'var(--surface2)', color:'var(--ink)', boxSizing:'border-box' }}
+              onFocus={e => e.target.style.borderColor='#1a73e8'}
+              onBlur={e => e.target.style.borderColor='var(--border)'}/>
+          </div>
+          {error && (
+            <div style={{ padding:'10px 14px', background:'rgba(234,67,53,.1)', border:'1px solid rgba(234,67,53,.3)', borderRadius:8, fontSize:13, color:'#ea4335', marginBottom:16 }}>
+              {error}
+            </div>
+          )}
+          <button type="submit" disabled={loading}
+            style={{ width:'100%', padding:13, background:'linear-gradient(135deg,#1a73e8,#1557b0)', color:'#fff', border:'none', borderRadius:10, fontSize:15, fontWeight:700, cursor: loading ? 'not-allowed' : 'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
+            {loading ? <><i className="fas fa-spinner fa-spin"/> Signing in...</> : 'Sign In'}
+          </button>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+export default function ManagerPage() {
+  const { user }    = useAuth()
+  const navigate    = useNavigate()
+
+  const [form, setForm]               = useState(EMPTY_FORM)
+  const [saving, setSaving]           = useState(false)
+  const [recentNews, setRecentNews]   = useState([])
+  const [loadingRecent, setLoadingRecent] = useState(false)
+  const [activeTab, setActiveTab]     = useState('add')  // 'add' | 'recent'
+
+  // Block non-manager users
+  if (!user) return <LoginScreen/>
+  if (user.email !== MANAGER_EMAIL) {
+    return (
+      <div style={{ minHeight:'100dvh', display:'flex', alignItems:'center', justifyContent:'center', background:'var(--bg)', flexDirection:'column', gap:16 }}>
+        <i className="fas fa-lock" style={{ fontSize:48, color:'#ea4335' }}/>
+        <h2 style={{ color:'var(--ink)', fontWeight:700 }}>Access Denied</h2>
+        <p style={{ color:'var(--muted)', fontSize:14 }}>You are not authorised to access this page.</p>
+        <button onClick={() => signOut(auth).then(() => navigate('/'))}
+          style={{ padding:'10px 24px', background:'#ea4335', color:'#fff', border:'none', borderRadius:8, fontWeight:700, cursor:'pointer' }}>
+          Sign Out & Go Home
+        </button>
+      </div>
+    )
+  }
+
+  const set = (key, val) => setForm(f => ({ ...f, [key]: val }))
+
+  const handleSubmit = async e => {
+    e.preventDefault()
+    if (!form.title.trim()) return showToast('Title is required')
+    if (!form.category) return showToast('Category is required')
+    setSaving(true)
+    try {
+      await addDoc(collection(db, 'news'), {
+        title:       form.title.trim(),
+        description: form.description.trim(),
+        url:         form.url.trim() || '',
+        image:       form.image.trim() || '',
+        category:    form.category,
+        source:      form.source.trim() || 'NewsTally',
+        author:      form.author.trim() || '',
+        pubDate:     form.pubDate || new Date().toISOString(),
+        fetchedAt:   new Date().toISOString(),
+        addedBy:     user.email,
+        manualEntry: true,
+        timestamp:   serverTimestamp()
+      })
+      showToast('✅ News added successfully!')
+      setForm(EMPTY_FORM)
+    } catch(e) { console.error(e); showToast('Failed to add news: ' + e.message) }
+    finally { setSaving(false) }
+  }
+
+  const loadRecent = async () => {
+    setLoadingRecent(true)
+    try {
+      const snap = await getDocs(query(collection(db,'news'), orderBy('fetchedAt','desc'), limit(20)))
+      setRecentNews(snap.docs.map(d => ({ id:d.id, ...d.data() })))
+    } catch {
+      try {
+        const snap = await getDocs(query(collection(db,'news'), limit(20)))
+        setRecentNews(snap.docs.map(d => ({ id:d.id, ...d.data() })))
+      } catch(e2) { showToast('Could not load: ' + e2.message) }
+    }
+    setLoadingRecent(false)
+  }
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Delete this news article? This cannot be undone.')) return
+    try {
+      await deleteDoc(doc(db, 'news', id))
+      setRecentNews(prev => prev.filter(n => n.id !== id))
+      showToast('Deleted ✅')
+    } catch(e) { showToast('Delete failed: ' + e.message) }
+  }
+
+  const inputStyle = {
+    width:'100%', padding:'11px 14px', border:'1.5px solid var(--border)',
+    borderRadius:10, fontSize:14, outline:'none',
+    background:'var(--surface2)', color:'var(--ink)', boxSizing:'border-box'
+  }
+  const labelStyle = { fontSize:12, fontWeight:700, color:'var(--muted)', display:'block', marginBottom:5, textTransform:'uppercase', letterSpacing:'.04em' }
+  const fieldStyle = { marginBottom:16 }
+
+  return (
+    <div style={{ minHeight:'100dvh', background:'var(--bg)' }}>
+      {/* Header */}
+      <div style={{ background:'var(--surface)', borderBottom:'1px solid var(--border)', padding:'12px 16px', display:'flex', alignItems:'center', justifyContent:'space-between', position:'sticky', top:0, zIndex:100, backdropFilter:'blur(20px)' }}>
+        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+          <button onClick={() => navigate('/')} style={{ width:34, height:34, borderRadius:'50%', background:'var(--surface2)', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', color:'var(--ink)', fontSize:14 }}>
+            <i className="fas fa-arrow-left"/>
+          </button>
+          <div>
+            <div style={{ fontSize:16, fontWeight:800, color:'var(--ink)' }}>News Manager</div>
+            <div style={{ fontSize:11, color:'var(--muted)' }}>{user.email}</div>
+          </div>
+        </div>
+        <button onClick={() => signOut(auth).then(() => navigate('/'))}
+          style={{ padding:'7px 14px', background:'rgba(234,67,53,.1)', border:'1px solid rgba(234,67,53,.25)', borderRadius:8, fontSize:12, fontWeight:700, color:'#ea4335', cursor:'pointer' }}>
+          <i className="fas fa-sign-out-alt" style={{ marginRight:5 }}/>Sign Out
+        </button>
+      </div>
+
+      {/* Tabs */}
+      <div style={{ display:'flex', background:'var(--surface)', borderBottom:'1px solid var(--border)' }}>
+        {[['add','➕ Add News'], ['recent','📋 Recent']].map(([k,l]) => (
+          <button key={k} onClick={() => { setActiveTab(k); if(k==='recent') loadRecent() }}
+            style={{ flex:1, padding:'12px', fontSize:13, fontWeight:700, background:'none', border:'none', cursor:'pointer', color: activeTab===k ? '#1a73e8' : 'var(--muted)', borderBottom: activeTab===k ? '2.5px solid #1a73e8' : '2.5px solid transparent' }}>
+            {l}
+          </button>
+        ))}
+      </div>
+
+      {/* Add News Form */}
+      {activeTab === 'add' && (
+        <div style={{ maxWidth:640, margin:'0 auto', padding:'20px 16px 80px' }}>
+          <form onSubmit={handleSubmit}>
+
+            {/* Required fields */}
+            <div style={{ background:'var(--surface)', borderRadius:14, padding:'18px 16px', marginBottom:16, border:'1px solid var(--border)' }}>
+              <div style={{ fontSize:12, fontWeight:800, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.05em', marginBottom:14, display:'flex', alignItems:'center', gap:6 }}>
+                <i className="fas fa-asterisk" style={{ color:'#ea4335', fontSize:10 }}/> Required Fields
+              </div>
+
+              <div style={fieldStyle}>
+                <label style={labelStyle}>Title *</label>
+                <input value={form.title} onChange={e => set('title', e.target.value)} required
+                  placeholder="News headline" style={inputStyle}/>
+              </div>
+
+              <div style={fieldStyle}>
+                <label style={labelStyle}>Category *</label>
+                <select value={form.category} onChange={e => set('category', e.target.value)} required
+                  style={{ ...inputStyle, cursor:'pointer' }}>
+                  {CAT_OPTIONS.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+
+              <div style={fieldStyle}>
+                <label style={labelStyle}>Source *</label>
+                <input value={form.source} onChange={e => set('source', e.target.value)}
+                  placeholder="e.g. NewsTally, DD News, ANI" style={inputStyle}/>
+              </div>
+            </div>
+
+            {/* Optional fields */}
+            <div style={{ background:'var(--surface)', borderRadius:14, padding:'18px 16px', marginBottom:16, border:'1px solid var(--border)' }}>
+              <div style={{ fontSize:12, fontWeight:800, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.05em', marginBottom:14 }}>
+                Optional Fields
+              </div>
+
+              <div style={fieldStyle}>
+                <label style={labelStyle}>Description / Summary</label>
+                <textarea value={form.description} onChange={e => set('description', e.target.value)}
+                  placeholder="Short summary of the news..." rows={4}
+                  style={{ ...inputStyle, resize:'vertical', lineHeight:1.6 }}/>
+              </div>
+
+              <div style={fieldStyle}>
+                <label style={labelStyle}>Article URL</label>
+                <input type="url" value={form.url} onChange={e => set('url', e.target.value)}
+                  placeholder="https://example.com/article" style={inputStyle}/>
+              </div>
+
+              <div style={fieldStyle}>
+                <label style={labelStyle}>Image URL</label>
+                <input type="url" value={form.image} onChange={e => set('image', e.target.value)}
+                  placeholder="https://example.com/image.jpg" style={inputStyle}/>
+                {form.image && (
+                  <img src={form.image} alt="preview" style={{ width:'100%', height:140, objectFit:'cover', borderRadius:8, marginTop:8 }}
+                    onError={e => e.target.style.display='none'}/>
+                )}
+              </div>
+
+              <div style={fieldStyle}>
+                <label style={labelStyle}>Publish Date & Time</label>
+                <input type="datetime-local" value={form.pubDate ? new Date(form.pubDate).toISOString().slice(0,16) : ''}
+                  onChange={e => set('pubDate', e.target.value ? new Date(e.target.value).toISOString() : '')}
+                  style={inputStyle}/>
+                <p style={{ fontSize:11, color:'var(--muted)', marginTop:4 }}>Leave blank to use current time</p>
+              </div>
+
+              <div style={fieldStyle}>
+                <label style={labelStyle}>Author</label>
+                <input value={form.author} onChange={e => set('author', e.target.value)}
+                  placeholder="Reporter / Author name" style={inputStyle}/>
+              </div>
+            </div>
+
+            {/* Preview */}
+            {form.title && (
+              <div style={{ background:'var(--surface)', borderRadius:14, padding:'16px', marginBottom:16, border:'1px solid var(--border)' }}>
+                <div style={{ fontSize:12, fontWeight:800, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.05em', marginBottom:12 }}>Preview</div>
+                {form.image && <img src={form.image} alt="" style={{ width:'100%', height:160, objectFit:'cover', borderRadius:10, marginBottom:10 }} onError={e => e.target.style.display='none'}/>}
+                <div style={{ fontSize:11, fontWeight:800, color:'#1a73e8', textTransform:'uppercase', marginBottom:6 }}>{form.category} · {form.source || 'NewsTally'}</div>
+                <div style={{ fontSize:16, fontWeight:700, color:'var(--ink)', lineHeight:1.4, marginBottom:6 }}>{form.title}</div>
+                {form.description && <div style={{ fontSize:13, color:'var(--muted)', lineHeight:1.6 }}>{form.description.substring(0,200)}{form.description.length > 200 ? '...' : ''}</div>}
+              </div>
+            )}
+
+            <button type="submit" disabled={saving || !form.title.trim()}
+              style={{ width:'100%', padding:'14px', background: form.title.trim() ? 'linear-gradient(135deg,#1a73e8,#1557b0)' : 'var(--border)', color: form.title.trim() ? '#fff' : 'var(--muted)', border:'none', borderRadius:12, fontSize:15, fontWeight:700, cursor: form.title.trim() ? 'pointer' : 'not-allowed', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
+              {saving ? <><i className="fas fa-spinner fa-spin"/> Adding...</> : <><i className="fas fa-plus"/> Add to NewsTally</>}
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* Recent News */}
+      {activeTab === 'recent' && (
+        <div style={{ maxWidth:640, margin:'0 auto', padding:'12px 16px 80px' }}>
+          {loadingRecent ? (
+            <div style={{ padding:40, textAlign:'center' }}><i className="fas fa-spinner fa-spin" style={{ fontSize:24, color:'var(--muted)' }}/></div>
+          ) : recentNews.length === 0 ? (
+            <div style={{ textAlign:'center', padding:'40px 20px', color:'var(--muted)' }}>
+              <i className="fas fa-newspaper" style={{ fontSize:36, display:'block', marginBottom:12, opacity:.3 }}/>
+              <p>No news articles found</p>
+            </div>
+          ) : recentNews.map((n, i) => (
+            <div key={n.id} style={{ background:'var(--surface)', borderRadius:12, padding:'14px', marginBottom:10, border:'1px solid var(--border)', display:'flex', gap:12, alignItems:'flex-start' }}>
+              {n.image && <img src={n.image} alt="" style={{ width:70, height:56, borderRadius:8, objectFit:'cover', flexShrink:0 }} onError={e => e.target.style.display='none'}/>}
+              <div style={{ flex:1, minWidth:0 }}>
+                <div style={{ fontSize:10, fontWeight:800, color:'#1a73e8', textTransform:'uppercase', marginBottom:4 }}>{n.category} · {n.source}</div>
+                <div style={{ fontSize:13, fontWeight:600, color:'var(--ink)', lineHeight:1.4, marginBottom:4, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{n.title}</div>
+                <div style={{ fontSize:11, color:'var(--muted)', display:'flex', gap:8, alignItems:'center' }}>
+                  <span>{timeAgo(n.pubDate || n.fetchedAt)}</span>
+                  {n.manualEntry && <span style={{ background:'rgba(26,115,232,.1)', color:'#1a73e8', padding:'1px 6px', borderRadius:4, fontWeight:700 }}>Manual</span>}
+                </div>
+              </div>
+              <button onClick={() => handleDelete(n.id)}
+                style={{ width:32, height:32, borderRadius:8, background:'rgba(234,67,53,.1)', border:'1px solid rgba(234,67,53,.2)', color:'#ea4335', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, fontSize:13 }}>
+                <i className="fas fa-trash"/>
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}

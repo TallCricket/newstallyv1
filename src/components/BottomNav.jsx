@@ -12,76 +12,77 @@ export default function BottomNav({ darkMode = false }) {
 
   useEffect(() => {
     if (!user) { setUnread(0); return }
-    const q = query(collection(db, 'users', user.uid, 'notifications'), where('read', '==', false), limit(99))
+    const q = query(
+      collection(db, 'users', user.uid, 'notifications'),
+      where('read', '==', false),
+      limit(99)
+    )
     const unsub = onSnapshot(q, snap => setUnread(snap.size), () => {})
     return unsub
   }, [user])
 
-  const hasNotif = unread > 0
+  const active = darkMode
+    ? (is) => is ? '#fff' : 'rgba(255,255,255,.5)'
+    : (is) => is ? 'var(--blue)' : 'var(--muted2)'
 
-  const style = darkMode
-    ? { background:'rgba(0,0,0,.7)', backdropFilter:'blur(10px)', borderTopColor:'rgba(255,255,255,.1)' }
+  const navStyle = darkMode
+    ? { background: 'rgba(0,0,0,.7)', backdropFilter: 'blur(10px)', borderTopColor: 'rgba(255,255,255,.1)' }
     : {}
 
-  const color = (active) => {
-    if (darkMode) return active ? '#fff' : 'rgba(255,255,255,.6)'
-    return active ? 'var(--blue)' : 'var(--muted2)'
-  }
-
-  const items = [
-    { path:'/',        icon:'fas fa-house',      label:'Home'    },
-    { path:'/news',    icon:'fas fa-newspaper',  label:'News'    },
-    { path:'SHORTS',   icon:null,                label:'Shorts'  },  // special
-    { path:'/search',  icon:'fas fa-magnifying-glass', label:'Search' },
-    { path:'/profile', icon:null,                label:'Profile' },  // special (avatar)
-  ]
+  const isActive = (path) => pathname === path
 
   return (
-    <nav className="bottom-nav" style={style}>
-      {items.map(item => {
-        if (item.path === 'SHORTS') {
-          return (
-            <button key="shorts" className="nav-shorts" onClick={() => navigate('/shorts')}>
-              <div className="shorts-inner">
-                <i className="fas fa-circle-play" style={{ color:'#fff', fontSize:20 }}/>
-              </div>
-              <span style={{ fontSize:10, fontWeight:600, color:'#e53935', marginTop:2 }}>Shorts</span>
-            </button>
-          )
+    <nav className="bottom-nav" style={navStyle}>
+
+      {/* Home */}
+      <button className={`nav-btn ${isActive('/') ? 'active' : ''}`}
+        style={{ color: active(isActive('/')) }} onClick={() => navigate('/')}>
+        <i className="fas fa-house" />
+        <span>Home</span>
+      </button>
+
+      {/* News */}
+      <button className={`nav-btn ${isActive('/news') ? 'active' : ''}`}
+        style={{ color: active(isActive('/news')) }} onClick={() => navigate('/news')}>
+        <i className="fas fa-newspaper" />
+        <span>News</span>
+      </button>
+
+      {/* Shorts — special pill button */}
+      <button className="nav-shorts" onClick={() => navigate('/shorts')}>
+        <div className="shorts-inner">
+          <i className="fas fa-circle-play" style={{ color: '#fff', fontSize: 20 }} />
+        </div>
+        <span style={{ fontSize: 10, fontWeight: 600, color: '#e53935', marginTop: 2 }}>Shorts</span>
+      </button>
+
+      {/* Search */}
+      <button className={`nav-btn ${isActive('/search') ? 'active' : ''}`}
+        style={{ color: active(isActive('/search')) }} onClick={() => navigate('/search')}>
+        <i className="fas fa-magnifying-glass" />
+        <span>Search</span>
+      </button>
+
+      {/* Profile — shows avatar if available + notification dot for unread */}
+      <button
+        className={`nav-btn ${isActive('/profile') ? 'active' : ''}`}
+        style={{ color: active(isActive('/profile')), position: 'relative' }}
+        onClick={() => navigate('/profile')}>
+        {user?.photoURL
+          ? <img src={user.photoURL}
+              style={{ width: 24, height: 24, borderRadius: '50%', objectFit: 'cover', border: isActive('/profile') ? '2px solid var(--blue)' : '2px solid transparent' }}
+              alt="" />
+          : <i className="fas fa-user" />
         }
-
-        if (item.path === '/profile') {
-          const isActive = pathname === '/profile'
-          return (
-            <button key="/profile" className={`nav-btn ${isActive ? 'active' : ''}`}
-              style={{ color: color(isActive) }} onClick={() => navigate('/profile')}>
-              {user?.photoURL
-                ? <img src={user.photoURL} style={{ width:24, height:24, borderRadius:'50%', objectFit:'cover', border: isActive ? '2px solid var(--blue)' : '2px solid transparent' }} alt=""/>
-                : <i className="fas fa-user"/>
-              }
-              <span>Profile</span>
-            </button>
-          )
-        }
-
-        const isActive = pathname === item.path
-        const isAlerts = item.path === '/alerts'
-
-        return (
-          <button key={item.path}
-            className={`nav-btn ${isAlerts && hasNotif ? 'nav-btn-notif active-notif' : ''} ${isActive ? 'active' : ''}`}
-            style={{ color: isAlerts && hasNotif ? 'var(--red)' : color(isActive) }}
-            onClick={() => navigate(item.path)}>
-            <i className={isAlerts && hasNotif ? 'fas fa-bell' : item.icon}/>
-            <span>{item.label}</span>
-            {isAlerts && hasNotif && (
-              <span className="notify-badge" style={{ display:'flex' }}>
-                {unread > 99 ? '99+' : unread}
-              </span>
-            )}
-          </button>
-        )
-      })}
+        <span>Profile</span>
+        {unread > 0 && (
+          <span style={{
+            position: 'absolute', top: 2, right: 10,
+            width: 8, height: 8, borderRadius: '50%',
+            background: '#e53935', border: '2px solid var(--surface)'
+          }} />
+        )}
+      </button>
     </nav>
   )
 }

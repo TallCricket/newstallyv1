@@ -19,54 +19,69 @@ export default function BottomNav({ darkMode = false }) {
 
   const hasNotif = unread > 0
 
-  const style = darkMode ? { background: 'rgba(0,0,0,.7)', backdropFilter: 'blur(10px)', borderTopColor: 'rgba(255,255,255,.1)' } : {}
-  const btnColor = darkMode ? (active) => active ? '#fff' : 'rgba(255,255,255,.6)' : (active) => active ? '#1a73e8' : '#9aa0a6'
+  const style = darkMode
+    ? { background:'rgba(0,0,0,.7)', backdropFilter:'blur(10px)', borderTopColor:'rgba(255,255,255,.1)' }
+    : {}
+
+  const color = (active) => {
+    if (darkMode) return active ? '#fff' : 'rgba(255,255,255,.6)'
+    return active ? 'var(--blue)' : 'var(--muted2)'
+  }
+
+  const items = [
+    { path:'/',        icon:'fas fa-house',      label:'Home'    },
+    { path:'/news',    icon:'fas fa-newspaper',  label:'News'    },
+    { path:'SHORTS',   icon:null,                label:'Shorts'  },  // special
+    { path:'/search',  icon:'fas fa-magnifying-glass', label:'Search' },
+    { path:'/profile', icon:null,                label:'Profile' },  // special (avatar)
+  ]
 
   return (
     <nav className="bottom-nav" style={style}>
-      {/* Community */}
-      <button className={`nav-btn ${pathname === '/' ? 'active' : ''}`} style={{ color: btnColor(pathname === '/') }} onClick={() => navigate('/')}>
-        <i className="fas fa-house" />
-        <span>Home</span>
-      </button>
-
-      {/* News */}
-      <button className={`nav-btn ${pathname === '/news' ? 'active' : ''}`} style={{ color: btnColor(pathname === '/news') }} onClick={() => navigate('/news')}>
-        <i className="fas fa-newspaper" />
-        <span>News</span>
-      </button>
-
-      {/* Shorts */}
-      <button className="nav-shorts" onClick={() => navigate('/shorts')}>
-        <div className="shorts-inner">
-          <i className="fas fa-circle-play" style={{ color: '#fff', fontSize: 20 }} />
-        </div>
-        <span style={{ fontSize: 10, fontWeight: 600, color: '#e53935', marginTop: 2 }}>Shorts</span>
-      </button>
-
-      {/* Alerts */}
-      <button
-        className={`nav-btn nav-btn-notif ${hasNotif ? 'active-notif' : ''} ${pathname === '/alerts' ? 'active' : ''}`}
-        style={{ color: hasNotif ? '#e53935' : btnColor(pathname === '/alerts') }}
-        onClick={() => navigate('/alerts')}
-      >
-        <i className={hasNotif ? 'fas fa-bell' : 'far fa-bell'} />
-        <span>Alerts</span>
-        {hasNotif && (
-          <span className="notify-badge" style={{ display: 'flex' }}>
-            {unread > 99 ? '99+' : unread}
-          </span>
-        )}
-      </button>
-
-      {/* Profile */}
-      <button className={`nav-btn ${pathname === '/profile' ? 'active' : ''}`} style={{ color: btnColor(pathname === '/profile') }} onClick={() => navigate('/profile')}>
-        {user?.photoURL
-          ? <img src={user.photoURL} style={{ width: 24, height: 24, borderRadius: '50%', objectFit: 'cover' }} alt="" />
-          : <i className="fas fa-user" />
+      {items.map(item => {
+        if (item.path === 'SHORTS') {
+          return (
+            <button key="shorts" className="nav-shorts" onClick={() => navigate('/shorts')}>
+              <div className="shorts-inner">
+                <i className="fas fa-circle-play" style={{ color:'#fff', fontSize:20 }}/>
+              </div>
+              <span style={{ fontSize:10, fontWeight:600, color:'#e53935', marginTop:2 }}>Shorts</span>
+            </button>
+          )
         }
-        <span>Profile</span>
-      </button>
+
+        if (item.path === '/profile') {
+          const isActive = pathname === '/profile'
+          return (
+            <button key="/profile" className={`nav-btn ${isActive ? 'active' : ''}`}
+              style={{ color: color(isActive) }} onClick={() => navigate('/profile')}>
+              {user?.photoURL
+                ? <img src={user.photoURL} style={{ width:24, height:24, borderRadius:'50%', objectFit:'cover', border: isActive ? '2px solid var(--blue)' : '2px solid transparent' }} alt=""/>
+                : <i className="fas fa-user"/>
+              }
+              <span>Profile</span>
+            </button>
+          )
+        }
+
+        const isActive = pathname === item.path
+        const isAlerts = item.path === '/alerts'
+
+        return (
+          <button key={item.path}
+            className={`nav-btn ${isAlerts && hasNotif ? 'nav-btn-notif active-notif' : ''} ${isActive ? 'active' : ''}`}
+            style={{ color: isAlerts && hasNotif ? 'var(--red)' : color(isActive) }}
+            onClick={() => navigate(item.path)}>
+            <i className={isAlerts && hasNotif ? 'fas fa-bell' : item.icon}/>
+            <span>{item.label}</span>
+            {isAlerts && hasNotif && (
+              <span className="notify-badge" style={{ display:'flex' }}>
+                {unread > 99 ? '99+' : unread}
+              </span>
+            )}
+          </button>
+        )
+      })}
     </nav>
   )
 }

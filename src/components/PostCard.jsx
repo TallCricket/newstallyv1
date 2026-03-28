@@ -9,20 +9,8 @@ import RichText from './RichText'
 // ── News Repost Embed Card ─────────────────────────────────────────
 function RepostCard({ post, onClick }) {
   const [imgErr, setImgErr] = useState(false)
-  const navigate = useNavigate()
-  
-  const handleClick = (e) => {
-    e.stopPropagation()
-    // Open news article internally if we have newsId, otherwise external
-    if (post.newsId && post.newsId.length < 30) {
-      navigate(`/news/${post.newsId}`)
-    } else if (post.newsUrl) {
-      navigate(`/news/${encodeURIComponent(post.newsId || post.newsUrl)}`)
-    }
-  }
-
   return (
-    <div onClick={handleClick}
+    <div onClick={e => { e.stopPropagation(); onClick() }}
       style={{
         borderRadius: 12, overflow: 'hidden',
         border: '1px solid var(--border)',
@@ -207,7 +195,10 @@ export default function PostCard({ post, id, onOpenComments, onOpenProfile, onAu
       {post.type === 'poll' && <PollContent post={post} id={id} />}
 
       {post.type === 'repost' && (
-        <RepostCard post={post} onClick={() => {}} />
+        <RepostCard post={post} onClick={() => {
+          if (post.newsId) navigate(`/news/${post.newsId}`)
+          else if (post.newsUrl) window.open(post.newsUrl, '_blank', 'noopener')
+        }} />
       )}
 
       {(post.type === 'text' || !post.type) && (

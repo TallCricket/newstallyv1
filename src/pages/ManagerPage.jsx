@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
   collection, addDoc, serverTimestamp, query,
   orderBy, limit, getDocs, deleteDoc, doc,
-  setDoc, getDoc, updateDoc
+  updateDoc, setDoc, getDoc, writeBatch, where
 } from 'firebase/firestore'
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth'
 import { db, auth } from '../firebase/config'
@@ -10,13 +10,17 @@ import { useAuth } from '../context/AuthContext'
 import { showToast, timeAgo } from '../utils'
 import { useNavigate } from 'react-router-dom'
 
-const MANAGER_EMAIL  = 'newstallyofficial@gmail.com'
-const RANKING_DOC_ID = 'category_rankings'
-const CAT_OPTIONS    = ['National','World','Business','Technology','Health','Education','Sports','General','Entertainment','Cricket','Politics','Science','Environment','Culture']
-const EMPTY_FORM     = { title:'', description:'', url:'', image:'', category:'National', source:'', pubDate:'', author:'' }
+// ✅ Only this email can access manager
+const MANAGER_EMAIL = 'newstallyofficial@gmail.com'
 
-// ── Login screen ──────────────────────────────────────────────────
-function LoginScreen() {
+const CAT_OPTIONS = ['National','World','Business','Technology','Health','Education','Sports','General','Entertainment']
+
+const EMPTY_FORM = {
+  title: '', description: '', url: '', image: '',
+  category: 'National', source: '', pubDate: '', author: ''
+}
+
+function LoginScreen({ onLogin }) {
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading]   = useState(false)
@@ -26,8 +30,12 @@ function LoginScreen() {
     e.preventDefault()
     if (email !== MANAGER_EMAIL) { setError('Access denied. Unauthorized email.'); return }
     setLoading(true); setError('')
-    try { await signInWithEmailAndPassword(auth, email, password) }
-    catch(err) { setError(err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential' ? 'Invalid password' : 'Login failed: ' + err.message) }
+    try {
+      await signInWithEmailAndPassword(auth, email, password)
+    } catch(err) {
+      setError(err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential'
+        ? 'Invalid password' : 'Login failed: ' + err.message)
+    }
     setLoading(false)
   }
 
@@ -39,16 +47,29 @@ function LoginScreen() {
           <h1 style={{ fontSize:22, fontWeight:800, color:'var(--ink)', marginBottom:4 }}>NewsTally Manager</h1>
           <p style={{ fontSize:13, color:'var(--muted)' }}>Authorised access only</p>
         </div>
+
         <form onSubmit={handleLogin}>
-          {[['email','Email','email',email,setEmail,'manager email'],['password','Password','password',password,setPassword,'••••••••']].map(([id,label,type,val,set,ph]) => (
-            <div key={id} style={{ marginBottom:14 }}>
-              <label style={{ fontSize:12, fontWeight:600, color:'var(--muted)', display:'block', marginBottom:6, textTransform:'uppercase', letterSpacing:'.04em' }}>{label}</label>
-              <input type={type} value={val} onChange={e => set(e.target.value)} required placeholder={ph}
-                style={{ width:'100%', padding:'11px 14px', border:'1.5px solid var(--border)', borderRadius:10, fontSize:14, outline:'none', background:'var(--surface2)', color:'var(--ink)', boxSizing:'border-box' }}
-                onFocus={e => e.target.style.borderColor='#1a73e8'} onBlur={e => e.target.style.borderColor='var(--border)'}/>
+          <div style={{ marginBottom:14 }}>
+            <label style={{ fontSize:12, fontWeight:600, color:'var(--muted)', display:'block', marginBottom:6, textTransform:'uppercase', letterSpacing:'.04em' }}>Email</label>
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} required
+              placeholder="manager email"
+              style={{ width:'100%', padding:'11px 14px', border:'1.5px solid var(--border)', borderRadius:10, fontSize:14, outline:'none', background:'var(--surface2)', color:'var(--ink)', boxSizing:'border-box' }}
+              onFocus={e => e.target.style.borderColor='#1a73e8'}
+              onBlur={e => e.target.style.borderColor='var(--border)'}/>
+          </div>
+          <div style={{ marginBottom:20 }}>
+            <label style={{ fontSize:12, fontWeight:600, color:'var(--muted)', display:'block', marginBottom:6, textTransform:'uppercase', letterSpacing:'.04em' }}>Password</label>
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} required
+              placeholder="••••••••"
+              style={{ width:'100%', padding:'11px 14px', border:'1.5px solid var(--border)', borderRadius:10, fontSize:14, outline:'none', background:'var(--surface2)', color:'var(--ink)', boxSizing:'border-box' }}
+              onFocus={e => e.target.style.borderColor='#1a73e8'}
+              onBlur={e => e.target.style.borderColor='var(--border)'}/>
+          </div>
+          {error && (
+            <div style={{ padding:'10px 14px', background:'rgba(234,67,53,.1)', border:'1px solid rgba(234,67,53,.3)', borderRadius:8, fontSize:13, color:'#ea4335', marginBottom:16 }}>
+              {error}
             </div>
-          ))}
-          {error && <div style={{ padding:'10px 14px', background:'rgba(234,67,53,.1)', border:'1px solid rgba(234,67,53,.3)', borderRadius:8, fontSize:13, color:'#ea4335', marginBottom:16 }}>{error}</div>}
+          )}
           <button type="submit" disabled={loading}
             style={{ width:'100%', padding:13, background:'linear-gradient(135deg,#1a73e8,#1557b0)', color:'#fff', border:'none', borderRadius:10, fontSize:15, fontWeight:700, cursor: loading ? 'not-allowed' : 'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
             {loading ? <><i className="fas fa-spinner fa-spin"/> Signing in...</> : 'Sign In'}
@@ -59,126 +80,168 @@ function LoginScreen() {
   )
 }
 
-// ═══════════════════════════════════════════════════════════════════
 export default function ManagerPage() {
-  const { user }  = useAuth()
-  const navigate  = useNavigate()
+  const { user }    = useAuth()
+  const navigate    = useNavigate()
 
-  const [form, setForm]                 = useState(EMPTY_FORM)
-  const [saving, setSaving]             = useState(false)
-  const [recentNews, setRecentNews]     = useState([])
+  const [form, setForm]               = useState(EMPTY_FORM)
+  const [saving, setSaving]           = useState(false)
+  const [recentNews, setRecentNews]   = useState([])
   const [loadingRecent, setLoadingRecent] = useState(false)
-  const [activeTab, setActiveTab]       = useState('add')
+  const [activeTab, setActiveTab]     = useState('add')  // 'add' | 'recent' | 'ranking'
 
-  // ── Category Ranking state ──────────────────────────────────────
-  const [rankings, setRankings]         = useState([])        // [{cat, rank, color}]
-  const [loadingRanks, setLoadingRanks] = useState(false)
-  const [savingRanks, setSavingRanks]   = useState(false)
-  const [dragIdx, setDragIdx]           = useState(null)
+  // ── Ranking state ──
+  const [rankCat, setRankCat]             = useState('National')
+  const [rankItems, setRankItems]         = useState([])   // { id, title, image, category, rank }
+  const [rankLoading, setRankLoading]     = useState(false)
+  const [rankSaving, setRankSaving]       = useState(false)
+  const [catOrder, setCatOrder]           = useState([...CAT_OPTIONS])
+  const [catOrderSaving, setCatOrderSaving] = useState(false)
 
+  // Block non-manager users
   if (!user) return <LoginScreen/>
-  if (user.email !== MANAGER_EMAIL) return (
-    <div style={{ minHeight:'100dvh', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', background:'var(--bg)', gap:16 }}>
-      <i className="fas fa-lock" style={{ fontSize:48, color:'#ea4335' }}/>
-      <h2 style={{ color:'var(--ink)', fontWeight:700 }}>Access Denied</h2>
-      <button onClick={() => signOut(auth).then(() => navigate('/'))}
-        style={{ padding:'10px 24px', background:'#ea4335', color:'#fff', border:'none', borderRadius:8, fontWeight:700, cursor:'pointer' }}>Sign Out</button>
-    </div>
-  )
+  if (user.email !== MANAGER_EMAIL) {
+    return (
+      <div style={{ minHeight:'100dvh', display:'flex', alignItems:'center', justifyContent:'center', background:'var(--bg)', flexDirection:'column', gap:16 }}>
+        <i className="fas fa-lock" style={{ fontSize:48, color:'#ea4335' }}/>
+        <h2 style={{ color:'var(--ink)', fontWeight:700 }}>Access Denied</h2>
+        <p style={{ color:'var(--muted)', fontSize:14 }}>You are not authorised to access this page.</p>
+        <button onClick={() => signOut(auth).then(() => navigate('/'))}
+          style={{ padding:'10px 24px', background:'#ea4335', color:'#fff', border:'none', borderRadius:8, fontWeight:700, cursor:'pointer' }}>
+          Sign Out & Go Home
+        </button>
+      </div>
+    )
+  }
 
-  // ── Helpers ──
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }))
-  const inputStyle = { width:'100%', padding:'11px 14px', border:'1.5px solid var(--border)', borderRadius:10, fontSize:14, outline:'none', background:'var(--surface2)', color:'var(--ink)', boxSizing:'border-box' }
-  const labelStyle = { fontSize:12, fontWeight:700, color:'var(--muted)', display:'block', marginBottom:5, textTransform:'uppercase', letterSpacing:'.04em' }
 
-  // ── Add news ──
   const handleSubmit = async e => {
     e.preventDefault()
     if (!form.title.trim()) return showToast('Title is required')
+    if (!form.category) return showToast('Category is required')
     setSaving(true)
     try {
       await addDoc(collection(db, 'news'), {
-        title: form.title.trim(), description: form.description.trim(),
-        url: form.url.trim()||'', image: form.image.trim()||'',
-        category: form.category, source: form.source.trim()||'NewsTally',
-        author: form.author.trim()||'',
-        pubDate: form.pubDate || new Date().toISOString(),
-        fetchedAt: new Date().toISOString(),
-        addedBy: user.email, manualEntry: true,
-        timestamp: serverTimestamp()
+        title:       form.title.trim(),
+        description: form.description.trim(),
+        url:         form.url.trim() || '',
+        image:       form.image.trim() || '',
+        category:    form.category,
+        source:      form.source.trim() || 'NewsTally',
+        author:      form.author.trim() || '',
+        pubDate:     form.pubDate || new Date().toISOString(),
+        fetchedAt:   new Date().toISOString(),
+        addedBy:     user.email,
+        manualEntry: true,
+        timestamp:   serverTimestamp()
       })
       showToast('✅ News added successfully!')
       setForm(EMPTY_FORM)
-    } catch(e) { showToast('Failed: ' + e.message) }
+    } catch(e) { console.error(e); showToast('Failed to add news: ' + e.message) }
     finally { setSaving(false) }
   }
 
-  // ── Load recent ──
   const loadRecent = async () => {
     setLoadingRecent(true)
     try {
-      const snap = await getDocs(query(collection(db,'news'), orderBy('fetchedAt','desc'), limit(30)))
+      const snap = await getDocs(query(collection(db,'news'), orderBy('fetchedAt','desc'), limit(20)))
       setRecentNews(snap.docs.map(d => ({ id:d.id, ...d.data() })))
     } catch {
       try {
-        const snap2 = await getDocs(query(collection(db,'news'), limit(30)))
-        setRecentNews(snap2.docs.map(d => ({ id:d.id, ...d.data() })))
-      } catch(e2) { showToast('Load failed: ' + e2.message) }
+        const snap = await getDocs(query(collection(db,'news'), limit(20)))
+        setRecentNews(snap.docs.map(d => ({ id:d.id, ...d.data() })))
+      } catch(e2) { showToast('Could not load: ' + e2.message) }
     }
     setLoadingRecent(false)
   }
 
-  const handleDelete = async id => {
-    if (!window.confirm('Delete this article?')) return
-    try { await deleteDoc(doc(db,'news',id)); setRecentNews(p => p.filter(n => n.id !== id)); showToast('Deleted ✅') }
-    catch(e) { showToast('Delete failed: ' + e.message) }
-  }
-
-  // ── Load rankings ──
-  const loadRankings = async () => {
-    setLoadingRanks(true)
+  const handleDelete = async (id) => {
+    if (!window.confirm('Delete this news article? This cannot be undone.')) return
     try {
-      // First get all distinct categories in the news collection
-      const snap = await getDocs(query(collection(db,'news'), limit(300)))
-      const allCats = [...new Set(snap.docs.map(d => d.data().category).filter(Boolean))].sort()
-
-      // Load saved rankings
-      const rankSnap = await getDoc(doc(db, 'manager', RANKING_DOC_ID)).catch(() => null)
-      const savedRanks = rankSnap?.exists() ? (rankSnap.data().rankings || []) : []
-
-      // Merge: saved rankings first (in order), then any unsaved categories appended
-      const rankedCats = savedRanks.map(r => r.category).filter(c => allCats.includes(c))
-      const unrankedCats = allCats.filter(c => !rankedCats.includes(c))
-      const merged = [
-        ...rankedCats.map((cat, i) => ({ category: cat, rank: i + 1 })),
-        ...unrankedCats.map((cat, i) => ({ category: cat, rank: rankedCats.length + i + 1 }))
-      ]
-      setRankings(merged)
-    } catch(e) { showToast('Load rankings failed: ' + e.message) }
-    setLoadingRanks(false)
+      await deleteDoc(doc(db, 'news', id))
+      setRecentNews(prev => prev.filter(n => n.id !== id))
+      showToast('Deleted ✅')
+    } catch(e) { showToast('Delete failed: ' + e.message) }
   }
 
-  // ── Save rankings ──
+  // ── Load category order from Firestore ──
+  useEffect(() => {
+    getDoc(doc(db, 'config', 'rankings')).then(snap => {
+      if (snap.exists() && snap.data().categoryOrder) {
+        setCatOrder(snap.data().categoryOrder)
+      }
+    }).catch(() => {})
+  }, [])
+
+  // ── Load news for a category (for ranking) ──
+  const loadRankItems = async (cat) => {
+    setRankLoading(true)
+    try {
+      const snap = await getDocs(query(
+        collection(db, 'news'),
+        where('category', '==', cat),
+        orderBy('rank', 'asc'),
+        limit(50)
+      )).catch(async () =>
+        getDocs(query(collection(db, 'news'), where('category', '==', cat), limit(50)))
+      )
+      const items = snap.docs.map((d, i) => ({ id: d.id, ...d.data(), rank: d.data().rank ?? (i + 1) }))
+      items.sort((a, b) => (a.rank ?? 999) - (b.rank ?? 999))
+      setRankItems(items)
+    } catch(e) { showToast('Load failed: ' + e.message) }
+    setRankLoading(false)
+  }
+
+  // ── Move item up/down in rank list ──
+  const moveItem = (idx, dir) => {
+    const newItems = [...rankItems]
+    const swapIdx = idx + dir
+    if (swapIdx < 0 || swapIdx >= newItems.length) return
+    ;[newItems[idx], newItems[swapIdx]] = [newItems[swapIdx], newItems[idx]]
+    setRankItems(newItems)
+  }
+
+  // ── Save article rankings to Firestore ──
   const saveRankings = async () => {
-    setSavingRanks(true)
+    setRankSaving(true)
     try {
-      await setDoc(doc(db, 'manager', RANKING_DOC_ID), {
-        rankings: rankings.map((r, i) => ({ category: r.category, rank: i + 1 })),
-        updatedAt: serverTimestamp()
+      const batch = writeBatch(db)
+      rankItems.forEach((item, i) => {
+        batch.update(doc(db, 'news', item.id), { rank: i + 1 })
       })
-      showToast('Rankings saved ✅')
+      await batch.commit()
+      showToast('✅ Rankings saved!')
     } catch(e) { showToast('Save failed: ' + e.message) }
-    setSavingRanks(false)
+    setRankSaving(false)
   }
 
-  // ── Drag-and-drop reorder ──
-  const moveUp   = i => { if (i === 0) return; const r = [...rankings]; [r[i-1], r[i]] = [r[i], r[i-1]]; setRankings(r) }
-  const moveDown = i => { if (i === rankings.length-1) return; const r = [...rankings]; [r[i], r[i+1]] = [r[i+1], r[i]]; setRankings(r) }
-  const moveToTop = i => { const r = [...rankings]; const [item] = r.splice(i, 1); r.unshift(item); setRankings(r) }
+  // ── Move category up/down ──
+  const moveCat = (idx, dir) => {
+    const newOrder = [...catOrder]
+    const swapIdx = idx + dir
+    if (swapIdx < 0 || swapIdx >= newOrder.length) return
+    ;[newOrder[idx], newOrder[swapIdx]] = [newOrder[swapIdx], newOrder[idx]]
+    setCatOrder(newOrder)
+  }
 
-  const CAT_COLORS = { National:'#e53935', World:'#1a73e8', Business:'#34a853', Technology:'#9334e6', Health:'#f4a261', Education:'#0077b6', Sports:'#ff6d00', General:'#546e7a', Entertainment:'#ad1457', Cricket:'#e53935', Politics:'#1a73e8', Science:'#00897b' }
+  // ── Save category order to Firestore ──
+  const saveCatOrder = async () => {
+    setCatOrderSaving(true)
+    try {
+      await setDoc(doc(db, 'config', 'rankings'), { categoryOrder: catOrder }, { merge: true })
+      showToast('✅ Category order saved!')
+    } catch(e) { showToast('Save failed: ' + e.message) }
+    setCatOrderSaving(false)
+  }
 
-  const TABS = [['add','➕ Add News'], ['recent','📋 Recent'], ['ranking','🏆 Category Ranking']]
+  const inputStyle = {
+    width:'100%', padding:'11px 14px', border:'1.5px solid var(--border)',
+    borderRadius:10, fontSize:14, outline:'none',
+    background:'var(--surface2)', color:'var(--ink)', boxSizing:'border-box'
+  }
+  const labelStyle = { fontSize:12, fontWeight:700, color:'var(--muted)', display:'block', marginBottom:5, textTransform:'uppercase', letterSpacing:'.04em' }
+  const fieldStyle = { marginBottom:16 }
 
   return (
     <div style={{ minHeight:'100dvh', background:'var(--bg)' }}>
@@ -201,80 +264,104 @@ export default function ManagerPage() {
 
       {/* Tabs */}
       <div style={{ display:'flex', background:'var(--surface)', borderBottom:'1px solid var(--border)', overflowX:'auto' }}>
-        {TABS.map(([k,l]) => (
-          <button key={k}
-            onClick={() => { setActiveTab(k); if(k==='recent') loadRecent(); if(k==='ranking') loadRankings() }}
-            style={{ padding:'12px 16px', fontSize:13, fontWeight:700, background:'none', border:'none', cursor:'pointer', color: activeTab===k ? '#1a73e8' : 'var(--muted)', borderBottom: activeTab===k ? '2.5px solid #1a73e8' : '2.5px solid transparent', whiteSpace:'nowrap', flexShrink:0 }}>
+        {[['add','➕ Add'], ['recent','📋 Recent'], ['ranking','🏆 Ranking']].map(([k,l]) => (
+          <button key={k} onClick={() => {
+            setActiveTab(k)
+            if (k === 'recent') loadRecent()
+            if (k === 'ranking') loadRankItems(rankCat)
+          }}
+            style={{ flex:1, padding:'12px', fontSize:13, fontWeight:700, background:'none', border:'none', cursor:'pointer', whiteSpace:'nowrap',
+              color: activeTab===k ? '#1a73e8' : 'var(--muted)',
+              borderBottom: activeTab===k ? '2.5px solid #1a73e8' : '2.5px solid transparent' }}>
             {l}
           </button>
         ))}
       </div>
 
-      {/* ── ADD NEWS ── */}
+      {/* Add News Form */}
       {activeTab === 'add' && (
         <div style={{ maxWidth:640, margin:'0 auto', padding:'20px 16px 80px' }}>
           <form onSubmit={handleSubmit}>
+
+            {/* Required fields */}
             <div style={{ background:'var(--surface)', borderRadius:14, padding:'18px 16px', marginBottom:16, border:'1px solid var(--border)' }}>
               <div style={{ fontSize:12, fontWeight:800, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.05em', marginBottom:14, display:'flex', alignItems:'center', gap:6 }}>
                 <i className="fas fa-asterisk" style={{ color:'#ea4335', fontSize:10 }}/> Required Fields
               </div>
-              {[
-                { key:'title', label:'Title *', ph:'News headline', type:'text' },
-                { key:'source', label:'Source *', ph:'e.g. NewsTally, DD News, ANI', type:'text' },
-              ].map(({ key, label, ph, type }) => (
-                <div key={key} style={{ marginBottom:14 }}>
-                  <label style={labelStyle}>{label}</label>
-                  <input type={type} value={form[key]} onChange={e => set(key, e.target.value)} required={label.includes('*')} placeholder={ph} style={inputStyle}
-                    onFocus={e => e.target.style.borderColor='#1a73e8'} onBlur={e => e.target.style.borderColor='var(--border)'}/>
-                </div>
-              ))}
-              <div style={{ marginBottom:14 }}>
+
+              <div style={fieldStyle}>
+                <label style={labelStyle}>Title *</label>
+                <input value={form.title} onChange={e => set('title', e.target.value)} required
+                  placeholder="News headline" style={inputStyle}/>
+              </div>
+
+              <div style={fieldStyle}>
                 <label style={labelStyle}>Category *</label>
-                <select value={form.category} onChange={e => set('category', e.target.value)} required style={{ ...inputStyle, cursor:'pointer' }}>
+                <select value={form.category} onChange={e => set('category', e.target.value)} required
+                  style={{ ...inputStyle, cursor:'pointer' }}>
                   {CAT_OPTIONS.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
+
+              <div style={fieldStyle}>
+                <label style={labelStyle}>Source *</label>
+                <input value={form.source} onChange={e => set('source', e.target.value)}
+                  placeholder="e.g. NewsTally, DD News, ANI" style={inputStyle}/>
+              </div>
             </div>
 
+            {/* Optional fields */}
             <div style={{ background:'var(--surface)', borderRadius:14, padding:'18px 16px', marginBottom:16, border:'1px solid var(--border)' }}>
-              <div style={{ fontSize:12, fontWeight:800, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.05em', marginBottom:14 }}>Optional Fields</div>
-              {[
-                { key:'url', label:'Article URL', ph:'https://example.com/article', type:'url' },
-                { key:'image', label:'Image URL', ph:'https://example.com/image.jpg', type:'url' },
-                { key:'author', label:'Author', ph:'Reporter name', type:'text' },
-              ].map(({ key, label, ph, type }) => (
-                <div key={key} style={{ marginBottom:14 }}>
-                  <label style={labelStyle}>{label}</label>
-                  <input type={type} value={form[key]} onChange={e => set(key, e.target.value)} placeholder={ph} style={inputStyle}
-                    onFocus={e => e.target.style.borderColor='#1a73e8'} onBlur={e => e.target.style.borderColor='var(--border)'}/>
-                  {key === 'image' && form.image && (
-                    <img src={form.image} alt="" style={{ width:'100%', height:120, objectFit:'cover', borderRadius:8, marginTop:8 }} onError={e => e.target.style.display='none'}/>
-                  )}
-                </div>
-              ))}
-              <div style={{ marginBottom:14 }}>
-                <label style={labelStyle}>Description</label>
-                <textarea value={form.description} onChange={e => set('description', e.target.value)} placeholder="Summary..." rows={3}
-                  style={{ ...inputStyle, resize:'vertical', lineHeight:1.6 }}
-                  onFocus={e => e.target.style.borderColor='#1a73e8'} onBlur={e => e.target.style.borderColor='var(--border)'}/>
+              <div style={{ fontSize:12, fontWeight:800, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.05em', marginBottom:14 }}>
+                Optional Fields
               </div>
-              <div style={{ marginBottom:14 }}>
+
+              <div style={fieldStyle}>
+                <label style={labelStyle}>Description / Summary</label>
+                <textarea value={form.description} onChange={e => set('description', e.target.value)}
+                  placeholder="Short summary of the news..." rows={4}
+                  style={{ ...inputStyle, resize:'vertical', lineHeight:1.6 }}/>
+              </div>
+
+              <div style={fieldStyle}>
+                <label style={labelStyle}>Article URL</label>
+                <input type="url" value={form.url} onChange={e => set('url', e.target.value)}
+                  placeholder="https://example.com/article" style={inputStyle}/>
+              </div>
+
+              <div style={fieldStyle}>
+                <label style={labelStyle}>Image URL</label>
+                <input type="url" value={form.image} onChange={e => set('image', e.target.value)}
+                  placeholder="https://example.com/image.jpg" style={inputStyle}/>
+                {form.image && (
+                  <img src={form.image} alt="preview" style={{ width:'100%', height:140, objectFit:'cover', borderRadius:8, marginTop:8 }}
+                    onError={e => e.target.style.display='none'}/>
+                )}
+              </div>
+
+              <div style={fieldStyle}>
                 <label style={labelStyle}>Publish Date & Time</label>
                 <input type="datetime-local" value={form.pubDate ? new Date(form.pubDate).toISOString().slice(0,16) : ''}
                   onChange={e => set('pubDate', e.target.value ? new Date(e.target.value).toISOString() : '')}
-                  style={inputStyle} onFocus={e => e.target.style.borderColor='#1a73e8'} onBlur={e => e.target.style.borderColor='var(--border)'}/>
+                  style={inputStyle}/>
                 <p style={{ fontSize:11, color:'var(--muted)', marginTop:4 }}>Leave blank to use current time</p>
+              </div>
+
+              <div style={fieldStyle}>
+                <label style={labelStyle}>Author</label>
+                <input value={form.author} onChange={e => set('author', e.target.value)}
+                  placeholder="Reporter / Author name" style={inputStyle}/>
               </div>
             </div>
 
             {/* Preview */}
             {form.title && (
-              <div style={{ background:'var(--surface)', borderRadius:14, padding:16, marginBottom:16, border:'1px solid var(--border)' }}>
+              <div style={{ background:'var(--surface)', borderRadius:14, padding:'16px', marginBottom:16, border:'1px solid var(--border)' }}>
                 <div style={{ fontSize:12, fontWeight:800, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.05em', marginBottom:12 }}>Preview</div>
-                {form.image && <img src={form.image} alt="" style={{ width:'100%', height:140, objectFit:'cover', borderRadius:10, marginBottom:10 }} onError={e => e.target.style.display='none'}/>}
-                <div style={{ fontSize:11, fontWeight:800, color:'#1a73e8', textTransform:'uppercase', marginBottom:6 }}>{form.category} · {form.source||'NewsTally'}</div>
-                <div style={{ fontSize:15, fontWeight:700, color:'var(--ink)', lineHeight:1.4, marginBottom:6 }}>{form.title}</div>
-                {form.description && <div style={{ fontSize:13, color:'var(--muted)', lineHeight:1.6 }}>{form.description.substring(0,200)}{form.description.length>200?'...':''}</div>}
+                {form.image && <img src={form.image} alt="" style={{ width:'100%', height:160, objectFit:'cover', borderRadius:10, marginBottom:10 }} onError={e => e.target.style.display='none'}/>}
+                <div style={{ fontSize:11, fontWeight:800, color:'#1a73e8', textTransform:'uppercase', marginBottom:6 }}>{form.category} · {form.source || 'NewsTally'}</div>
+                <div style={{ fontSize:16, fontWeight:700, color:'var(--ink)', lineHeight:1.4, marginBottom:6 }}>{form.title}</div>
+                {form.description && <div style={{ fontSize:13, color:'var(--muted)', lineHeight:1.6 }}>{form.description.substring(0,200)}{form.description.length > 200 ? '...' : ''}</div>}
               </div>
             )}
 
@@ -286,7 +373,7 @@ export default function ManagerPage() {
         </div>
       )}
 
-      {/* ── RECENT NEWS ── */}
+      {/* Recent News */}
       {activeTab === 'recent' && (
         <div style={{ maxWidth:640, margin:'0 auto', padding:'12px 16px 80px' }}>
           {loadingRecent ? (
@@ -296,14 +383,14 @@ export default function ManagerPage() {
               <i className="fas fa-newspaper" style={{ fontSize:36, display:'block', marginBottom:12, opacity:.3 }}/>
               <p>No news articles found</p>
             </div>
-          ) : recentNews.map(n => (
-            <div key={n.id} style={{ background:'var(--surface)', borderRadius:12, padding:'12px 14px', marginBottom:10, border:'1px solid var(--border)', display:'flex', gap:12, alignItems:'flex-start' }}>
+          ) : recentNews.map((n, i) => (
+            <div key={n.id} style={{ background:'var(--surface)', borderRadius:12, padding:'14px', marginBottom:10, border:'1px solid var(--border)', display:'flex', gap:12, alignItems:'flex-start' }}>
               {n.image && <img src={n.image} alt="" style={{ width:70, height:56, borderRadius:8, objectFit:'cover', flexShrink:0 }} onError={e => e.target.style.display='none'}/>}
               <div style={{ flex:1, minWidth:0 }}>
-                <div style={{ fontSize:10, fontWeight:800, color: CAT_COLORS[n.category]||'#1a73e8', textTransform:'uppercase', marginBottom:4 }}>{n.category} · {n.source}</div>
+                <div style={{ fontSize:10, fontWeight:800, color:'#1a73e8', textTransform:'uppercase', marginBottom:4 }}>{n.category} · {n.source}</div>
                 <div style={{ fontSize:13, fontWeight:600, color:'var(--ink)', lineHeight:1.4, marginBottom:4, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{n.title}</div>
-                <div style={{ fontSize:11, color:'var(--muted)', display:'flex', gap:8 }}>
-                  <span>{timeAgo(n.pubDate||n.fetchedAt)}</span>
+                <div style={{ fontSize:11, color:'var(--muted)', display:'flex', gap:8, alignItems:'center' }}>
+                  <span>{timeAgo(n.pubDate || n.fetchedAt)}</span>
                   {n.manualEntry && <span style={{ background:'rgba(26,115,232,.1)', color:'#1a73e8', padding:'1px 6px', borderRadius:4, fontWeight:700 }}>Manual</span>}
                 </div>
               </div>
@@ -316,80 +403,121 @@ export default function ManagerPage() {
         </div>
       )}
 
-      {/* ── CATEGORY RANKING ── */}
+      {/* ══ RANKING TAB ══ */}
       {activeTab === 'ranking' && (
         <div style={{ maxWidth:640, margin:'0 auto', padding:'16px 16px 80px' }}>
-          <div style={{ background:'var(--surface)', borderRadius:14, padding:'16px', marginBottom:16, border:'1px solid var(--border)' }}>
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
+
+          {/* ── Category Order Section ── */}
+          <div style={{ background:'var(--surface)', borderRadius:14, border:'1px solid var(--border)', marginBottom:20, overflow:'hidden' }}>
+            <div style={{ padding:'13px 16px', borderBottom:'1px solid var(--border)', background:'var(--surface2)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
               <div>
-                <div style={{ fontSize:15, fontWeight:800, color:'var(--ink)', marginBottom:3 }}>Category Rankings</div>
-                <div style={{ fontSize:12, color:'var(--muted)' }}>Drag ↑↓ to reorder how categories appear in news</div>
+                <div style={{ fontSize:13, fontWeight:800, color:'var(--ink)' }}>📂 Category Order</div>
+                <div style={{ fontSize:11, color:'var(--muted)', marginTop:2 }}>Set which category tab appears first in NewsTally</div>
               </div>
-              <button onClick={saveRankings} disabled={savingRanks || rankings.length === 0}
-                style={{ padding:'9px 18px', background:'#1a73e8', color:'#fff', border:'none', borderRadius:10, fontSize:13, fontWeight:700, cursor:'pointer', display:'flex', alignItems:'center', gap:6 }}>
-                {savingRanks ? <><i className="fas fa-spinner fa-spin"/> Saving...</> : <><i className="fas fa-save"/> Save Order</>}
+              <button onClick={saveCatOrder} disabled={catOrderSaving}
+                style={{ padding:'7px 16px', background:'#1a73e8', color:'#fff', border:'none', borderRadius:8, fontSize:12, fontWeight:700, cursor:'pointer', display:'flex', alignItems:'center', gap:6 }}>
+                {catOrderSaving ? <><i className="fas fa-spinner fa-spin"/> Saving…</> : <><i className="fas fa-save"/> Save Order</>}
               </button>
             </div>
+            <div style={{ padding:'8px 0' }}>
+              {catOrder.map((cat, idx) => (
+                <div key={cat} style={{ display:'flex', alignItems:'center', gap:10, padding:'9px 16px', borderBottom: idx < catOrder.length-1 ? '1px solid var(--border2)' : 'none' }}>
+                  <span style={{ width:22, height:22, borderRadius:'50%', background:'#1a73e820', color:'#1a73e8', fontSize:11, fontWeight:800, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                    {idx + 1}
+                  </span>
+                  <span style={{ flex:1, fontSize:14, fontWeight:600, color:'var(--ink)' }}>{cat}</span>
+                  <div style={{ display:'flex', gap:4 }}>
+                    <button onClick={() => moveCat(idx, -1)} disabled={idx === 0}
+                      style={{ width:28, height:28, borderRadius:7, border:'1px solid var(--border)', background:'var(--surface2)', color: idx===0 ? 'var(--border)' : 'var(--ink)', cursor: idx===0 ? 'default' : 'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:12 }}>
+                      <i className="fas fa-chevron-up"/>
+                    </button>
+                    <button onClick={() => moveCat(idx, 1)} disabled={idx === catOrder.length-1}
+                      style={{ width:28, height:28, borderRadius:7, border:'1px solid var(--border)', background:'var(--surface2)', color: idx===catOrder.length-1 ? 'var(--border)' : 'var(--ink)', cursor: idx===catOrder.length-1 ? 'default' : 'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:12 }}>
+                      <i className="fas fa-chevron-down"/>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
 
-            {loadingRanks ? (
-              <div style={{ padding:30, textAlign:'center' }}><i className="fas fa-spinner fa-spin" style={{ fontSize:22, color:'var(--muted)' }}/></div>
-            ) : rankings.length === 0 ? (
-              <div style={{ textAlign:'center', padding:'30px 20px', color:'var(--muted)' }}>
-                <i className="fas fa-layer-group" style={{ fontSize:32, marginBottom:10, display:'block', opacity:.3 }}/>
-                <p>No categories found in database yet</p>
+          {/* ── Article Ranking per Category ── */}
+          <div style={{ background:'var(--surface)', borderRadius:14, border:'1px solid var(--border)', overflow:'hidden' }}>
+            <div style={{ padding:'13px 16px', borderBottom:'1px solid var(--border)', background:'var(--surface2)' }}>
+              <div style={{ fontSize:13, fontWeight:800, color:'var(--ink)', marginBottom:10 }}>📰 Article Ranking by Category</div>
+              <div style={{ display:'flex', gap:8, alignItems:'center', flexWrap:'wrap' }}>
+                <select value={rankCat} onChange={e => { setRankCat(e.target.value); loadRankItems(e.target.value) }}
+                  style={{ flex:1, minWidth:120, padding:'8px 12px', border:'1.5px solid var(--border)', borderRadius:8, fontSize:13, fontWeight:600, background:'var(--surface)', color:'var(--ink)', cursor:'pointer', outline:'none' }}>
+                  {CAT_OPTIONS.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+                <button onClick={() => loadRankItems(rankCat)}
+                  style={{ padding:'8px 14px', border:'1px solid var(--border)', borderRadius:8, background:'var(--surface2)', color:'var(--muted)', fontSize:12, fontWeight:700, cursor:'pointer', display:'flex', alignItems:'center', gap:5 }}>
+                  <i className="fas fa-sync-alt"/> Refresh
+                </button>
+                <button onClick={saveRankings} disabled={rankSaving || rankItems.length === 0}
+                  style={{ padding:'8px 16px', background: rankItems.length ? '#34a853' : 'var(--border)', color: rankItems.length ? '#fff' : 'var(--muted)', border:'none', borderRadius:8, fontSize:12, fontWeight:700, cursor: rankItems.length ? 'pointer' : 'not-allowed', display:'flex', alignItems:'center', gap:6 }}>
+                  {rankSaving ? <><i className="fas fa-spinner fa-spin"/> Saving…</> : <><i className="fas fa-save"/> Save Rankings</>}
+                </button>
+              </div>
+            </div>
+
+            {rankLoading ? (
+              <div style={{ padding:40, textAlign:'center' }}><i className="fas fa-spinner fa-spin" style={{ fontSize:22, color:'var(--muted)' }}/></div>
+            ) : rankItems.length === 0 ? (
+              <div style={{ padding:'32px 16px', textAlign:'center', color:'var(--muted)' }}>
+                <i className="fas fa-list-ol" style={{ fontSize:32, marginBottom:10, display:'block', opacity:.3 }}/>
+                <p style={{ fontWeight:600 }}>No articles in {rankCat}</p>
+                <p style={{ fontSize:12, marginTop:4 }}>Add news to this category first</p>
               </div>
             ) : (
-              <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-                {rankings.map((item, i) => {
-                  const ac = CAT_COLORS[item.category] || '#546e7a'
-                  return (
-                    <div key={item.category}
-                      style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 12px', background:'var(--surface2)', borderRadius:10, border:'1px solid var(--border)', transition:'opacity .2s', cursor:'default' }}>
-                      {/* Rank number */}
-                      <div style={{ width:28, height:28, borderRadius:8, background:ac, color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, fontWeight:800, flexShrink:0 }}>
-                        {i + 1}
-                      </div>
-
-                      {/* Category name */}
-                      <div style={{ flex:1 }}>
-                        <span style={{ fontSize:14, fontWeight:700, color:'var(--ink)' }}>{item.category}</span>
-                      </div>
-
-                      {/* Controls */}
-                      <div style={{ display:'flex', gap:4, flexShrink:0 }}>
-                        <button onClick={() => moveToTop(i)} disabled={i === 0}
-                          title="Move to top"
-                          style={{ width:28, height:28, borderRadius:6, background: i===0 ? 'var(--border)' : 'rgba(26,115,232,.12)', border:'none', color: i===0 ? 'var(--muted)' : '#1a73e8', cursor: i===0 ? 'not-allowed' : 'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11 }}>
-                          <i className="fas fa-angles-up"/>
-                        </button>
-                        <button onClick={() => moveUp(i)} disabled={i === 0}
-                          title="Move up"
-                          style={{ width:28, height:28, borderRadius:6, background: i===0 ? 'var(--border)' : 'rgba(26,115,232,.12)', border:'none', color: i===0 ? 'var(--muted)' : '#1a73e8', cursor: i===0 ? 'not-allowed' : 'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11 }}>
-                          <i className="fas fa-chevron-up"/>
-                        </button>
-                        <button onClick={() => moveDown(i)} disabled={i === rankings.length - 1}
-                          title="Move down"
-                          style={{ width:28, height:28, borderRadius:6, background: i===rankings.length-1 ? 'var(--border)' : 'rgba(26,115,232,.12)', border:'none', color: i===rankings.length-1 ? 'var(--muted)' : '#1a73e8', cursor: i===rankings.length-1 ? 'not-allowed' : 'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11 }}>
-                          <i className="fas fa-chevron-down"/>
-                        </button>
-                      </div>
+              <div style={{ padding:'6px 0' }}>
+                <div style={{ padding:'6px 16px 10px', fontSize:11, color:'var(--muted)', fontWeight:600 }}>
+                  {rankItems.length} articles · Use ↑↓ to reorder · Rank #1 appears first in feed
+                </div>
+                {rankItems.map((item, idx) => (
+                  <div key={item.id} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 16px',
+                    borderBottom: idx < rankItems.length-1 ? '1px solid var(--border2)' : 'none',
+                    background: idx < 3 ? 'rgba(52,168,83,.03)' : 'transparent' }}>
+                    <div style={{ width:28, textAlign:'center', flexShrink:0 }}>
+                      <span style={{ fontSize:13, fontWeight:800, color: idx < 3 ? '#34a853' : 'var(--muted)' }}>#{idx+1}</span>
                     </div>
-                  )
-                })}
+                    {item.image ? (
+                      <img src={item.image} alt="" style={{ width:48, height:36, borderRadius:6, objectFit:'cover', flexShrink:0 }}
+                        onError={e => e.target.style.display='none'}/>
+                    ) : (
+                      <div style={{ width:48, height:36, borderRadius:6, background:'var(--surface2)', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                        <i className="fas fa-newspaper" style={{ fontSize:14, color:'var(--muted)' }}/>
+                      </div>
+                    )}
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ fontSize:13, fontWeight:600, color:'var(--ink)', lineHeight:1.4,
+                        display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>
+                        {item.title}
+                      </div>
+                      <div style={{ fontSize:11, color:'var(--muted)', marginTop:2 }}>{item.source || 'Unknown'}</div>
+                    </div>
+                    <div style={{ display:'flex', flexDirection:'column', gap:3, flexShrink:0 }}>
+                      <button onClick={() => moveItem(idx, -1)} disabled={idx === 0}
+                        style={{ width:26, height:26, borderRadius:6, border:'1px solid var(--border)', background:'var(--surface2)',
+                          color: idx===0 ? 'var(--border)' : '#1a73e8', cursor: idx===0 ? 'default' : 'pointer',
+                          display:'flex', alignItems:'center', justifyContent:'center', fontSize:11 }}>
+                        <i className="fas fa-chevron-up"/>
+                      </button>
+                      <button onClick={() => moveItem(idx, 1)} disabled={idx === rankItems.length-1}
+                        style={{ width:26, height:26, borderRadius:6, border:'1px solid var(--border)', background:'var(--surface2)',
+                          color: idx===rankItems.length-1 ? 'var(--border)' : '#1a73e8', cursor: idx===rankItems.length-1 ? 'default' : 'pointer',
+                          display:'flex', alignItems:'center', justifyContent:'center', fontSize:11 }}>
+                        <i className="fas fa-chevron-down"/>
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
-
-          {rankings.length > 0 && (
-            <div style={{ background:'rgba(26,115,232,.06)', borderRadius:12, padding:'12px 14px', border:'1px solid rgba(26,115,232,.15)' }}>
-              <p style={{ fontSize:12, color:'#1a73e8', fontWeight:600, margin:0 }}>
-                <i className="fas fa-info-circle" style={{ marginRight:6 }}/>
-                Saved ranking is used in /news/category sidebar and determines the default display order
-              </p>
-            </div>
-          )}
         </div>
       )}
+
     </div>
   )
 }

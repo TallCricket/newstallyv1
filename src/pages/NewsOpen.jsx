@@ -9,6 +9,7 @@ import { useAuth } from '../context/AuthContext'
 import { timeAgo, catIcon, showToast } from '../utils'
 import BottomNav from '../components/BottomNav'
 import AuthModal from '../components/AuthModal'
+import { useTranslation } from '../context/TranslationContext'
 
 const CAT_COLORS = {
   National:'#e53935', World:'#1a73e8', Business:'#34a853',
@@ -96,6 +97,7 @@ export default function NewsOpen() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { lang, translate, getLangName } = useTranslation()
 
   const [item, setItem]             = useState(null)
   const [related, setRelated]       = useState([])
@@ -106,6 +108,8 @@ export default function NewsOpen() {
   const [showAuth, setShowAuth]     = useState(false)
   const [repostItem, setRepostItem] = useState(null)
   const [reposting, setReposting]   = useState(false)
+  const [translating, setTranslating]   = useState(false)
+  const [translated, setTranslated]     = useState(null)   // { title, description }
   const articleRef = useRef(null)
 
   // Reading progress
@@ -212,6 +216,21 @@ export default function NewsOpen() {
     finally { setReposting(false) }
   }
 
+  // Translate article
+  const handleTranslate = async () => {
+    if (!item) return
+    if (translated) { setTranslated(null); return }   // toggle off
+    setTranslating(true)
+    try {
+      const [tTitle, tDesc] = await Promise.all([
+        translate(item.title || ''),
+        translate(item.description || '')
+      ])
+      setTranslated({ title: tTitle, description: tDesc })
+    } catch { showToast('Translation failed, try again') }
+    finally { setTranslating(false) }
+  }
+
   const readTime = item ? Math.max(1, Math.ceil(((item.title||'').length + (item.description||'').length) / 200)) : 1
   const accent   = CAT_COLORS[item?.category] || '#1a73e8'
 
@@ -284,7 +303,7 @@ export default function NewsOpen() {
 
           {/* ── Title ── */}
           <h1 style={{ fontSize:'clamp(20px,4.5vw,28px)', fontWeight:700, lineHeight:1.4, color:'var(--ink)', letterSpacing:'-.3px', marginBottom:16 }}>
-            {item.title}
+            {translated?.title || item.title}
           </h1>
 
           {/* ── Source bar ── */}
@@ -302,6 +321,17 @@ export default function NewsOpen() {
                 style={{ display:'flex', alignItems:'center', gap:5, padding:'7px 14px', borderRadius:8, background:'rgba(52,168,83,.1)', border:'1.5px solid rgba(52,168,83,.3)', fontSize:12, fontWeight:700, color:'#2e7d32', cursor:'pointer' }}>
                 <i className="fas fa-retweet"/> Repost
               </button>
+              {lang !== 'en' && (
+                <button onClick={handleTranslate} disabled={translating}
+                  style={{ display:'flex', alignItems:'center', gap:5, padding:'7px 14px', borderRadius:8,
+                    background: translated ? 'rgba(147,52,230,.15)' : 'rgba(147,52,230,.08)',
+                    border:`1.5px solid rgba(147,52,230,${translated ? '.5' : '.25'})`,
+                    fontSize:12, fontWeight:700, color:'#9334e6', cursor:'pointer' }}>
+                  {translating ? <><i className="fas fa-spinner fa-spin"/> Translating...</>
+                    : translated ? <><i className="fas fa-language"/> Show Original</>
+                    : <><i className="fas fa-language"/> Translate ({getLangName().split(' ')[0]})</>}
+                </button>
+              )}
               <button onClick={() => setShowShare(s => !s)}
                 style={{ display:'flex', alignItems:'center', gap:5, padding:'7px 14px', borderRadius:8, background:'var(--surface)', border:'1.5px solid var(--border)', fontSize:12, fontWeight:600, color:'var(--ink)', cursor:'pointer' }}>
                 <i className="fas fa-share-alt"/> Share
@@ -328,9 +358,15 @@ export default function NewsOpen() {
           )}
 
           {/* ── Article body ── */}
-          {item.description ? (
+          {(translated?.description || item.description) ? (
             <div ref={articleRef} style={{ fontSize:16, lineHeight:1.85, color:'var(--ink2)', marginBottom:24 }}>
-              {item.description.split(/(?<=[.!?])\s+/).filter(s => s.trim().length > 5).map((s, i) => (
+              {translated && (
+                <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:12, padding:'8px 12px', background:'rgba(147,52,230,.08)', borderRadius:8, border:'1px solid rgba(147,52,230,.2)' }}>
+                  <i className="fas fa-language" style={{ color:'#9334e6', fontSize:13 }}/>
+                  <span style={{ fontSize:12, color:'#9334e6', fontWeight:600 }}>Translated to {getLangName()}</span>
+                </div>
+              )}
+              {(translated?.description || item.description).split(/(?<=[.!?।])\s+/).filter(s => s.trim().length > 5).map((s, i) => (
                 <p key={i} style={{ marginBottom:14 }}>{s.trim()}</p>
               ))}
             </div>

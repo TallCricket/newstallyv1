@@ -14,6 +14,7 @@ import AuthModal from '../components/AuthModal'
 import { useNavigate } from 'react-router-dom'
 import CommentsPage from '../components/CommentsPage'
 import ProfilePage from '../components/ProfilePage'
+import { useTranslation, INDIAN_LANGS } from '../context/TranslationContext'
 
 
 // ── Followers/Following Modal ──────────────────────────────────────
@@ -83,11 +84,15 @@ const SETTINGS_LINKS = [
 ]
 
 // ── Profile Post Card ──
-function ProfilePostCard({ post, onClick }) {
+function ProfilePostCard({ post, onClick, onNavigateNews }) {
   const [imgErr, setImgErr] = useState(false)
   const isRepost = post.type === 'repost'
+  const handleClick = () => {
+    if (isRepost && post.newsId) onNavigateNews(post.newsId)
+    else onClick(post.id)
+  }
   return (
-    <div onClick={() => onClick(post.id)}
+    <div onClick={handleClick}
       style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:14,
         overflow:'hidden', cursor:'pointer', transition:'box-shadow .15s' }}
       onMouseOver={e => e.currentTarget.style.boxShadow='var(--shadow-md)'}
@@ -154,6 +159,7 @@ function SavedCard({ item, onOpen }) {
 export default function Profile() {
   const { user } = useAuth()
   const { dark, toggle: toggleDark } = useTheme()
+  const { lang, setLang, getLangName } = useTranslation()
   const navigate = useNavigate()
 
   const [profile, setProfile]       = useState(null)
@@ -225,11 +231,8 @@ export default function Profile() {
     try {
       const savedIds = JSON.parse(localStorage.getItem('nt_saved_news') || '[]')
       if (!savedIds.length) { setSavedArticles([]); return }
-      // Fetch all saved articles from Firestore
       const fetches = savedIds.slice(0, 20).map(id =>
-        import('firebase/firestore').then(({ getDoc, doc: docFn }) =>
-          getDoc(docFn(db, 'news', id)).then(s => s.exists() ? { id:s.id, ...s.data() } : null)
-        )
+        getDoc(doc(db, 'news', id)).then(s => s.exists() ? { id: s.id, ...s.data() } : null).catch(() => null)
       )
       Promise.all(fetches).then(results => {
         setSavedArticles(results.filter(Boolean))
@@ -505,7 +508,7 @@ export default function Profile() {
                 </div>
               ) : (
                 <div style={{ padding:'12px 16px', display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
-                  {posts.map(p => <ProfilePostCard key={p.id} post={p} onClick={id => setOpenCommentPost(id)}/>)}
+                  {posts.map(p => <ProfilePostCard key={p.id} post={p} onClick={id => setOpenCommentPost(id)} onNavigateNews={id => navigate(`/news/${id}`)}/>)}
                 </div>
               )
             )}
@@ -556,12 +559,13 @@ export default function Profile() {
                   ))}
                 </div>
 
-                {/* 4️⃣ Dark Mode Toggle */}
+                {/* Appearance: Dark Mode + Language */}
                 <div style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:14, marginBottom:16, overflow:'hidden' }}>
                   <div style={{ padding:'12px 16px', borderBottom:'1px solid var(--border2)', background:'var(--surface2)' }}>
-                    <span style={{ fontSize:11, fontWeight:800, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.05em' }}>Appearance</span>
+                    <span style={{ fontSize:11, fontWeight:800, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.05em' }}>Appearance & Language</span>
                   </div>
-                  <div style={{ display:'flex', alignItems:'center', gap:12, padding:'14px 16px' }}>
+                  {/* Dark Mode */}
+                  <div style={{ display:'flex', alignItems:'center', gap:12, padding:'14px 16px', borderBottom:'1px solid var(--border2)' }}>
                     <div style={{ width:36, height:36, borderRadius:10, background: dark ? '#1a1a2e' : '#f8f6f0', display:'flex', alignItems:'center', justifyContent:'center' }}>
                       <i className={dark ? 'fas fa-moon' : 'fas fa-sun'} style={{ fontSize:16, color: dark ? '#aaa0ff' : '#f5c518' }}/>
                     </div>
@@ -571,7 +575,6 @@ export default function Profile() {
                         {dark ? 'Currently Dark' : 'Currently Light'} · Follows device if not set
                       </div>
                     </div>
-                    {/* Toggle switch */}
                     <div onClick={toggleDark}
                       style={{ width:48, height:28, borderRadius:99, background: dark ? '#1a73e8' : 'var(--border)',
                         position:'relative', cursor:'pointer', transition:'background .25s', flexShrink:0 }}>
@@ -579,6 +582,37 @@ export default function Profile() {
                         width:22, height:22, borderRadius:'50%', background:'#fff',
                         transition:'left .25s', boxShadow:'0 1px 4px rgba(0,0,0,.3)' }}/>
                     </div>
+                  </div>
+                  {/* Language Selector */}
+                  <div style={{ padding:'14px 16px' }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:10 }}>
+                      <div style={{ width:36, height:36, borderRadius:10, background:'rgba(147,52,230,.1)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                        <i className="fas fa-globe" style={{ fontSize:16, color:'#9334e6' }}/>
+                      </div>
+                      <div style={{ flex:1 }}>
+                        <div style={{ fontSize:14, fontWeight:700, color:'var(--ink)' }}>App Language</div>
+                        <div style={{ fontSize:12, color:'var(--muted)' }}>
+                          Translate news to your language · Auto-detected from browser
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
+                      {INDIAN_LANGS.map(l => (
+                        <button key={l.code} onClick={() => setLang(l.code)}
+                          style={{ padding:'6px 14px', borderRadius:99, border:`1.5px solid ${lang===l.code ? '#9334e6' : 'var(--border)'}`,
+                            background: lang===l.code ? 'rgba(147,52,230,.12)' : 'var(--surface2)',
+                            color: lang===l.code ? '#9334e6' : 'var(--muted)',
+                            fontSize:12, fontWeight: lang===l.code ? 700 : 500, cursor:'pointer',
+                            transition:'all .15s' }}>
+                          {l.native}
+                        </button>
+                      ))}
+                    </div>
+                    {lang !== 'en' && (
+                      <p style={{ fontSize:11, color:'#9334e6', marginTop:8, fontWeight:600 }}>
+                        ✓ Articles will show a "Translate" button in {getLangName()}
+                      </p>
+                    )}
                   </div>
                 </div>
 

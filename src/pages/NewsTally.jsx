@@ -11,7 +11,7 @@ import BottomNav from '../components/BottomNav'
 import AuthModal from '../components/AuthModal'
 import { useNavigate } from 'react-router-dom'
 
-const CATS = ['All','National','World','Business','Technology','Health','Education','Sports','General']
+const DEFAULT_CATS = ['All','National','World','Business','Technology','Health','Education','Sports','General']
 const PAGE_SIZE = 20
 
 const CAT_COLORS = {
@@ -27,7 +27,13 @@ function getItemDate(n) {
   return isNaN(t) ? 0 : t
 }
 function sortByDate(items) {
-  return [...items].sort((a, b) => getItemDate(b) - getItemDate(a))
+  return [...items].sort((a, b) => {
+    // ranked items (rank set by manager) sort by rank ascending first
+    const aRank = a.rank != null ? a.rank : 9999
+    const bRank = b.rank != null ? b.rank : 9999
+    if (aRank !== bRank) return aRank - bRank
+    return getItemDate(b) - getItemDate(a)
+  })
 }
 
 // ─── Skeletons ────────────────────────────────────────────────────
@@ -364,12 +370,23 @@ export default function NewsTally() {
   const [error, setError]             = useState('')
 
   const [cat, setCat]                 = useState('All')
+  const [cats, setCats]               = useState(DEFAULT_CATS) // loaded from Firestore config
   const [search, setSearch]           = useState('')
   const [showSearch, setShowSearch]   = useState(false)
   const [showAuth, setShowAuth]       = useState(false)
   const [repostItem, setRepostItem]   = useState(null)
   const [reposting, setReposting]     = useState(false)
   const sentinelRef = useRef(null)
+
+  // Load category order from Firestore config
+  useEffect(() => {
+    getDoc(doc(db, 'config', 'rankings')).then(snap => {
+      if (snap.exists() && Array.isArray(snap.data().categoryOrder)) {
+        const order = snap.data().categoryOrder
+        setCats(['All', ...order])
+      }
+    }).catch(() => {})
+  }, [])
 
   // KEY FIX: No orderBy in Firestore query → returns ALL sources (not just DD News)
   // Sort is done client-side so all news from all platforms appears latest-first
@@ -519,7 +536,7 @@ export default function NewsTally() {
         )}
 
         <div className="cat-bar" style={{ position:'sticky', top: showSearch ? 98 : 56, zIndex:49 }}>
-          {CATS.map(c => (
+          {cats.map(c => (
             <button key={c} className={`cat-btn ${cat===c?'active':''}`} onClick={() => setCat(c)}>{c}</button>
           ))}
         </div>

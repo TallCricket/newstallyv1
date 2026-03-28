@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { useNavigate } from 'react-router-dom'
 import { timeAgo, showToast, sendNotification } from '../utils'
 import { doc, updateDoc, arrayUnion, arrayRemove, getDoc } from 'firebase/firestore'
 import { db, APP_ID } from '../firebase/config'
@@ -130,6 +131,7 @@ function PollContent({ post, id }) {
 // ── Main PostCard ─────────────────────────────────────────────────
 export default function PostCard({ post, id, onOpenComments, onOpenProfile, onAuthRequired, onMention, onHashtag }) {
   const { user, userData } = useAuth()
+  const navigate = useNavigate()
   const isLiked = user && (post.likes || []).includes(user.uid)
   const av = post.userAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(post.username || 'U')}&background=1a73e8&color=fff`
 
@@ -173,7 +175,7 @@ export default function PostCard({ post, id, onOpenComments, onOpenProfile, onAu
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
             <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink)', cursor: 'pointer' }}
-              onClick={() => onOpenProfile(post.userId)}>
+              onClick={() => post.username ? navigate(`/u/${post.username}`) : onOpenProfile(post.userId)}>
               {post.username || 'User'}
             </span>
             {post.type === 'repost' && (

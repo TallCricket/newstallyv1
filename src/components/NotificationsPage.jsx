@@ -51,18 +51,18 @@ export default function NotificationsPage({ open, onClose, onOpenProfile, onOpen
 
   return (
     <div className={`page-layer ${open ? 'open' : ''}`}>
-      <div style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 16px', borderBottom:'1px solid #f0f0f0', position:'sticky', top:0, background:'#fff', zIndex:10 }}>
+      <div style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 16px', borderBottom:'1px solid var(--border)', position:'sticky', top:0, background:'var(--header-bg)', backdropFilter:'blur(20px)', zIndex:10 }}>
         <button className="page-back-btn" onClick={onClose}><i className="fas fa-arrow-left"/></button>
-        <span style={{ fontWeight:700, fontSize:16 }}>Notifications</span>
+        <span style={{ fontWeight:700, fontSize:16, color:'var(--ink)' }}>Notifications</span>
       </div>
 
       {loading ? (
-        <div style={{ padding:40, textAlign:'center' }}><i className="fas fa-spinner fa-spin" style={{ fontSize:24, color:'#9aa0a6' }}/></div>
+        <div style={{ padding:40, textAlign:'center' }}><i className="fas fa-spinner fa-spin" style={{ fontSize:24, color:'var(--muted)' }}/></div>
       ) : notifs.length === 0 ? (
         <div style={{ textAlign:'center', padding:'60px 20px', color:'#9aa0a6' }}>
-          <i className="far fa-bell" style={{ fontSize:40, marginBottom:12, display:'block', opacity:.4 }}/>
+          <i className="far fa-bell" style={{ fontSize:40, marginBottom:12, display:'block', opacity:.3, color:'var(--muted)' }}/>
           <p style={{ fontWeight:600, marginBottom:6 }}>No notifications yet</p>
-          <p style={{ fontSize:13 }}>When someone likes or follows you, you'll see it here</p>
+          <p style={{ fontSize:13, color:'var(--muted)' }}>When someone likes or follows you, you'll see it here</p>
         </div>
       ) : notifs.map(n => {
         const c = cfg(n.type)

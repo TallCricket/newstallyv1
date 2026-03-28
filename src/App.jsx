@@ -16,40 +16,41 @@ import NotFound              from './pages/NotFound'
 export default function App() {
   return (
     <Routes>
-      {/* Community */}
-      <Route path="/"                       element={<Socialgati />} />
+      {/* Home */}
+      <Route path="/"                        element={<Socialgati />} />
 
-      {/* News */}
-      <Route path="/news"                   element={<NewsTally />} />
-      <Route path="/news/:id"               element={<NewsOpen />} />
-      <Route path="/news/category/:cat"     element={<CategoryPage />} />
+      {/* ⚠️ Category route MUST come before /news/:id so it doesn't get swallowed */}
+      <Route path="/news/category/:cat"      element={<CategoryPage />} />
+      <Route path="/news/:id"                element={<NewsOpen />} />
+      <Route path="/news"                    element={<NewsTally />} />
 
       {/* Shorts */}
-      <Route path="/shorts"                 element={<Shorts />} />
+      <Route path="/shorts"                  element={<Shorts />} />
 
-      {/* Alerts */}
-      <Route path="/alerts"                 element={<NotificationsFullPage />} />
+      {/* Notifications */}
+      <Route path="/alerts"                  element={<NotificationsFullPage />} />
 
       {/* Search */}
-      <Route path="/search"                 element={<SearchPage />} />
+      <Route path="/search"                  element={<SearchPage />} />
 
-      {/* Profiles — /profile = own, /u/:username = public */}
-      <Route path="/profile"               element={<Profile />} />
-      <Route path="/u/:username"           element={<UserProfilePage />} />
+      {/* Own profile vs public @username profile */}
+      <Route path="/profile"                 element={<Profile />} />
+      <Route path="/@:username"              element={<UserProfilePage />} />
+      <Route path="/u/:username"             element={<UserProfilePage />} />
 
-      {/* Hashtags */}
-      <Route path="/hashtag/:tag"          element={<HashtagPage />} />
+      {/* Hashtag feed */}
+      <Route path="/hashtag/:tag"            element={<HashtagPage />} />
 
-      {/* Static pages */}
-      <Route path="/about"                 element={<About />} />
-      <Route path="/privacy"              element={<Privacy />} />
-      <Route path="/terms"                element={<Terms />} />
-      <Route path="/contact"              element={<Contact />} />
+      {/* Static */}
+      <Route path="/about"                   element={<About />} />
+      <Route path="/privacy"                 element={<Privacy />} />
+      <Route path="/terms"                   element={<Terms />} />
+      <Route path="/contact"                 element={<Contact />} />
 
       {/* Manager */}
-      <Route path="/manager"              element={<ManagerPage />} />
+      <Route path="/manager"                 element={<ManagerPage />} />
 
-      <Route path="*"                     element={<NotFound />} />
+      <Route path="*"                        element={<NotFound />} />
     </Routes>
   )
 }

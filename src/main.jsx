@@ -4,17 +4,17 @@ import { BrowserRouter } from 'react-router-dom'
 import App from './App.jsx'
 import { AuthProvider } from './context/AuthContext.jsx'
 import { ThemeProvider } from './context/ThemeContext.jsx'
-import { TranslateProvider } from './context/TranslateContext.jsx'
+import { TranslationProvider } from './context/TranslationContext.jsx'
 import './index.css'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <BrowserRouter>
     <ThemeProvider>
-      <TranslateProvider>
+      <TranslationProvider>
         <AuthProvider>
           <App />
         </AuthProvider>
-      </TranslateProvider>
+      </TranslationProvider>
     </ThemeProvider>
   </BrowserRouter>
 )

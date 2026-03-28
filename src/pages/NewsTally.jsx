@@ -371,25 +371,14 @@ export default function NewsTally() {
   const [reposting, setReposting]     = useState(false)
   const sentinelRef = useRef(null)
 
-  const detectOrderField = useCallback(async () => {
-    for (const field of ['pubDate', 'fetchedAt', 'savedAt']) {
-      try {
-        const snap = await getDocs(query(collection(db,'news'), orderBy(field,'desc'), limit(1)))
-        if (!snap.empty) { orderFieldRef.current = field; return field }
-      } catch {}
-    }
-    orderFieldRef.current = null; return null
-  }, [])
-
+  // KEY FIX: No orderBy in Firestore query → returns ALL sources (not just DD News)
+  // Sort is done client-side so all news from all platforms appears latest-first
   const fetchBatch = useCallback(async (isFirst = false) => {
-    const field = orderFieldRef.current
-    let q = field
-      ? (isFirst
-          ? query(collection(db,'news'), orderBy(field,'desc'), limit(PAGE_SIZE))
-          : lastDocRef.current ? query(collection(db,'news'), orderBy(field,'desc'), startAfter(lastDocRef.current), limit(PAGE_SIZE)) : null)
-      : (isFirst
-          ? query(collection(db,'news'), limit(PAGE_SIZE))
-          : lastDocRef.current ? query(collection(db,'news'), startAfter(lastDocRef.current), limit(PAGE_SIZE)) : null)
+    let q = isFirst
+      ? query(collection(db,'news'), limit(PAGE_SIZE * 2))
+      : lastDocRef.current
+        ? query(collection(db,'news'), startAfter(lastDocRef.current), limit(PAGE_SIZE * 2))
+        : null
     if (!q) return []
     const snap = await getDocs(q)
     if (snap.empty) { setHasMore(false); return [] }
@@ -399,20 +388,10 @@ export default function NewsTally() {
   }, [])
 
   const fetchCategoryBatch = useCallback(async (category, isFirst = false) => {
-    const field = orderFieldRef.current
-    let constraints = [where('category','==',category)]
-    // ORDER BY DATE for category too
-    if (field) { try { constraints.push(orderBy(field,'desc')) } catch {} }
+    const constraints = [where('category','==',category)]
     if (!isFirst && catLastDocRef.current) constraints.push(startAfter(catLastDocRef.current))
-    constraints.push(limit(PAGE_SIZE))
-    let snap
-    try { snap = await getDocs(query(collection(db,'news'), ...constraints)) }
-    catch {
-      const fb = [where('category','==',category)]
-      if (!isFirst && catLastDocRef.current) fb.push(startAfter(catLastDocRef.current))
-      fb.push(limit(PAGE_SIZE))
-      snap = await getDocs(query(collection(db,'news'), ...fb))
-    }
+    constraints.push(limit(PAGE_SIZE * 2))
+    const snap = await getDocs(query(collection(db,'news'), ...constraints))
     if (snap.empty) { setCatHasMore(false); return [] }
     if (snap.docs.length < PAGE_SIZE) setCatHasMore(false)
     catLastDocRef.current = snap.docs[snap.docs.length - 1]
@@ -422,13 +401,12 @@ export default function NewsTally() {
   const loadInitial = useCallback(async () => {
     setLoading(true); setError(''); setHasMore(true); lastDocRef.current = null
     try {
-      await detectOrderField()
       const items = await fetchBatch(true)
       if (!items.length) { setError('No news yet.'); return }
       setAllNews(sortByDate(items))
     } catch(e) { setError(e.message) }
     finally { setLoading(false) }
-  }, [detectOrderField, fetchBatch])
+  }, [fetchBatch])
 
   const loadCategoryInitial = useCallback(async (category) => {
     setLoading(true); setError(''); setCatItems([]); setCatHasMore(true); catLastDocRef.current = null
@@ -525,17 +503,6 @@ export default function NewsTally() {
         <div className="logo">
           <img src="https://i.postimg.cc/dLTgRxbL/cropped-circle-image.png" alt="NewsTally"/>
           <span className="logo-text">NewsTally</span>
-        </div>
-        <div className="header-actions">
-          <button className="icon-btn" onClick={() => setShowSearch(s => !s)}>
-            <i className={showSearch ? 'fas fa-times' : 'fas fa-magnifying-glass'}/>
-          </button>
-          {user
-            ? <img src={user.photoURL || `https://ui-avatars.com/api/?name=U&background=1a73e8&color=fff`}
-                style={{ width:32, height:32, borderRadius:'50%', objectFit:'cover', cursor:'pointer' }} alt=""
-                onClick={() => navigate('/profile')}/>
-            : <button className="btn-signin" onClick={() => setShowAuth(true)}>Sign In</button>
-          }
         </div>
       </header>
 

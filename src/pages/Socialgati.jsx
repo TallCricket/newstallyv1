@@ -257,20 +257,11 @@ export default function Socialgati() {
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          {/* Search icon — goes to full search page */}
-          <button onClick={() => navigate('/search')}
-            style={{ width: 36, height: 36, borderRadius: 8, border: 'none', background: 'transparent', color: 'var(--muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>
-            <i className="fas fa-magnifying-glass" />
-          </button>
           <button onClick={() => user ? navigate('/alerts') : setShowAuth(true)}
             style={{ width: 36, height: 36, borderRadius: 8, border: 'none', background: 'transparent', color: 'var(--muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>
             <i className="fas fa-bell" />
           </button>
-          {user ? (
-            <img src={av} onClick={() => navigate('/profile')}
-              style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', cursor: 'pointer', border: '2px solid var(--border)' }}
-              alt="" onError={e => e.target.src = `https://ui-avatars.com/api/?name=U&background=1a73e8&color=fff`} />
-          ) : (
+          {!user && (
             <button onClick={() => setShowAuth(true)}
               style={{ padding: '6px 16px', background: '#1a73e8', color: '#fff', borderRadius: 99, fontSize: 13, fontWeight: 700, border: 'none', cursor: 'pointer' }}>
               Sign In

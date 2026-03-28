@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import {
-  doc, onSnapshot, collection, query, where, orderBy, limit,
+  doc, getDoc, onSnapshot, collection, query, where, orderBy, limit,
   getDocs, updateDoc, setDoc, writeBatch
 } from 'firebase/firestore'
 import { signOut, updateProfile } from 'firebase/auth'
@@ -13,6 +13,67 @@ import BottomNav from '../components/BottomNav'
 import AuthModal from '../components/AuthModal'
 import { useNavigate } from 'react-router-dom'
 import CommentsPage from '../components/CommentsPage'
+import ProfilePage from '../components/ProfilePage'
+
+
+// ── Followers/Following Modal ──────────────────────────────────────
+function FollowListModal({ title, uids, onClose, onOpenProfile }) {
+  const [users, setUsers] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!uids || uids.length === 0) { setLoading(false); return }
+    Promise.all(
+      uids.slice(0, 50).map(uid =>
+        getDoc(doc(db, 'users', uid)).then(s => s.exists() ? { id:s.id, ...s.data() } : null).catch(() => null)
+      )
+    ).then(results => {
+      setUsers(results.filter(Boolean))
+      setLoading(false)
+    })
+  }, [uids])
+
+  return (
+    <div onClick={e => e.target === e.currentTarget && onClose()}
+      style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.5)', zIndex:600, display:'flex', alignItems:'flex-end', justifyContent:'center' }}>
+      <div style={{ width:'100%', maxWidth:480, background:'var(--surface)', borderRadius:'20px 20px 0 0', maxHeight:'70dvh', display:'flex', flexDirection:'column', border:'1px solid var(--border)' }}>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'16px 16px 12px', borderBottom:'1px solid var(--border)', flexShrink:0 }}>
+          <div style={{ width:40, height:4, background:'var(--border)', borderRadius:99, position:'absolute', left:'50%', top:8, transform:'translateX(-50%)' }}/>
+          <span style={{ fontWeight:700, fontSize:16, color:'var(--ink)' }}>{title}</span>
+          <button onClick={onClose} style={{ background:'none', border:'none', fontSize:18, cursor:'pointer', color:'var(--muted)' }}>
+            <i className="fas fa-times"/>
+          </button>
+        </div>
+        <div style={{ overflowY:'auto', flex:1 }}>
+          {loading ? (
+            <div style={{ padding:40, textAlign:'center' }}>
+              <i className="fas fa-spinner fa-spin" style={{ fontSize:22, color:'var(--muted)' }}/>
+            </div>
+          ) : users.length === 0 ? (
+            <div style={{ padding:'40px 20px', textAlign:'center', color:'var(--muted)' }}>
+              <i className="fas fa-users" style={{ fontSize:36, marginBottom:12, display:'block', opacity:.3 }}/>
+              <p style={{ fontWeight:600, color:'var(--ink)' }}>No {title.toLowerCase()} yet</p>
+            </div>
+          ) : users.map(u => (
+            <div key={u.id} onClick={() => { onOpenProfile(u.id); onClose() }}
+              style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 16px', borderBottom:'1px solid var(--border2)', cursor:'pointer', transition:'background .15s' }}
+              onMouseOver={e => e.currentTarget.style.background='var(--surface2)'}
+              onMouseOut={e => e.currentTarget.style.background='transparent'}>
+              <img src={u.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent((u.displayName||'U').substring(0,2))}&background=9334e6&color=fff`}
+                style={{ width:46, height:46, borderRadius:'50%', objectFit:'cover', flexShrink:0 }} alt=""
+                onError={e => e.target.src=`https://ui-avatars.com/api/?name=U&background=9334e6&color=fff`}/>
+              <div style={{ flex:1, minWidth:0 }}>
+                <div style={{ fontSize:14, fontWeight:700, color:'var(--ink)' }}>{u.displayName || 'User'}</div>
+                <div style={{ fontSize:12, color:'var(--muted)' }}>@{u.username || 'user'}</div>
+              </div>
+              <i className="fas fa-chevron-right" style={{ color:'var(--muted)', fontSize:12 }}/>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
 
 const SETTINGS_LINKS = [
   { icon:'fas fa-info-circle',    label:'About NewsTally',  url:'/about',   color:'#1a73e8' },
@@ -103,6 +164,8 @@ export default function Profile() {
   const [postsLoading, setPostsLoading] = useState(true)
   const [showAuth, setShowAuth]     = useState(false)
   const [openCommentPost, setOpenCommentPost] = useState(null)
+  const [followList, setFollowList] = useState(null)  // { title, uids }
+  const [openProfileSlide, setOpenProfileSlide] = useState(null)
 
   const [editMode, setEditMode]         = useState(false)
   const [editName, setEditName]         = useState('')
@@ -394,8 +457,15 @@ export default function Profile() {
 
               {/* Stats — realtime via onSnapshot */}
               <div style={{ display:'flex', marginTop:16, background:'var(--surface2)', borderRadius:12, overflow:'hidden', border:'1px solid var(--border)' }}>
-                {[{ label:'Posts', val: posts.length },{ label:'Followers', val: profile?.followersCount||0 },{ label:'Following', val: profile?.followingCount||0 }].map((s,i) => (
-                  <div key={s.label} style={{ flex:1, textAlign:'center', padding:'12px 0', borderRight: i<2 ? '1px solid var(--border)' : 'none' }}>
+                {[{ label:'Posts', val: posts.length, onClick: null },
+                  { label:'Followers', val: profile?.followersCount||0, onClick: () => setFollowList({ title:'Followers', uids: profile?.followers||[] }) },
+                  { label:'Following', val: profile?.followingCount||0, onClick: () => setFollowList({ title:'Following', uids: profile?.following||[] }) }
+                ].map((s,i) => (
+                  <div key={s.label}
+                    onClick={s.onClick || undefined}
+                    style={{ flex:1, textAlign:'center', padding:'12px 0', borderRight: i<2 ? '1px solid var(--border)' : 'none', cursor: s.onClick ? 'pointer' : 'default' }}
+                    onMouseOver={e => s.onClick && (e.currentTarget.style.background='var(--surface2)')}
+                    onMouseOut={e => e.currentTarget.style.background='transparent'}>
                     <div style={{ fontSize:20, fontWeight:800, color:'var(--ink)' }}>{formatCount(s.val)}</div>
                     <div style={{ fontSize:11, color:'var(--muted)', fontWeight:600 }}>{s.label}</div>
                   </div>
@@ -558,7 +628,21 @@ export default function Profile() {
         )}
       </div>
 
-      <CommentsPage postId={openCommentPost} onClose={() => setOpenCommentPost(null)} onOpenProfile={() => {}}/>
+      {followList && (
+        <FollowListModal
+          title={followList.title}
+          uids={followList.uids}
+          onClose={() => setFollowList(null)}
+          onOpenProfile={uid => { setFollowList(null); setOpenProfileSlide(uid) }}
+        />
+      )}
+      {openProfileSlide && (
+        <ProfilePage uid={openProfileSlide} onClose={() => setOpenProfileSlide(null)}
+          onOpenComments={id => setOpenCommentPost(id)}
+          onOpenProfile={uid2 => setOpenProfileSlide(uid2)}
+          onAuthRequired={() => setShowAuth(true)}/>
+      )}
+      <CommentsPage postId={openCommentPost} onClose={() => setOpenCommentPost(null)} onOpenProfile={uid => setOpenProfileSlide(uid)}/>
       {showAuth && <AuthModal onClose={() => setShowAuth(false)}/>}
       <BottomNav/>
     </>

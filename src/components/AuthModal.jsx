@@ -4,7 +4,7 @@ import { doc, setDoc, serverTimestamp } from 'firebase/firestore'
 import { auth, db } from '../firebase/config'
 import { showToast } from '../utils'
 
-// ─── Step indicator ───────────────────────────────────────────────
+// \u2500\u2500\u2500 Step indicator \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 function Steps({ current, total }) {
   return (
     <div style={{ display:'flex', gap:6, justifyContent:'center', marginBottom:24 }}>
@@ -19,7 +19,7 @@ function Steps({ current, total }) {
   )
 }
 
-// ─── Input ────────────────────────────────────────────────────────
+// \u2500\u2500\u2500 Input \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 function Input({ label, type='text', value, onChange, placeholder, error, autoFocus }) {
   const [show, setShow] = useState(false)
   const isPass = type === 'password'
@@ -50,7 +50,7 @@ function Input({ label, type='text', value, onChange, placeholder, error, autoFo
   )
 }
 
-// ─── Checkbox ─────────────────────────────────────────────────────
+// \u2500\u2500\u2500 Checkbox \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 function Check({ checked, onChange, children }) {
   return (
     <label style={{ display:'flex', alignItems:'flex-start', gap:10, cursor:'pointer', marginBottom:12 }}>
@@ -65,7 +65,7 @@ function Check({ checked, onChange, children }) {
   )
 }
 
-// ─── SIGN IN ──────────────────────────────────────────────────────
+// \u2500\u2500\u2500 SIGN IN \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 function SignIn({ onSwitch, onClose }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -85,7 +85,7 @@ function SignIn({ onSwitch, onClose }) {
     setLoading(true)
     try {
       await signInWithEmailAndPassword(auth, email.trim(), password)
-      showToast('Welcome back! 👋')
+      showToast('Welcome back! \u1f44b')
       onClose()
     } catch(e) {
       const msgs = {
@@ -127,7 +127,7 @@ function SignIn({ onSwitch, onClose }) {
   )
 }
 
-// ─── SIGN UP — 3 Steps ────────────────────────────────────────────
+// \u2500\u2500\u2500 SIGN UP \u2014 3 Steps \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 function SignUp({ onSwitch, onClose }) {
   const [step, setStep] = useState(1)
   const [form, setForm] = useState({ name:'', username:'', email:'', password:'', confirm:'' })
@@ -190,7 +190,7 @@ function SignUp({ onSwitch, onClose }) {
         followers: [],
         following: [],
       })
-      showToast('Account created! Welcome to Socialgati 🎉')
+      showToast('Account created! Welcome to Socialgati \u1f389')
       onClose()
     } catch(e) {
       const msgs = {
@@ -214,10 +214,10 @@ function SignUp({ onSwitch, onClose }) {
 
       <Steps current={step} total={3}/>
 
-      {/* ── STEP 1: Name + Username ── */}
+      {/* \u2500\u2500 STEP 1: Name + Username \u2500\u2500 */}
       {step === 1 && (
         <div>
-          <p style={{ fontSize:13, fontWeight:700, color:'#1a73e8', marginBottom:16, textAlign:'center' }}>Step 1 of 3 — Your identity</p>
+          <p style={{ fontSize:13, fontWeight:700, color:'#1a73e8', marginBottom:16, textAlign:'center' }}>Step 1 of 3 \u2014 Your identity</p>
           <Input label="Full name" value={form.name} onChange={e => setField('name', e.target.value)}
             placeholder="Rahul Sharma" error={errors.name} autoFocus/>
           <Input label="Username" value={form.username} onChange={e => setField('username', e.target.value.toLowerCase().replace(/\s/g,''))}
@@ -229,15 +229,15 @@ function SignUp({ onSwitch, onClose }) {
           )}
           <button onClick={handleNext}
             style={{ width:'100%', padding:14, background:'linear-gradient(135deg,#1a73e8,#1557b0)', color:'#fff', border:'none', borderRadius:12, fontSize:15, fontWeight:700, cursor:'pointer' }}>
-            Continue →
+            Continue \u2192
           </button>
         </div>
       )}
 
-      {/* ── STEP 2: Email + Password ── */}
+      {/* \u2500\u2500 STEP 2: Email + Password \u2500\u2500 */}
       {step === 2 && (
         <div>
-          <p style={{ fontSize:13, fontWeight:700, color:'#1a73e8', marginBottom:16, textAlign:'center' }}>Step 2 of 3 — Secure your account</p>
+          <p style={{ fontSize:13, fontWeight:700, color:'#1a73e8', marginBottom:16, textAlign:'center' }}>Step 2 of 3 \u2014 Secure your account</p>
           <Input label="Email address" type="email" value={form.email} onChange={e => setField('email', e.target.value)}
             placeholder="you@example.com" error={errors.email} autoFocus/>
           <Input label="Password" type="password" value={form.password} onChange={e => setField('password', e.target.value)}
@@ -261,20 +261,20 @@ function SignUp({ onSwitch, onClose }) {
           <div style={{ display:'flex', gap:10 }}>
             <button onClick={() => setStep(1)}
               style={{ flex:1, padding:14, background:'#f1f3f4', color:'#606060', border:'none', borderRadius:12, fontSize:15, fontWeight:600, cursor:'pointer' }}>
-              ← Back
+              \u2190 Back
             </button>
             <button onClick={handleNext}
               style={{ flex:2, padding:14, background:'linear-gradient(135deg,#1a73e8,#1557b0)', color:'#fff', border:'none', borderRadius:12, fontSize:15, fontWeight:700, cursor:'pointer' }}>
-              Continue →
+              Continue \u2192
             </button>
           </div>
         </div>
       )}
 
-      {/* ── STEP 3: Agreements ── */}
+      {/* \u2500\u2500 STEP 3: Agreements \u2500\u2500 */}
       {step === 3 && (
         <div>
-          <p style={{ fontSize:13, fontWeight:700, color:'#1a73e8', marginBottom:16, textAlign:'center' }}>Step 3 of 3 — Almost done!</p>
+          <p style={{ fontSize:13, fontWeight:700, color:'#1a73e8', marginBottom:16, textAlign:'center' }}>Step 3 of 3 \u2014 Almost done!</p>
 
           <div style={{ background:'#f0f7ff', border:'1px solid #c5d9f8', borderRadius:12, padding:'14px 16px', marginBottom:20 }}>
             <Check checked={checks.terms} onChange={v => setCheck('terms', v)}>
@@ -295,14 +295,14 @@ function SignUp({ onSwitch, onClose }) {
           {/* Summary */}
           <div style={{ background:'#f8f9fa', borderRadius:10, padding:'12px 14px', marginBottom:20, fontSize:13, color:'#606060', lineHeight:1.7 }}>
             <p><strong>Creating account for:</strong></p>
-            <p>👤 {form.name} <span style={{ color:'#9aa0a6' }}>@{form.username}</span></p>
-            <p>📧 {form.email}</p>
+            <p>\u1f464 {form.name} <span style={{ color:'#9aa0a6' }}>@{form.username}</span></p>
+            <p>\u1f4e7 {form.email}</p>
           </div>
 
           <div style={{ display:'flex', gap:10 }}>
             <button onClick={() => setStep(2)}
               style={{ flex:1, padding:14, background:'#f1f3f4', color:'#606060', border:'none', borderRadius:12, fontSize:15, fontWeight:600, cursor:'pointer' }}>
-              ← Back
+              \u2190 Back
             </button>
             <button onClick={handleCreate} disabled={loading || !checks.terms || !checks.privacy || !checks.age}
               style={{ flex:2, padding:14,
@@ -311,7 +311,7 @@ function SignUp({ onSwitch, onClose }) {
                 color:'#fff', border:'none', borderRadius:12, fontSize:15, fontWeight:700,
                 cursor: (checks.terms && checks.privacy && checks.age && !loading) ? 'pointer' : 'not-allowed',
                 display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
-              {loading ? <><i className="fas fa-spinner fa-spin"/> Creating...</> : '🎉 Create Account'}
+              {loading ? <><i className="fas fa-spinner fa-spin"/> Creating...</> : '\u1f389 Create Account'}
             </button>
           </div>
         </div>
@@ -325,7 +325,7 @@ function SignUp({ onSwitch, onClose }) {
   )
 }
 
-// ─── MAIN EXPORT ──────────────────────────────────────────────────
+// \u2500\u2500\u2500 MAIN EXPORT \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 export default function AuthModal({ onClose }) {
   const [mode, setMode] = useState('signin')
 

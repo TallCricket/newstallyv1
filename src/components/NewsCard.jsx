@@ -6,7 +6,7 @@ export default function NewsCard({ item, featured = false, onRepost }) {
   const [imgErr, setImgErr] = useState(false)
   const navigate = useNavigate()
 
-  // ✅ FIX: Navigate to internal NewsOpen page instead of opening external URL
+  // \u2705 FIX: Navigate to internal NewsOpen page instead of opening external URL
   const handleClick = () => {
     navigate(`/news/${item.id}`)
   }
@@ -24,7 +24,7 @@ export default function NewsCard({ item, featured = false, onRepost }) {
           <span style={{ fontSize:10, fontWeight:700, color:'#1a73e8', textTransform:'uppercase', letterSpacing:'.06em', display:'flex', alignItems:'center', gap:4 }}>
             <i className={catIcon(item.category)} style={{ fontSize:9 }}/> {item.category}
           </span>
-          <span style={{ fontSize:10, color:'#9aa0a6' }}>•</span>
+          <span style={{ fontSize:10, color:'#9aa0a6' }}>\u2022</span>
           <span style={{ fontSize:10, color:'#9aa0a6', fontWeight:500 }}>{item.source}</span>
           <span style={{ fontSize:10, color:'#9aa0a6', marginLeft:'auto' }}>{timeAgo(item.date)}</span>
         </div>

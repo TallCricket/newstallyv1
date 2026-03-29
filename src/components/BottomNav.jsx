@@ -48,7 +48,7 @@ export default function BottomNav({ darkMode = false }) {
         <span>News</span>
       </button>
 
-      {/* Shorts — special pill button */}
+      {/* Shorts \u2014 special pill button */}
       <button className="nav-shorts" onClick={() => navigate('/shorts')}>
         <div className="shorts-inner">
           <i className="fas fa-circle-play" style={{ color: '#fff', fontSize: 20 }} />
@@ -63,7 +63,7 @@ export default function BottomNav({ darkMode = false }) {
         <span>Search</span>
       </button>
 
-      {/* Profile — shows avatar if available + notification dot for unread */}
+      {/* Profile \u2014 shows avatar if available + notification dot for unread */}
       <button
         className={`nav-btn ${isActive('/profile') ? 'active' : ''}`}
         style={{ color: active(isActive('/profile')), position: 'relative' }}

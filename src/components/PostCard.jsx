@@ -6,7 +6,7 @@ import { doc, updateDoc, arrayUnion, arrayRemove, getDoc } from 'firebase/firest
 import { db, APP_ID } from '../firebase/config'
 import RichText from './RichText'
 
-// ── News Repost Embed Card ─────────────────────────────────────────
+// \u2500\u2500 News Repost Embed Card \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 function RepostCard({ post, onClick }) {
   const [imgErr, setImgErr] = useState(false)
   return (
@@ -85,7 +85,7 @@ function RepostCard({ post, onClick }) {
   )
 }
 
-// ── Poll ──────────────────────────────────────────────────────────
+// \u2500\u2500 Poll \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 function PollContent({ post, id }) {
   const { user } = useAuth()
   const opts = post.pollOptions || []
@@ -122,13 +122,13 @@ function PollContent({ post, id }) {
         )
       })}
       <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 4 }}>
-        {total} vote{total !== 1 ? 's' : ''} · {userVoted ? 'Voted' : 'Tap to vote'}
+        {total} vote{total !== 1 ? 's' : ''} \u00b7 {userVoted ? 'Voted' : 'Tap to vote'}
       </div>
     </div>
   )
 }
 
-// ── Main PostCard ─────────────────────────────────────────────────
+// \u2500\u2500 Main PostCard \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 export default function PostCard({ post, id, onOpenComments, onOpenProfile, onAuthRequired, onMention, onHashtag }) {
   const { user, userData } = useAuth()
   const navigate = useNavigate()
@@ -145,7 +145,7 @@ export default function PostCard({ post, id, onOpenComments, onOpenProfile, onAu
         type: 'like', fromUid: user.uid,
         fromName: userData?.displayName || user.displayName || 'Someone',
         fromAvatar: user.photoURL || '',
-        message: 'ne aapki post ko Gati diya ❤️',
+        message: 'ne aapki post ko Gati diya \u2764\ufe0f',
         postId: id,
         postSnippet: (post.headline || '').substring(0, 60)
       })
@@ -179,14 +179,14 @@ export default function PostCard({ post, id, onOpenComments, onOpenProfile, onAu
               {post.username || 'User'}
             </span>
             {post.type === 'repost' && (
-              <span style={{ fontSize: 10, fontWeight: 700, color: '#34a853', background: 'rgba(52,168,83,.12)', padding: '1px 7px', borderRadius: 4 }}>↺ Repost</span>
+              <span style={{ fontSize: 10, fontWeight: 700, color: '#34a853', background: 'rgba(52,168,83,.12)', padding: '1px 7px', borderRadius: 4 }}>\u21ba Repost</span>
             )}
             {post.type === 'poll' && (
-              <span style={{ fontSize: 10, fontWeight: 700, color: '#1a73e8', background: 'rgba(26,115,232,.1)', padding: '1px 7px', borderRadius: 4 }}>📊 Poll</span>
+              <span style={{ fontSize: 10, fontWeight: 700, color: '#1a73e8', background: 'rgba(26,115,232,.1)', padding: '1px 7px', borderRadius: 4 }}>\u1f4ca Poll</span>
             )}
           </div>
           <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 1 }}>
-            @{post.username || 'user'} · {timeAgo(post.timestamp?.toDate?.() || post.timestamp)}
+            @{post.username || 'user'} \u00b7 {timeAgo(post.timestamp?.toDate?.() || post.timestamp)}
           </div>
         </div>
       </div>

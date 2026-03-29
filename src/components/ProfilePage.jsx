@@ -22,7 +22,7 @@ export default function ProfilePage({ uid, onClose, onOpenComments, onOpenProfil
 
   const isOwn = user && user.uid === uid
 
-  // Fetch user profile — try by uid directly
+  // Fetch user profile \u2014 try by uid directly
   useEffect(() => {
     if (!uid) return
     setLoading(true)
@@ -48,7 +48,7 @@ export default function ProfilePage({ uid, onClose, onOpenComments, onOpenProfil
         setLoading(false)
       })
 
-    // Load posts — both text posts and reposts
+    // Load posts \u2014 both text posts and reposts
     getDocs(query(
       collection(db, 'artifacts', APP_ID, 'public', 'data', 'reposts'),
       where('userId', '==', uid),
@@ -86,7 +86,7 @@ export default function ProfilePage({ uid, onClose, onOpenComments, onOpenProfil
         const myName = mySnap?.data()?.displayName || userData?.displayName || user.displayName || 'Someone'
         sendNotification(uid, {
           type: 'follow', fromUid: user.uid, fromName: myName,
-          fromAvatar: user.photoURL || '', message: 'ne aapko follow kiya 🎉', postId: ''
+          fromAvatar: user.photoURL || '', message: 'ne aapko follow kiya \u1f389', postId: ''
         })
       }
     } catch(e) {
@@ -145,7 +145,7 @@ export default function ProfilePage({ uid, onClose, onOpenComments, onOpenProfil
                   </button>
                 ) : (
                   <button className={`btn-follow ${following ? 'following' : ''}`} onClick={handleFollow}>
-                    {following ? '✓ Following' : 'Follow'}
+                    {following ? '\u2713 Following' : 'Follow'}
                   </button>
                 )}
               </div>

@@ -67,7 +67,7 @@ export default function CommentsPage({ postId, onClose, onOpenProfile }) {
   return (
     <div className={`page-layer ${postId ? 'open' : ''}`} style={{ display: 'flex', flexDirection: 'column' }}>
 
-      {/* ── Header ── */}
+      {/* \u2500\u2500 Header \u2500\u2500 */}
       <div style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 16px',
         borderBottom:'1px solid var(--border)', flexShrink:0, position:'sticky', top:0,
         background:'var(--surface)', zIndex:10 }}>
@@ -87,7 +87,7 @@ export default function CommentsPage({ postId, onClose, onOpenProfile }) {
         )}
       </div>
 
-      {/* ── News card preview (for reposts) ── */}
+      {/* \u2500\u2500 News card preview (for reposts) \u2500\u2500 */}
       {post?.type === 'repost' && post.headline && (
         <div style={{ margin:'12px 16px 0', borderRadius:14, overflow:'hidden', border:'1px solid var(--border)',
           boxShadow:'0 2px 8px rgba(0,0,0,.06)', cursor:'pointer' }}
@@ -124,7 +124,7 @@ export default function CommentsPage({ postId, onClose, onOpenProfile }) {
         </div>
       )}
 
-      {/* ── Tabs ── */}
+      {/* \u2500\u2500 Tabs \u2500\u2500 */}
       <div style={{ display:'flex', borderBottom:'1px solid var(--border)', background:'var(--surface)',
         flexShrink:0, marginTop: post?.type === 'repost' ? 0 : 0 }}>
         <button onClick={() => setTab('comments')}
@@ -145,7 +145,7 @@ export default function CommentsPage({ postId, onClose, onOpenProfile }) {
         )}
       </div>
 
-      {/* ── Tab content ── */}
+      {/* \u2500\u2500 Tab content \u2500\u2500 */}
       <div style={{ flex:1, overflowY:'auto' }}>
 
         {/* COMMENTS tab */}
@@ -218,7 +218,7 @@ export default function CommentsPage({ postId, onClose, onOpenProfile }) {
         )}
       </div>
 
-      {/* ── Comment input ── */}
+      {/* \u2500\u2500 Comment input \u2500\u2500 */}
       {tab === 'comments' && (
         <div style={{ padding:'10px 16px', borderTop:'1px solid #f0f0f0', display:'flex', gap:10,
           alignItems:'center', flexShrink:0, background:'var(--surface)' }}>

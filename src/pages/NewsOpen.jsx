@@ -85,7 +85,7 @@ function RelatedCard({ item, onNavigate }) {
       <div style={{ flex:1, minWidth:0 }}>
         <div style={{ fontSize:10, fontWeight:700, color:accent, textTransform:'uppercase', letterSpacing:'.05em', marginBottom:4 }}>{item.category}</div>
         <div style={{ fontSize:13, fontWeight:600, color:'var(--ink)', lineHeight:1.4, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{item.title}</div>
-        <div style={{ fontSize:11, color:'var(--muted)', marginTop:4 }}>{item.source} \u00b7 {timeAgo(item.date)}</div>
+        <div style={{ fontSize:11, color:'var(--muted)', marginTop:4 }}>{item.source} {"\u00b7"} {timeAgo(item.date)}</div>
       </div>
     </div>
   )
@@ -224,7 +224,7 @@ export default function NewsOpen() {
       ))
       if (!existing.empty) {
         await updateDoc(existing.docs[0].ref, { repostCount:fbIncrement(1), repostedBy:arrayUnion(user.uid), repostedUsers:arrayUnion(myInfo) })
-        showToast('\u2705 You reposted this news!')
+        showToast('{"\u2705"} You reposted this news!')
       } else {
         await addDoc(collection(db,'artifacts',APP_ID,'public','data','reposts'), {
           userId:user.uid, username:myInfo.username, userAvatar:myInfo.avatar,
@@ -233,7 +233,7 @@ export default function NewsOpen() {
           newsId:String(newsItem.id||newsItem.title), likes:[], commentsCount:0, repostCount:1,
           repostedBy:[user.uid], repostedUsers:[myInfo], timestamp:serverTimestamp(), type:'repost'
         })
-        showToast('\u2705 Reposted to Socialgati!')
+        showToast('{"\u2705"} Reposted to Socialgati!')
       }
       setRepostItem(null)
     } catch(e) { console.error(e); showToast('Repost failed') }
@@ -317,7 +317,7 @@ export default function NewsOpen() {
           {translating && lang !== 'en' && (
             <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:10, padding:'8px 12px', background:'rgba(147,52,230,.06)', borderRadius:8, border:'1px solid rgba(147,52,230,.15)' }}>
               <i className="fas fa-spinner fa-spin" style={{ color:'#9334e6', fontSize:12 }}/>
-              <span style={{ fontSize:12, color:'#9334e6', fontWeight:600 }}>Translating to {getLangName()}\u2026</span>
+              <span style={{ fontSize:12, color:'#9334e6', fontWeight:600 }}>Translating to {getLangName()}{"\u2026"}</span>
             </div>
           )}
           <h1 style={{ fontSize:'clamp(20px,4.5vw,28px)', fontWeight:700, lineHeight:1.4, color:'var(--ink)', letterSpacing:'-.3px', marginBottom:16 }}>

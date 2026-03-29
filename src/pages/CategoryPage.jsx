@@ -1,5 +1,5 @@
 /**
- * CategoryPage \u2014 /news/category/:cat
+ * CategoryPage {"\u2014"} /news/category/:cat
  * Shows news for a specific category (or "all") with the exact same
  * Hero \u2192 Latest Updates \u2192 Grid \u2192 Sections layout as the home feed.
  * Categories are dynamic: whatever is in Firestore shows up.
@@ -66,7 +66,7 @@ function HeroCard({ item, onRepost }) {
             <span style={{ background:ac, color:'#fff', fontSize:10, fontWeight:800, padding:'4px 10px', borderRadius:99, textTransform:'uppercase' }}>{item.category}</span>
           </div>
           <div style={{ position:'absolute', bottom:12, left:14, right:14 }}>
-            <p style={{ color:'rgba(255,255,255,.75)', fontSize:11, fontWeight:600, marginBottom:4 }}>{item.source} \u00b7 {timeAgo(item.date || item.pubDate)}</p>
+            <p style={{ color:'rgba(255,255,255,.75)', fontSize:11, fontWeight:600, marginBottom:4 }}>{item.source} {"\u00b7"} {timeAgo(item.date || item.pubDate)}</p>
             <h2 style={{ color:'#fff', fontSize:17, fontWeight:700, lineHeight:1.4, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{title}</h2>
           </div>
         </div>
@@ -261,10 +261,10 @@ export default function CategoryPage() {
       const ex = await gd2(q2(col2(db,'artifacts',APP_ID,'public','data','reposts'), w2('newsId','==',String(item.id||item.title)), w2('type','==','repost'), l2(1)))
       if (!ex.empty) {
         await updateDoc(ex.docs[0].ref, { repostCount:fbIncrement(1), repostedBy:arrayUnion(user.uid), repostedUsers:arrayUnion(myInfo) })
-        showToast('\u2705 Reposted!')
+        showToast('{"\u2705"} Reposted!')
       } else {
         await addDoc(col2(db,'artifacts',APP_ID,'public','data','reposts'), { userId:user.uid, username:myInfo.username, userAvatar:myInfo.avatar, image:item.image||'', headline:item.title, newsUrl:item.url||'', newsSource:item.source||'', newsCategory:item.category||'', newsId:String(item.id||item.title), likes:[], commentsCount:0, repostCount:1, repostedBy:[user.uid], repostedUsers:[myInfo], timestamp:serverTimestamp(), type:'repost' })
-        showToast('\u2705 Reposted to Socialgati!')
+        showToast('{"\u2705"} Reposted to Socialgati!')
       }
       setRepostItem(null)
     } catch(e) { console.error(e); showToast('Repost failed') }
@@ -333,7 +333,7 @@ export default function CategoryPage() {
           <div style={{ textAlign:'center', padding:'60px 20px' }}>
             <i className="fas fa-exclamation-circle" style={{ fontSize:36, color:'#ea4335', marginBottom:12, display:'block' }}/>
             <p style={{ color:'var(--ink)', fontWeight:600, marginBottom:8 }}>Could not load news</p>
-            <button onClick={loadInitial} style={{ padding:'10px 24px', background:'#1a73e8', color:'#fff', border:'none', borderRadius:8, fontWeight:600, cursor:'pointer' }}>\u21ba Retry</button>
+            <button onClick={loadInitial} style={{ padding:'10px 24px', background:'#1a73e8', color:'#fff', border:'none', borderRadius:8, fontWeight:600, cursor:'pointer' }}>{"\u21ba"} Retry</button>
           </div>
         ) : items.length === 0 ? (
           <div style={{ textAlign:'center', padding:'60px 20px', color:'var(--muted)' }}>
@@ -342,10 +342,10 @@ export default function CategoryPage() {
           </div>
         ) : (
           <div style={{ background:'var(--bg)' }}>
-            {/* Hero \u2014 most recent */}
+            {/* Hero {"\u2014"} most recent */}
             <HeroCard item={items[0]} onRepost={setRepostItem}/>
 
-            {/* Latest Updates \u2014 items 1\u20134 */}
+            {/* Latest Updates {"\u2014"} items 1{"\u2013"}4 */}
             {items.length > 1 && (
               <div style={{ margin:'4px 16px 16px', background:'var(--surface)', borderRadius:12, border:'1px solid var(--border)', overflow:'hidden' }}>
                 <div style={{ background:ac, padding:'8px 14px', display:'flex', alignItems:'center', gap:8 }}>
@@ -358,7 +358,7 @@ export default function CategoryPage() {
               </div>
             )}
 
-            {/* 2-col grid \u2014 items 5\u201310 */}
+            {/* 2-col grid {"\u2014"} items 5{"\u2013"}10 */}
             {items.length > 5 && (
               <div style={{ padding:'0 16px', marginBottom:20 }}>
                 <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:12 }}>
@@ -397,7 +397,7 @@ export default function CategoryPage() {
               </div>
             )}
             {!hasMore && items.length > 10 && (
-              <p style={{ textAlign:'center', color:'var(--muted)', fontSize:13, padding:'20px 0' }}>All {items.length} articles loaded \u2713</p>
+              <p style={{ textAlign:'center', color:'var(--muted)', fontSize:13, padding:'20px 0' }}>All {items.length} articles loaded {"\u2713"}</p>
             )}
           </div>
         )}

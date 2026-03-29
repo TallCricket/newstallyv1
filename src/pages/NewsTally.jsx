@@ -83,7 +83,7 @@ function HeroCard({ item, onRepost }) {
             <span style={{ background:accent, color:'#fff', fontSize:10, fontWeight:800, padding:'4px 10px', borderRadius:99, textTransform:'uppercase', letterSpacing:'.05em' }}>{item.category}</span>
           </div>
           <div style={{ position:'absolute', bottom:12, left:14, right:14 }}>
-            <p style={{ color:'rgba(255,255,255,.75)', fontSize:11, fontWeight:600, marginBottom:4 }}>{item.source} \u00b7 {timeAgo(item.date || item.pubDate)}</p>
+            <p style={{ color:'rgba(255,255,255,.75)', fontSize:11, fontWeight:600, marginBottom:4 }}>{item.source} {"\u00b7"} {timeAgo(item.date || item.pubDate)}</p>
             <h2 style={{ color:'#fff', fontSize:18, fontWeight:700, lineHeight:1.4, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{title}</h2>
           </div>
         </div>
@@ -91,7 +91,7 @@ function HeroCard({ item, onRepost }) {
         <div style={{ background:`linear-gradient(135deg,${accent}22,${accent}44)`, padding:'28px 20px' }}>
           <span style={{ background:accent, color:'#fff', fontSize:10, fontWeight:800, padding:'4px 10px', borderRadius:99, textTransform:'uppercase', display:'inline-block', marginBottom:12 }}>{item.category}</span>
           <h2 style={{ fontSize:20, fontWeight:700, color:'var(--ink)', lineHeight:1.4, marginBottom:8 }}>{title}</h2>
-          <p style={{ fontSize:12, color:'var(--muted)' }}>{item.source} \u00b7 {timeAgo(item.date || item.pubDate)}</p>
+          <p style={{ fontSize:12, color:'var(--muted)' }}>{item.source} {"\u00b7"} {timeAgo(item.date || item.pubDate)}</p>
         </div>
       )}
       <div style={{ padding:'14px 16px' }}>
@@ -203,14 +203,14 @@ function CategorySection({ title, items, accent, onRepost, onSeeAll }) {
             <div style={{ position:'absolute', inset:0, background:'linear-gradient(to top,rgba(0,0,0,.6) 0%,transparent 60%)' }}/>
             <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:12 }}>
               <p style={{ color:'#fff', fontSize:15, fontWeight:700, lineHeight:1.4, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{main.title}</p>
-              <p style={{ color:'rgba(255,255,255,.7)', fontSize:11, marginTop:4 }}>{main.source} \u00b7 {timeAgo(main.date || main.pubDate)}</p>
+              <p style={{ color:'rgba(255,255,255,.7)', fontSize:11, marginTop:4 }}>{main.source} {"\u00b7"} {timeAgo(main.date || main.pubDate)}</p>
             </div>
           </div>
         )}
         {!main.image && (
           <div style={{ padding:'14px 16px' }}>
             <p style={{ fontSize:15, fontWeight:700, color:'var(--ink)', lineHeight:1.4 }}>{main.title}</p>
-            <p style={{ fontSize:12, color:'var(--muted)', marginTop:6 }}>{main.source} \u00b7 {timeAgo(main.date || main.pubDate)}</p>
+            <p style={{ fontSize:12, color:'var(--muted)', marginTop:6 }}>{main.source} {"\u00b7"} {timeAgo(main.date || main.pubDate)}</p>
           </div>
         )}
       </div>
@@ -220,7 +220,7 @@ function CategorySection({ title, items, accent, onRepost, onSeeAll }) {
             onClick={() => navigate(`/news/${item.id}`)}>
             <div style={{ flex:1, minWidth:0 }}>
               <p style={{ fontSize:13, fontWeight:600, color:'var(--ink)', lineHeight:1.4, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{item.title}</p>
-              <p style={{ fontSize:11, color:'var(--muted)', marginTop:3 }}>{item.source} \u00b7 {timeAgo(item.date || item.pubDate)}</p>
+              <p style={{ fontSize:11, color:'var(--muted)', marginTop:3 }}>{item.source} {"\u00b7"} {timeAgo(item.date || item.pubDate)}</p>
             </div>
             {item.image && <img src={item.image} alt="" loading="lazy" style={{ width:68, height:52, borderRadius:6, objectFit:'cover', flexShrink:0 }} onError={e => e.target.style.display='none'}/>}
           </div>
@@ -230,7 +230,7 @@ function CategorySection({ title, items, accent, onRepost, onSeeAll }) {
   )
 }
 
-// \u2500\u2500\u2500 Home/Category layout \u2014 same for ALL and every specific category \u2500\u2500
+// \u2500\u2500\u2500 Home/Category layout {"\u2014"} same for ALL and every specific category \u2500\u2500
 function NewsLayout({ items, cat, onRepost, onSeeAll, sentinelRef, loadingMore, hasMore, onLoadMore, totalLoaded }) {
   const { t } = useTranslation()
   const groupByCategory = (arr) => {
@@ -248,10 +248,10 @@ function NewsLayout({ items, cat, onRepost, onSeeAll, sentinelRef, loadingMore, 
 
   return (
     <div style={{ background:'var(--bg)' }}>
-      {/* Hero \u2014 always the most recent */}
+      {/* Hero {"\u2014"} always the most recent */}
       <HeroCard item={items[0]} onRepost={onRepost}/>
 
-      {/* Latest Updates strip \u2014 items 1\u20134 */}
+      {/* Latest Updates strip {"\u2014"} items 1{"\u2013"}4 */}
       {items.length > 1 && (
         <div style={{ margin:'4px 16px 16px', background:'var(--surface)', borderRadius:12, border:'1px solid var(--border)', overflow:'hidden' }}>
           <div style={{ background:'#1a73e8', padding:'8px 14px', display:'flex', alignItems:'center', gap:8 }}>
@@ -264,7 +264,7 @@ function NewsLayout({ items, cat, onRepost, onSeeAll, sentinelRef, loadingMore, 
         </div>
       )}
 
-      {/* 2-col grid \u2014 items 5\u201310 */}
+      {/* 2-col grid {"\u2014"} items 5{"\u2013"}10 */}
       {items.length > 5 && (
         <div style={{ padding:'0 16px', marginBottom:20 }}>
           <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:12 }}>
@@ -277,7 +277,7 @@ function NewsLayout({ items, cat, onRepost, onSeeAll, sentinelRef, loadingMore, 
         </div>
       )}
 
-      {/* Category sections \u2014 only on "All" tab */}
+      {/* Category sections {"\u2014"} only on "All" tab */}
       {cat === 'All' && items.length > 11 && (() => {
         const grouped = groupByCategory(items.slice(11))
         return Object.entries(grouped)
@@ -290,7 +290,7 @@ function NewsLayout({ items, cat, onRepost, onSeeAll, sentinelRef, loadingMore, 
           ))
       })()}
 
-      {/* Remaining articles \u2014 for specific category or after category sections */}
+      {/* Remaining articles {"\u2014"} for specific category or after category sections */}
       {(() => {
         const startIdx = cat === 'All' ? 40 : 11
         const remaining = items.slice(startIdx)
@@ -322,7 +322,7 @@ function NewsLayout({ items, cat, onRepost, onSeeAll, sentinelRef, loadingMore, 
       )}
       {!hasMore && totalLoaded >= PAGE_SIZE && (
         <p style={{ textAlign:'center', color:'var(--muted)', fontSize:13, padding:'20px 0' }}>
-          You've read all {totalLoaded} articles \u2713
+          You've read all {totalLoaded} articles {"\u2713"}
         </p>
       )}
     </div>
@@ -509,10 +509,10 @@ export default function NewsTally() {
       const existing = await getDocs(query(collection(db,'artifacts',APP_ID,'public','data','reposts'), where('newsId','==',String(item.id||item.title)), where('type','==','repost'), limit(1)))
       if (!existing.empty) {
         await updateDoc(existing.docs[0].ref, { repostCount:fbIncrement(1), repostedBy:arrayUnion(user.uid), repostedUsers:arrayUnion(myInfo) })
-        showToast('\u2705 You reposted this news!')
+        showToast('{"\u2705"} You reposted this news!')
       } else {
         await addDoc(collection(db,'artifacts',APP_ID,'public','data','reposts'), { userId:user.uid, username:myInfo.username, userAvatar:myInfo.avatar, image:item.image||'', headline:item.title, newsUrl:item.url||'', newsSource:item.source||'', newsCategory:item.category||'', newsId:String(item.id||item.title), likes:[], commentsCount:0, repostCount:1, repostedBy:[user.uid], repostedUsers:[myInfo], timestamp:serverTimestamp(), type:'repost' })
-        showToast('\u2705 Reposted to Socialgati!')
+        showToast('{"\u2705"} Reposted to Socialgati!')
       }
       setRepostItem(null)
     } catch(e) { console.error(e); showToast('Repost failed') }
@@ -585,7 +585,7 @@ export default function NewsTally() {
               <div style={{ textAlign:'center', padding:'60px 20px' }}>
                 <i className="fas fa-exclamation-circle" style={{ fontSize:36, color:'#ea4335', marginBottom:12, display:'block' }}/>
                 <p style={{ fontWeight:600, marginBottom:8, color:'var(--ink)' }}>Could not load news</p>
-                <button onClick={loadInitial} style={{ padding:'10px 24px', background:'#1a73e8', color:'#fff', border:'none', borderRadius:8, fontSize:14, fontWeight:600, cursor:'pointer' }}>\u21ba Retry</button>
+                <button onClick={loadInitial} style={{ padding:'10px 24px', background:'#1a73e8', color:'#fff', border:'none', borderRadius:8, fontSize:14, fontWeight:600, cursor:'pointer' }}>{"\u21ba"} Retry</button>
               </div>
             ) : search.trim() ? (
               <div>
@@ -704,7 +704,7 @@ export default function NewsTally() {
               <i className="fas fa-exclamation-circle" style={{ fontSize:36, color:'#ea4335', marginBottom:12, display:'block' }}/>
               <p style={{ fontWeight:600, marginBottom:8, color:'var(--ink)' }}>Could not load news</p>
               <p style={{ fontSize:12, color:'var(--muted)', marginBottom:16 }}>{error}</p>
-              <button onClick={loadInitial} style={{ padding:'10px 24px', background:'#1a73e8', color:'#fff', border:'none', borderRadius:8, fontSize:14, fontWeight:600, cursor:'pointer' }}>\u21ba Retry</button>
+              <button onClick={loadInitial} style={{ padding:'10px 24px', background:'#1a73e8', color:'#fff', border:'none', borderRadius:8, fontSize:14, fontWeight:600, cursor:'pointer' }}>{"\u21ba"} Retry</button>
             </div>
           ) : search.trim() ? (
             <div style={{ padding:'8px 16px', background:'var(--bg)' }}>

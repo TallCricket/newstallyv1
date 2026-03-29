@@ -104,7 +104,7 @@ function ProfilePostCard({ post, onClick, onNavigateNews }) {
       <div style={{ padding:'10px 12px' }}>
         <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:6 }}>
           {isRepost
-            ? <span style={{ fontSize:9, fontWeight:800, textTransform:'uppercase', color:'#34a853', background:'#e6f4ea', padding:'2px 7px', borderRadius:4 }}>\u21ba Repost</span>
+            ? <span style={{ fontSize:9, fontWeight:800, textTransform:'uppercase', color:'#34a853', background:'#e6f4ea', padding:'2px 7px', borderRadius:4 }}>{"\u21ba"} Repost</span>
             : <span style={{ fontSize:9, fontWeight:800, textTransform:'uppercase', color:'#1a73e8', background:'#e8f0fe', padding:'2px 7px', borderRadius:4 }}>\u1f4ac Post</span>
           }
           {post.newsCategory && (
@@ -291,13 +291,13 @@ export default function Profile() {
             }
           }
           if (count % BATCH_SIZE !== 0) await batch.commit()
-          showToast(`Profile updated \u2014 username changed everywhere \u2705`)
+          showToast(`Profile updated {"\u2014"} username changed everywhere {"\u2705"}`)
         } catch(e) {
           showToast('Profile saved, posts may take time to update')
         }
         setPropagating(false)
       } else {
-        showToast('Profile updated \u2705')
+        showToast('Profile updated {"\u2705"}')
       }
 
       setEditMode(false); setUsernameError('')
@@ -317,7 +317,7 @@ export default function Profile() {
       const url = await getDownloadURL(storageRef)
       await updateProfile(user, { photoURL: url })
       await updateDoc(doc(db, 'users', uid), { photoURL: url })
-      showToast('Photo updated \u2705')
+      showToast('Photo updated {"\u2705"}')
     } catch { showToast('Photo upload failed') }
     finally { setUploadingPhoto(false) }
   }
@@ -458,7 +458,7 @@ export default function Profile() {
                 </div>
               )}
 
-              {/* Stats \u2014 realtime via onSnapshot */}
+              {/* Stats {"\u2014"} realtime via onSnapshot */}
               <div style={{ display:'flex', marginTop:16, background:'var(--surface2)', borderRadius:12, overflow:'hidden', border:'1px solid var(--border)' }}>
                 {[{ label:'Posts', val: posts.length, onClick: null },
                   { label:'Followers', val: profile?.followersCount||0, onClick: () => setFollowList({ title:'Followers', uids: profile?.followers||[] }) },
@@ -519,7 +519,7 @@ export default function Profile() {
                 <div style={{ textAlign:'center', padding:'60px 20px', color:'var(--muted)' }}>
                   <i className="far fa-bookmark" style={{ fontSize:36, marginBottom:12, display:'block', opacity:.4 }}/>
                   <p style={{ fontWeight:600, marginBottom:6 }}>No saved articles</p>
-                  <p style={{ fontSize:13 }}>Bookmark articles in NewsTally \u2014 they'll appear here</p>
+                  <p style={{ fontSize:13 }}>Bookmark articles in NewsTally {"\u2014"} they'll appear here</p>
                   <button onClick={() => navigate('/news')}
                     style={{ marginTop:16, padding:'10px 24px', background:'#1a73e8', color:'#fff', border:'none', borderRadius:99, fontSize:14, fontWeight:700, cursor:'pointer' }}>
                     Browse News
@@ -545,7 +545,7 @@ export default function Profile() {
                   <div style={{ padding:'12px 16px', borderBottom:'1px solid var(--border2)', background:'var(--surface2)' }}>
                     <span style={{ fontSize:11, fontWeight:800, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.05em' }}>Account</span>
                   </div>
-                  {[{ icon:'fas fa-user-circle', label:'Name', val: profile?.displayName||'User' },{ icon:'fas fa-at', label:'Username', val: `@${profile?.username||'user'}` },{ icon:'fas fa-envelope', label:'Email', val: user?.email||'\u2014' },{ icon:'fas fa-user-friends', label:'Followers', val: formatCount(profile?.followersCount||0) },{ icon:'fas fa-user-plus', label:'Following', val: formatCount(profile?.followingCount||0) },{ icon:'fas fa-phone', label:'Phone', val: profile?.phone||'Not set' }].map((row,i,arr) => (
+                  {[{ icon:'fas fa-user-circle', label:'Name', val: profile?.displayName||'User' },{ icon:'fas fa-at', label:'Username', val: `@${profile?.username||'user'}` },{ icon:'fas fa-envelope', label:'Email', val: user?.email||'{"\u2014"}' },{ icon:'fas fa-user-friends', label:'Followers', val: formatCount(profile?.followersCount||0) },{ icon:'fas fa-user-plus', label:'Following', val: formatCount(profile?.followingCount||0) },{ icon:'fas fa-phone', label:'Phone', val: profile?.phone||'Not set' }].map((row,i,arr) => (
                     <div key={row.label} style={{ display:'flex', alignItems:'center', gap:12, padding:'11px 16px', borderBottom: i<arr.length-1 ? '1px solid var(--border2)' : 'none' }}>
                       <div style={{ width:36, height:36, borderRadius:10, background:'var(--surface2)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
                         <i className={row.icon} style={{ fontSize:15, color:'var(--muted)' }}/>
@@ -573,7 +573,7 @@ export default function Profile() {
                     <div style={{ flex:1 }}>
                       <div style={{ fontSize:14, fontWeight:700, color:'var(--ink)' }}>{t('darkMode')}</div>
                       <div style={{ fontSize:12, color:'var(--muted)' }}>
-                        {dark ? t('currentlyDark') : t('currentlyLight')} \u00b7 {t('followsDevice')}
+                        {dark ? t('currentlyDark') : t('currentlyLight')} {"\u00b7"} {t('followsDevice')}
                       </div>
                     </div>
                     <div onClick={toggleDark}
@@ -606,7 +606,7 @@ export default function Profile() {
                             color: uiLang===l.code ? '#1a73e8' : 'var(--muted)',
                             fontSize:14, fontWeight: uiLang===l.code ? 800 : 500, cursor:'pointer' }}>
                           {l.label}
-                          {uiLang===l.code && <span style={{ marginLeft:5, fontSize:11 }}>\u2713</span>}
+                          {uiLang===l.code && <span style={{ marginLeft:5, fontSize:11 }}>{"\u2713"}</span>}
                         </button>
                       ))}
                     </div>
@@ -632,14 +632,14 @@ export default function Profile() {
                             color: lang===l.code ? '#9334e6' : 'var(--muted)',
                             fontSize:12, fontWeight: lang===l.code ? 700 : 500, cursor:'pointer', transition:'all .15s' }}>
                           {l.native}
-                          {lang===l.code && <span style={{ marginLeft:4, fontSize:10 }}>\u2713</span>}
+                          {lang===l.code && <span style={{ marginLeft:4, fontSize:10 }}>{"\u2713"}</span>}
                         </button>
                       ))}
                     </div>
                     {lang !== 'en' && (
                       <div style={{ marginTop:10, padding:'8px 12px', background:'rgba(147,52,230,.06)', borderRadius:8, border:'1px solid rgba(147,52,230,.18)' }}>
                         <p style={{ fontSize:12, color:'#9334e6', fontWeight:600, margin:0 }}>
-                          \u2713 {t('autoTranslated')} \u2014 {getLangName()}
+                          {"\u2713"} {t('autoTranslated')} {"\u2014"} {getLangName()}
                         </p>
                       </div>
                     )}
@@ -672,13 +672,13 @@ export default function Profile() {
                   </div>
                   <div style={{ display:'flex', alignItems:'center', gap:12, padding:'13px 16px', borderBottom:'1px solid var(--border2)' }}>
                     <img src="https://i.postimg.cc/dLTgRxbL/cropped-circle-image.png" style={{ width:36, height:36, borderRadius:10 }} alt=""/>
-                    <div><div style={{ fontSize:14, fontWeight:700, color:'var(--ink)' }}>NewsTally</div><div style={{ fontSize:11, color:'var(--muted)' }}>Version 2.0 \u00b7 Socialgati</div></div>
+                    <div><div style={{ fontSize:14, fontWeight:700, color:'var(--ink)' }}>NewsTally</div><div style={{ fontSize:11, color:'var(--muted)' }}>Version 2.0 {"\u00b7"} Socialgati</div></div>
                   </div>
                   <div style={{ display:'flex', alignItems:'center', gap:12, padding:'13px 16px' }}>
                     <div style={{ width:36, height:36, borderRadius:10, background:'#fce4ec', display:'flex', alignItems:'center', justifyContent:'center' }}>
                       <i className="fas fa-globe" style={{ fontSize:16, color:'#e91e63' }}/>
                     </div>
-                    <div><div style={{ fontSize:14, fontWeight:700, color:'var(--ink)' }}>Websites</div><div style={{ fontSize:11, color:'var(--muted)' }}>newstally.online \u00b7 socialgati.online</div></div>
+                    <div><div style={{ fontSize:14, fontWeight:700, color:'var(--ink)' }}>Websites</div><div style={{ fontSize:11, color:'var(--muted)' }}>newstally.online {"\u00b7"} socialgati.online</div></div>
                   </div>
                 </div>
 

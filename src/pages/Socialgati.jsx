@@ -32,7 +32,7 @@ function PostSkeleton() {
   )
 }
 
-// \u2500\u2500 MentionInput \u2014 textarea with @ autocomplete \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// \u2500\u2500 MentionInput {"\u2014"} textarea with @ autocomplete \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 function MentionInput({ value, onChange, placeholder }) {
   const [suggestions, setSuggestions] = useState([])
   const [mentionQuery, setMentionQuery] = useState(null)
@@ -203,7 +203,7 @@ export default function Socialgati() {
       })
       setPostText('')
       setShowCreateModal(false)
-      showToast('Posted! \u2705')
+      showToast('Posted! {"\u2705"}')
     } catch { showToast('Failed. Try again.') }
     finally { setPosting(false) }
   }

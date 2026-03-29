@@ -10,7 +10,7 @@ import { useAuth } from '../context/AuthContext'
 import { showToast, timeAgo } from '../utils'
 import { useNavigate } from 'react-router-dom'
 
-// \u2705 Only this email can access manager
+// {"\u2705"} Only this email can access manager
 const MANAGER_EMAIL = 'newstallyofficial@gmail.com'
 
 const CAT_OPTIONS = ['National','World','Business','Technology','Health','Education','Sports','General','Entertainment']
@@ -147,7 +147,7 @@ export default function ManagerPage() {
         manualEntry: true,
         timestamp:   serverTimestamp()
       })
-      showToast('\u2705 News added successfully!')
+      showToast('{"\u2705"} News added successfully!')
       setForm(EMPTY_FORM)
     } catch(e) { console.error(e); showToast('Failed to add news: ' + e.message) }
     finally { setSaving(false) }
@@ -172,7 +172,7 @@ export default function ManagerPage() {
     try {
       await deleteDoc(doc(db, 'news', id))
       setRecentNews(prev => prev.filter(n => n.id !== id))
-      showToast('Deleted \u2705')
+      showToast('Deleted {"\u2705"}')
     } catch(e) { showToast('Delete failed: ' + e.message) }
   }
 
@@ -217,7 +217,7 @@ export default function ManagerPage() {
       const batch = writeBatch(db)
       rankItems.forEach((item, i) => batch.update(doc(db, 'news', item.id), { rank: i + 1 }))
       await batch.commit()
-      showToast('\u2705 Rankings saved!')
+      showToast('{"\u2705"} Rankings saved!')
     } catch(e) { showToast('Save failed: ' + e.message) }
     setRankSaving(false)
   }
@@ -234,7 +234,7 @@ export default function ManagerPage() {
     setCatOrderSaving(true)
     try {
       await setDoc(doc(db, 'config', 'rankings'), { categoryOrder: catOrder }, { merge: true })
-      showToast('\u2705 Category order saved!')
+      showToast('{"\u2705"} Category order saved!')
     } catch(e) { showToast('Save failed: ' + e.message) }
     setCatOrderSaving(false)
   }
@@ -360,7 +360,7 @@ export default function ManagerPage() {
               <div style={{ background:'var(--surface)', borderRadius:14, padding:'16px', marginBottom:16, border:'1px solid var(--border)' }}>
                 <div style={{ fontSize:12, fontWeight:800, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.05em', marginBottom:12 }}>Preview</div>
                 {form.image && <img src={form.image} alt="" style={{ width:'100%', height:160, objectFit:'cover', borderRadius:10, marginBottom:10 }} onError={e => e.target.style.display='none'}/>}
-                <div style={{ fontSize:11, fontWeight:800, color:'#1a73e8', textTransform:'uppercase', marginBottom:6 }}>{form.category} \u00b7 {form.source || 'NewsTally'}</div>
+                <div style={{ fontSize:11, fontWeight:800, color:'#1a73e8', textTransform:'uppercase', marginBottom:6 }}>{form.category} {"\u00b7"} {form.source || 'NewsTally'}</div>
                 <div style={{ fontSize:16, fontWeight:700, color:'var(--ink)', lineHeight:1.4, marginBottom:6 }}>{form.title}</div>
                 {form.description && <div style={{ fontSize:13, color:'var(--muted)', lineHeight:1.6 }}>{form.description.substring(0,200)}{form.description.length > 200 ? '...' : ''}</div>}
               </div>
@@ -391,7 +391,7 @@ export default function ManagerPage() {
             <div key={n.id} style={{ background:'var(--surface)', borderRadius:12, padding:'14px', marginBottom:10, border:'1px solid var(--border)', display:'flex', gap:12, alignItems:'flex-start' }}>
               {n.image && <img src={n.image} alt="" style={{ width:70, height:56, borderRadius:8, objectFit:'cover', flexShrink:0 }} onError={e => e.target.style.display='none'}/>}
               <div style={{ flex:1, minWidth:0 }}>
-                <div style={{ fontSize:10, fontWeight:800, color:'#1a73e8', textTransform:'uppercase', marginBottom:4 }}>{n.category} \u00b7 {n.source}</div>
+                <div style={{ fontSize:10, fontWeight:800, color:'#1a73e8', textTransform:'uppercase', marginBottom:4 }}>{n.category} {"\u00b7"} {n.source}</div>
                 <div style={{ fontSize:13, fontWeight:600, color:'var(--ink)', lineHeight:1.4, marginBottom:4, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{n.title}</div>
                 <div style={{ fontSize:11, color:'var(--muted)', display:'flex', gap:8, alignItems:'center' }}>
                   <span>{timeAgo(n.pubDate || n.fetchedAt)}</span>
@@ -420,7 +420,7 @@ export default function ManagerPage() {
               </div>
               <button onClick={saveCatOrder} disabled={catOrderSaving}
                 style={{ padding:'7px 16px', background:'#1a73e8', color:'#fff', border:'none', borderRadius:8, fontSize:12, fontWeight:700, cursor:'pointer', display:'flex', alignItems:'center', gap:6 }}>
-                {catOrderSaving ? <><i className="fas fa-spinner fa-spin"/> Saving\u2026</> : <><i className="fas fa-save"/> Save</>}
+                {catOrderSaving ? <><i className="fas fa-spinner fa-spin"/> Saving{"\u2026"}</> : <><i className="fas fa-save"/> Save</>}
               </button>
             </div>
             <div style={{ padding:'6px 0' }}>
@@ -460,7 +460,7 @@ export default function ManagerPage() {
                 </button>
                 <button onClick={saveRankings} disabled={rankSaving || rankItems.length === 0}
                   style={{ padding:'8px 16px', background: rankItems.length ? '#34a853' : 'var(--border)', color: rankItems.length ? '#fff' : 'var(--muted)', border:'none', borderRadius:8, fontSize:12, fontWeight:700, cursor: rankItems.length ? 'pointer' : 'not-allowed', display:'flex', alignItems:'center', gap:6 }}>
-                  {rankSaving ? <><i className="fas fa-spinner fa-spin"/> Saving\u2026</> : <><i className="fas fa-save"/> Save Rankings</>}
+                  {rankSaving ? <><i className="fas fa-spinner fa-spin"/> Saving{"\u2026"}</> : <><i className="fas fa-save"/> Save Rankings</>}
                 </button>
               </div>
             </div>
@@ -476,7 +476,7 @@ export default function ManagerPage() {
             ) : (
               <div>
                 <div style={{ padding:'8px 16px 6px', fontSize:11, color:'var(--muted)', fontWeight:600 }}>
-                  {rankItems.length} articles \u00b7 \u2191\u2193 to reorder \u00b7 #1 appears first in feed
+                  {rankItems.length} articles {"\u00b7"} {"\u2191"}{"\u2193"} to reorder {"\u00b7"} #1 appears first in feed
                 </div>
                 {rankItems.map((item, idx) => (
                   <div key={item.id} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 16px',
@@ -498,7 +498,7 @@ export default function ManagerPage() {
                         display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>
                         {item.title}
                       </div>
-                      <div style={{ fontSize:11, color:'var(--muted)', marginTop:2 }}>{item.source || ''} \u00b7 {timeAgo(item.pubDate || item.fetchedAt)}</div>
+                      <div style={{ fontSize:11, color:'var(--muted)', marginTop:2 }}>{item.source || ''} {"\u00b7"} {timeAgo(item.pubDate || item.fetchedAt)}</div>
                     </div>
                     <div style={{ display:'flex', flexDirection:'column', gap:3, flexShrink:0 }}>
                       <button onClick={() => moveItem(idx, -1)} disabled={idx === 0}

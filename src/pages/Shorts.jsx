@@ -323,7 +323,7 @@ export default function Shorts() {
       ))
       if (!existing.empty) {
         await updateDoc(existing.docs[0].ref, { repostCount: fbIncrement(1), repostedBy: arrayUnion(user.uid), repostedUsers: arrayUnion(myInfo) })
-        showToast('\u2705 You reposted this news!')
+        showToast('{"\u2705"} You reposted this news!')
       } else {
         await addDoc(collection(db, 'artifacts', APP_ID, 'public', 'data', 'reposts'), {
           userId: user.uid, username: myInfo.username, userAvatar: myInfo.avatar,
@@ -332,7 +332,7 @@ export default function Shorts() {
           newsId: String(item.id||item.title), likes:[], commentsCount:0, repostCount:1,
           repostedBy:[user.uid], repostedUsers:[myInfo], timestamp:serverTimestamp(), type:'repost'
         })
-        showToast('\u2705 Reposted to Socialgati!')
+        showToast('{"\u2705"} Reposted to Socialgati!')
       }
       setRepostItem(null)
     } catch(e) { showToast('Repost failed') }

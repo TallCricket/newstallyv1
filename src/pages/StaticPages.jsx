@@ -26,7 +26,7 @@ const h2 = { fontSize:18, fontWeight:700, color:'#202124', marginBottom:10, marg
 export function About() {
   return (
     <StaticLayout title="About NewsTally">
-      <p style={prose}>NewsTally is India's fastest growing news and community platform. We bring you the latest breaking news alongside a vibrant community \u2014 Socialgati \u2014 where you can share opinions, give Gati to posts, repost headlines, and connect with millions of Indians.</p>
+      <p style={prose}>NewsTally is India's fastest growing news and community platform. We bring you the latest breaking news alongside a vibrant community {"\u2014"} Socialgati {"\u2014"} where you can share opinions, give Gati to posts, repost headlines, and connect with millions of Indians.</p>
       <h2 style={h2}>Our Mission</h2>
       <p style={prose}>To make news accessible, engaging, and community-driven for every Indian. We believe news is better when it's discussed, shared, and given context by real people.</p>
       <h2 style={h2}>Contact Us</h2>

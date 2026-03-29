@@ -187,7 +187,7 @@ export default function SearchPage() {
           </div>
         </div>
 
-        {/* Filter tabs \u2014 only when query active */}
+        {/* Filter tabs {"\u2014"} only when query active */}
         {q.trim() && (
           <div style={{ display: 'flex', gap: 6, marginTop: 8, overflowX: 'auto', scrollbarWidth: 'none', paddingBottom: 2 }}>
             {[['all', 'All'], ['people', 'People'], ['posts', 'Posts'], ['hashtags', '#Tags']].map(([k, l]) => (
@@ -207,7 +207,7 @@ export default function SearchPage() {
       {/* \u2500\u2500 Body \u2500\u2500 */}
       <div style={{ paddingTop: topOffset, paddingBottom: 72, maxWidth: 600, margin: '0 auto', background: 'var(--bg)', minHeight: '100dvh' }}>
 
-        {/* Empty state \u2014 trending tags */}
+        {/* Empty state {"\u2014"} trending tags */}
         {!q.trim() && (
           <div style={{ padding: '20px 16px' }}>
             <h2 style={{ fontSize: 16, fontWeight: 800, color: 'var(--ink)', marginBottom: 16 }}>\u1f525 Trending on Socialgati</h2>

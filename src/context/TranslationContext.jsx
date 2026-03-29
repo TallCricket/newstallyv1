@@ -43,7 +43,7 @@ export const UI = {
     uiLangDesc: 'Controls buttons, labels and navigation language',
     contentLangDesc: 'News headlines and articles will be translated to this language',
     autoTranslated: 'Auto-translated',
-    bookmarkArticles: 'Bookmark articles in NewsTally \u2014 they\'ll appear here',
+    bookmarkArticles: 'Bookmark articles in NewsTally {"\u2014"} they\'ll appear here',
     shareFirst: 'Share your first thought on Socialgati!',
     joinSocialgati: 'Join Socialgati to post, follow and connect',
     signInView: 'Sign in to view your profile',

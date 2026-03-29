@@ -8,11 +8,11 @@
   "background_color": "#ffffff",
   "theme_color": "#1a73e8",
   "icons": [
-    {"src":"https://i.postimg.cc/cCnsLTMb/socialgati.jpg","sizes":"192x192","type":"image/png","purpose":"any maskable"},
-    {"src":"https://i.postimg.cc/cCnsLTMb/socialgati.jpg","sizes":"312x312","type":"image/png","purpose":"any maskable"}
+    {"src":"https://i.postimg.cc/dLTgRxbL/cropped-circle-image.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},
+    {"src":"https://i.postimg.cc/dLTgRxbL/cropped-circle-image.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}
   ],
   "shortcuts": [
-    {"name":"Community","url":"/","icons":[{"src":"https://i.postimg.cc/cCnsLTMb/socialgati.jpg","sizes":"96x96"}]},
+    {"name":"Community","url":"/","icons":[{"src":"https://i.postimg.cc/dLTgRxbL/cropped-circle-image.png","sizes":"96x96"}]},
     {"name":"News","url":"/news","icons":[{"src":"https://i.postimg.cc/dLTgRxbL/cropped-circle-image.png","sizes":"96x96"}]},
     {"name":"Shorts","url":"/shorts","icons":[{"src":"https://i.postimg.cc/dLTgRxbL/cropped-circle-image.png","sizes":"96x96"}]}
   ]

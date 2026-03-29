@@ -13,7 +13,7 @@ const app = initializeApp({
   appId: '1:506893212961:web:63882290195da992207260'
 })
 
-// \u2705 App Check \u2014 reCAPTCHA v3 (required for Firestore data fetch)
+// {"\u2705"} App Check {"\u2014"} reCAPTCHA v3 (required for Firestore data fetch)
 initializeAppCheck(app, {
   provider: new ReCaptchaV3Provider('6LdTUJQsAAAAADKO-4cTLCOqlV7jH02fg3srsoFD'),
   isTokenAutoRefreshEnabled: true

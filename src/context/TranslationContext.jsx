@@ -163,7 +163,7 @@ export function TranslationProvider({ children }) {
     const results = []
     for (let i = 0; i < texts.length; i += 5) {
       const batch = texts.slice(i, i + 5)
-      const translated = await Promise.all(batch.map(t => executeTranslate(t, tl)))
+      const translated = await Promise.all(batch.map(txt => executeTranslate(txt, tl)))
       results.push(...translated)
     }
     return results

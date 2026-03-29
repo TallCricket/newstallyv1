@@ -26,12 +26,12 @@ const h2 = { fontSize:18, fontWeight:700, color:'#202124', marginBottom:10, marg
 export function About() {
   return (
     <StaticLayout title="About NewsTally">
-      <p style={prose}>NewsTally is India's fastest growing news and community platform. We bring you the latest breaking news alongside a vibrant community — Socialgati — where you can share opinions, give Gati to posts, repost headlines, and connect with millions of Indians.</p>
+      <p style={prose}>NewsTally is India's fastest growing news and community platform. We bring you the latest breaking news alongside a vibrant community \u2014 Socialgati \u2014 where you can share opinions, give Gati to posts, repost headlines, and connect with millions of Indians.</p>
       <h2 style={h2}>Our Mission</h2>
       <p style={prose}>To make news accessible, engaging, and community-driven for every Indian. We believe news is better when it's discussed, shared, and given context by real people.</p>
       <h2 style={h2}>Contact Us</h2>
-      <p style={prose}>📧 newstallyofficial@gmail.com</p>
-      <p style={prose}>🌐 newstally.online | socialgati.online</p>
+      <p style={prose}>\u1f4e7 newstallyofficial@gmail.com</p>
+      <p style={prose}>\u1f310 newstally.online | socialgati.online</p>
       <div style={{ display:'flex', gap:16, marginTop:20 }}>
         {[['fab fa-instagram','https://instagram.com/newstallyofficial'],['fab fa-youtube','https://youtube.com/@newstallyofficial'],['fab fa-x-twitter','https://twitter.com/newstallyofficial']].map(([icon,url])=>(
           <a key={url} href={url} target="_blank" rel="noopener" style={{ width:44, height:44, background:'#f1f3f4', borderRadius:12, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, color:'#202124' }}>
@@ -49,9 +49,9 @@ export function Privacy() {
       <p style={{ ...prose, color:'#9aa0a6', fontSize:13 }}>Last updated: March 2025</p>
       <p style={prose}>NewsTally ("we", "our", "us") is committed to protecting your privacy. This policy explains what data we collect, how we use it, and your rights.</p>
       <h2 style={h2}>Data We Collect</h2>
-      <p style={prose}>• Account info (name, email, profile photo) when you sign up via Google or email.<br/>• Posts, comments, and interactions you make on Socialgati.<br/>• Basic usage analytics to improve the app.</p>
+      <p style={prose}>\u2022 Account info (name, email, profile photo) when you sign up via Google or email.<br/>\u2022 Posts, comments, and interactions you make on Socialgati.<br/>\u2022 Basic usage analytics to improve the app.</p>
       <h2 style={h2}>How We Use It</h2>
-      <p style={prose}>• To provide and improve NewsTally services.<br/>• To show you relevant notifications.<br/>• We never sell your data to third parties.</p>
+      <p style={prose}>\u2022 To provide and improve NewsTally services.<br/>\u2022 To show you relevant notifications.<br/>\u2022 We never sell your data to third parties.</p>
       <h2 style={h2}>Your Rights</h2>
       <p style={prose}>You can request deletion of your account and data by emailing newstallyofficial@gmail.com.</p>
       <h2 style={h2}>Contact</h2>
@@ -66,7 +66,7 @@ export function Terms() {
       <p style={{ ...prose, color:'#9aa0a6', fontSize:13 }}>Last updated: March 2025</p>
       <p style={prose}>By using NewsTally, you agree to these terms. Please read them carefully.</p>
       <h2 style={h2}>Acceptable Use</h2>
-      <p style={prose}>• Do not post illegal, abusive, or spam content.<br/>• Do not impersonate others.<br/>• Respect other community members.</p>
+      <p style={prose}>\u2022 Do not post illegal, abusive, or spam content.<br/>\u2022 Do not impersonate others.<br/>\u2022 Respect other community members.</p>
       <h2 style={h2}>Content</h2>
       <p style={prose}>News content is sourced from DD News (Public Broadcaster) and is provided for informational purposes. Community posts are the responsibility of their authors.</p>
       <h2 style={h2}>Termination</h2>

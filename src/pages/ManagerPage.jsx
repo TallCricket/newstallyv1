@@ -10,7 +10,7 @@ import { useAuth } from '../context/AuthContext'
 import { showToast, timeAgo } from '../utils'
 import { useNavigate } from 'react-router-dom'
 
-// ✅ Only this email can access manager
+// \u2705 Only this email can access manager
 const MANAGER_EMAIL = 'newstallyofficial@gmail.com'
 
 const CAT_OPTIONS = ['National','World','Business','Technology','Health','Education','Sports','General','Entertainment']
@@ -60,7 +60,7 @@ function LoginScreen({ onLogin }) {
           <div style={{ marginBottom:20 }}>
             <label style={{ fontSize:12, fontWeight:600, color:'var(--muted)', display:'block', marginBottom:6, textTransform:'uppercase', letterSpacing:'.04em' }}>Password</label>
             <input type="password" value={password} onChange={e => setPassword(e.target.value)} required
-              placeholder="••••••••"
+              placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"
               style={{ width:'100%', padding:'11px 14px', border:'1.5px solid var(--border)', borderRadius:10, fontSize:14, outline:'none', background:'var(--surface2)', color:'var(--ink)', boxSizing:'border-box' }}
               onFocus={e => e.target.style.borderColor='#1a73e8'}
               onBlur={e => e.target.style.borderColor='var(--border)'}/>
@@ -90,16 +90,26 @@ export default function ManagerPage() {
   const [loadingRecent, setLoadingRecent] = useState(false)
   const [activeTab, setActiveTab]     = useState('add')  // 'add' | 'recent' | 'ranking'
 
-  // ── Ranking state ──
+  // \u2500\u2500 Ranking state \u2500\u2500
   const [rankCat, setRankCat]             = useState('National')
-  const [rankItems, setRankItems]         = useState([])   // { id, title, image, category, rank }
+  const [rankItems, setRankItems]         = useState([])
   const [rankLoading, setRankLoading]     = useState(false)
   const [rankSaving, setRankSaving]       = useState(false)
   const [catOrder, setCatOrder]           = useState([...CAT_OPTIONS])
   const [catOrderSaving, setCatOrderSaving] = useState(false)
 
-  // Block non-manager users
-  if (!user) return <LoginScreen/>
+  // \u2500\u2500 ALL HOOKS MUST BE BEFORE EARLY RETURNS \u2500\u2500
+  // Load saved category order from Firestore on mount
+  useEffect(() => {
+    if (!user || user.email !== MANAGER_EMAIL) return
+    getDoc(doc(db, 'config', 'rankings')).then(snap => {
+      if (snap.exists() && Array.isArray(snap.data().categoryOrder))
+        setCatOrder(snap.data().categoryOrder)
+    }).catch(() => {})
+  }, [user])
+
+  // \u2500\u2500 Block non-manager users (after all hooks) \u2500\u2500
+  if (!user) return <LoginScreen />
   if (user.email !== MANAGER_EMAIL) {
     return (
       <div style={{ minHeight:'100dvh', display:'flex', alignItems:'center', justifyContent:'center', background:'var(--bg)', flexDirection:'column', gap:16 }}>
@@ -114,6 +124,7 @@ export default function ManagerPage() {
     )
   }
 
+  // \u2500\u2500 Helpers \u2500\u2500
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }))
 
   const handleSubmit = async e => {
@@ -136,7 +147,7 @@ export default function ManagerPage() {
         manualEntry: true,
         timestamp:   serverTimestamp()
       })
-      showToast('✅ News added successfully!')
+      showToast('\u2705 News added successfully!')
       setForm(EMPTY_FORM)
     } catch(e) { console.error(e); showToast('Failed to add news: ' + e.message) }
     finally { setSaving(false) }
@@ -161,76 +172,69 @@ export default function ManagerPage() {
     try {
       await deleteDoc(doc(db, 'news', id))
       setRecentNews(prev => prev.filter(n => n.id !== id))
-      showToast('Deleted ✅')
+      showToast('Deleted \u2705')
     } catch(e) { showToast('Delete failed: ' + e.message) }
   }
 
-  // ── Load category order from Firestore ──
-  useEffect(() => {
-    getDoc(doc(db, 'config', 'rankings')).then(snap => {
-      if (snap.exists() && snap.data().categoryOrder) {
-        setCatOrder(snap.data().categoryOrder)
-      }
-    }).catch(() => {})
-  }, [])
-
-  // ── Load news for a category (for ranking) ──
+  // \u2500\u2500 Ranking helpers \u2500\u2500
   const loadRankItems = async (cat) => {
     setRankLoading(true)
     try {
-      const snap = await getDocs(query(
-        collection(db, 'news'),
-        where('category', '==', cat),
-        orderBy('rank', 'asc'),
-        limit(50)
-      )).catch(async () =>
-        getDocs(query(collection(db, 'news'), where('category', '==', cat), limit(50)))
-      )
+      let snap
+      try {
+        snap = await getDocs(query(
+          collection(db, 'news'),
+          where('category', '==', cat),
+          orderBy('rank', 'asc'),
+          limit(50)
+        ))
+      } catch {
+        snap = await getDocs(query(
+          collection(db, 'news'),
+          where('category', '==', cat),
+          limit(50)
+        ))
+      }
       const items = snap.docs.map((d, i) => ({ id: d.id, ...d.data(), rank: d.data().rank ?? (i + 1) }))
-      items.sort((a, b) => (a.rank ?? 999) - (b.rank ?? 999))
+      items.sort((a, b) => (a.rank ?? 9999) - (b.rank ?? 9999))
       setRankItems(items)
     } catch(e) { showToast('Load failed: ' + e.message) }
     setRankLoading(false)
   }
 
-  // ── Move item up/down in rank list ──
   const moveItem = (idx, dir) => {
-    const newItems = [...rankItems]
-    const swapIdx = idx + dir
-    if (swapIdx < 0 || swapIdx >= newItems.length) return
-    ;[newItems[idx], newItems[swapIdx]] = [newItems[swapIdx], newItems[idx]]
-    setRankItems(newItems)
+    const arr = [...rankItems]
+    const swap = idx + dir
+    if (swap < 0 || swap >= arr.length) return
+    ;[arr[idx], arr[swap]] = [arr[swap], arr[idx]]
+    setRankItems(arr)
   }
 
-  // ── Save article rankings to Firestore ──
   const saveRankings = async () => {
+    if (!rankItems.length) return
     setRankSaving(true)
     try {
       const batch = writeBatch(db)
-      rankItems.forEach((item, i) => {
-        batch.update(doc(db, 'news', item.id), { rank: i + 1 })
-      })
+      rankItems.forEach((item, i) => batch.update(doc(db, 'news', item.id), { rank: i + 1 }))
       await batch.commit()
-      showToast('✅ Rankings saved!')
+      showToast('\u2705 Rankings saved!')
     } catch(e) { showToast('Save failed: ' + e.message) }
     setRankSaving(false)
   }
 
-  // ── Move category up/down ──
   const moveCat = (idx, dir) => {
-    const newOrder = [...catOrder]
-    const swapIdx = idx + dir
-    if (swapIdx < 0 || swapIdx >= newOrder.length) return
-    ;[newOrder[idx], newOrder[swapIdx]] = [newOrder[swapIdx], newOrder[idx]]
-    setCatOrder(newOrder)
+    const arr = [...catOrder]
+    const swap = idx + dir
+    if (swap < 0 || swap >= arr.length) return
+    ;[arr[idx], arr[swap]] = [arr[swap], arr[idx]]
+    setCatOrder(arr)
   }
 
-  // ── Save category order to Firestore ──
   const saveCatOrder = async () => {
     setCatOrderSaving(true)
     try {
       await setDoc(doc(db, 'config', 'rankings'), { categoryOrder: catOrder }, { merge: true })
-      showToast('✅ Category order saved!')
+      showToast('\u2705 Category order saved!')
     } catch(e) { showToast('Save failed: ' + e.message) }
     setCatOrderSaving(false)
   }
@@ -263,14 +267,14 @@ export default function ManagerPage() {
       </div>
 
       {/* Tabs */}
-      <div style={{ display:'flex', background:'var(--surface)', borderBottom:'1px solid var(--border)', overflowX:'auto' }}>
-        {[['add','➕ Add'], ['recent','📋 Recent'], ['ranking','🏆 Ranking']].map(([k,l]) => (
+      <div style={{ display:'flex', background:'var(--surface)', borderBottom:'1px solid var(--border)' }}>
+        {[['add','\u2795 Add'], ['recent','\u1f4cb Recent'], ['ranking','\u1f3c6 Ranking']].map(([k,l]) => (
           <button key={k} onClick={() => {
             setActiveTab(k)
             if (k === 'recent') loadRecent()
             if (k === 'ranking') loadRankItems(rankCat)
           }}
-            style={{ flex:1, padding:'12px', fontSize:13, fontWeight:700, background:'none', border:'none', cursor:'pointer', whiteSpace:'nowrap',
+            style={{ flex:1, padding:'12px', fontSize:13, fontWeight:700, background:'none', border:'none', cursor:'pointer',
               color: activeTab===k ? '#1a73e8' : 'var(--muted)',
               borderBottom: activeTab===k ? '2.5px solid #1a73e8' : '2.5px solid transparent' }}>
             {l}
@@ -278,12 +282,11 @@ export default function ManagerPage() {
         ))}
       </div>
 
-      {/* Add News Form */}
+      {/* \u2500\u2500 ADD NEWS TAB \u2500\u2500 */}
       {activeTab === 'add' && (
         <div style={{ maxWidth:640, margin:'0 auto', padding:'20px 16px 80px' }}>
           <form onSubmit={handleSubmit}>
 
-            {/* Required fields */}
             <div style={{ background:'var(--surface)', borderRadius:14, padding:'18px 16px', marginBottom:16, border:'1px solid var(--border)' }}>
               <div style={{ fontSize:12, fontWeight:800, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.05em', marginBottom:14, display:'flex', alignItems:'center', gap:6 }}>
                 <i className="fas fa-asterisk" style={{ color:'#ea4335', fontSize:10 }}/> Required Fields
@@ -310,7 +313,6 @@ export default function ManagerPage() {
               </div>
             </div>
 
-            {/* Optional fields */}
             <div style={{ background:'var(--surface)', borderRadius:14, padding:'18px 16px', marginBottom:16, border:'1px solid var(--border)' }}>
               <div style={{ fontSize:12, fontWeight:800, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.05em', marginBottom:14 }}>
                 Optional Fields
@@ -354,12 +356,11 @@ export default function ManagerPage() {
               </div>
             </div>
 
-            {/* Preview */}
             {form.title && (
               <div style={{ background:'var(--surface)', borderRadius:14, padding:'16px', marginBottom:16, border:'1px solid var(--border)' }}>
                 <div style={{ fontSize:12, fontWeight:800, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.05em', marginBottom:12 }}>Preview</div>
                 {form.image && <img src={form.image} alt="" style={{ width:'100%', height:160, objectFit:'cover', borderRadius:10, marginBottom:10 }} onError={e => e.target.style.display='none'}/>}
-                <div style={{ fontSize:11, fontWeight:800, color:'#1a73e8', textTransform:'uppercase', marginBottom:6 }}>{form.category} · {form.source || 'NewsTally'}</div>
+                <div style={{ fontSize:11, fontWeight:800, color:'#1a73e8', textTransform:'uppercase', marginBottom:6 }}>{form.category} \u00b7 {form.source || 'NewsTally'}</div>
                 <div style={{ fontSize:16, fontWeight:700, color:'var(--ink)', lineHeight:1.4, marginBottom:6 }}>{form.title}</div>
                 {form.description && <div style={{ fontSize:13, color:'var(--muted)', lineHeight:1.6 }}>{form.description.substring(0,200)}{form.description.length > 200 ? '...' : ''}</div>}
               </div>
@@ -373,7 +374,7 @@ export default function ManagerPage() {
         </div>
       )}
 
-      {/* Recent News */}
+      {/* \u2500\u2500 RECENT NEWS TAB \u2500\u2500 */}
       {activeTab === 'recent' && (
         <div style={{ maxWidth:640, margin:'0 auto', padding:'12px 16px 80px' }}>
           {loadingRecent ? (
@@ -382,12 +383,15 @@ export default function ManagerPage() {
             <div style={{ textAlign:'center', padding:'40px 20px', color:'var(--muted)' }}>
               <i className="fas fa-newspaper" style={{ fontSize:36, display:'block', marginBottom:12, opacity:.3 }}/>
               <p>No news articles found</p>
+              <button onClick={loadRecent} style={{ marginTop:12, padding:'8px 20px', background:'#1a73e8', color:'#fff', border:'none', borderRadius:8, fontWeight:700, cursor:'pointer', fontSize:13 }}>
+                Load Articles
+              </button>
             </div>
-          ) : recentNews.map((n, i) => (
+          ) : recentNews.map((n) => (
             <div key={n.id} style={{ background:'var(--surface)', borderRadius:12, padding:'14px', marginBottom:10, border:'1px solid var(--border)', display:'flex', gap:12, alignItems:'flex-start' }}>
               {n.image && <img src={n.image} alt="" style={{ width:70, height:56, borderRadius:8, objectFit:'cover', flexShrink:0 }} onError={e => e.target.style.display='none'}/>}
               <div style={{ flex:1, minWidth:0 }}>
-                <div style={{ fontSize:10, fontWeight:800, color:'#1a73e8', textTransform:'uppercase', marginBottom:4 }}>{n.category} · {n.source}</div>
+                <div style={{ fontSize:10, fontWeight:800, color:'#1a73e8', textTransform:'uppercase', marginBottom:4 }}>{n.category} \u00b7 {n.source}</div>
                 <div style={{ fontSize:13, fontWeight:600, color:'var(--ink)', lineHeight:1.4, marginBottom:4, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{n.title}</div>
                 <div style={{ fontSize:11, color:'var(--muted)', display:'flex', gap:8, alignItems:'center' }}>
                   <span>{timeAgo(n.pubDate || n.fetchedAt)}</span>
@@ -403,36 +407,36 @@ export default function ManagerPage() {
         </div>
       )}
 
-      {/* ══ RANKING TAB ══ */}
+      {/* \u2500\u2500 RANKING TAB \u2500\u2500 */}
       {activeTab === 'ranking' && (
         <div style={{ maxWidth:640, margin:'0 auto', padding:'16px 16px 80px' }}>
 
-          {/* ── Category Order Section ── */}
+          {/* Category Order */}
           <div style={{ background:'var(--surface)', borderRadius:14, border:'1px solid var(--border)', marginBottom:20, overflow:'hidden' }}>
             <div style={{ padding:'13px 16px', borderBottom:'1px solid var(--border)', background:'var(--surface2)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
               <div>
-                <div style={{ fontSize:13, fontWeight:800, color:'var(--ink)' }}>📂 Category Order</div>
-                <div style={{ fontSize:11, color:'var(--muted)', marginTop:2 }}>Set which category tab appears first in NewsTally</div>
+                <div style={{ fontSize:13, fontWeight:800, color:'var(--ink)' }}>\u1f4c2 Category Order</div>
+                <div style={{ fontSize:11, color:'var(--muted)', marginTop:2 }}>Controls the order of category tabs in NewsTally</div>
               </div>
               <button onClick={saveCatOrder} disabled={catOrderSaving}
                 style={{ padding:'7px 16px', background:'#1a73e8', color:'#fff', border:'none', borderRadius:8, fontSize:12, fontWeight:700, cursor:'pointer', display:'flex', alignItems:'center', gap:6 }}>
-                {catOrderSaving ? <><i className="fas fa-spinner fa-spin"/> Saving…</> : <><i className="fas fa-save"/> Save Order</>}
+                {catOrderSaving ? <><i className="fas fa-spinner fa-spin"/> Saving\u2026</> : <><i className="fas fa-save"/> Save</>}
               </button>
             </div>
-            <div style={{ padding:'8px 0' }}>
+            <div style={{ padding:'6px 0' }}>
               {catOrder.map((cat, idx) => (
-                <div key={cat} style={{ display:'flex', alignItems:'center', gap:10, padding:'9px 16px', borderBottom: idx < catOrder.length-1 ? '1px solid var(--border2)' : 'none' }}>
-                  <span style={{ width:22, height:22, borderRadius:'50%', background:'#1a73e820', color:'#1a73e8', fontSize:11, fontWeight:800, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                <div key={cat} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 16px', borderBottom: idx < catOrder.length-1 ? '1px solid var(--border2)' : 'none' }}>
+                  <span style={{ width:24, height:24, borderRadius:'50%', background:'rgba(26,115,232,.1)', color:'#1a73e8', fontSize:11, fontWeight:800, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
                     {idx + 1}
                   </span>
                   <span style={{ flex:1, fontSize:14, fontWeight:600, color:'var(--ink)' }}>{cat}</span>
                   <div style={{ display:'flex', gap:4 }}>
                     <button onClick={() => moveCat(idx, -1)} disabled={idx === 0}
-                      style={{ width:28, height:28, borderRadius:7, border:'1px solid var(--border)', background:'var(--surface2)', color: idx===0 ? 'var(--border)' : 'var(--ink)', cursor: idx===0 ? 'default' : 'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:12 }}>
+                      style={{ width:30, height:30, borderRadius:8, border:'1px solid var(--border)', background:'var(--surface2)', color: idx===0 ? 'var(--border)' : '#1a73e8', cursor: idx===0 ? 'default' : 'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:12 }}>
                       <i className="fas fa-chevron-up"/>
                     </button>
                     <button onClick={() => moveCat(idx, 1)} disabled={idx === catOrder.length-1}
-                      style={{ width:28, height:28, borderRadius:7, border:'1px solid var(--border)', background:'var(--surface2)', color: idx===catOrder.length-1 ? 'var(--border)' : 'var(--ink)', cursor: idx===catOrder.length-1 ? 'default' : 'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:12 }}>
+                      style={{ width:30, height:30, borderRadius:8, border:'1px solid var(--border)', background:'var(--surface2)', color: idx===catOrder.length-1 ? 'var(--border)' : '#1a73e8', cursor: idx===catOrder.length-1 ? 'default' : 'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:12 }}>
                       <i className="fas fa-chevron-down"/>
                     </button>
                   </div>
@@ -441,11 +445,11 @@ export default function ManagerPage() {
             </div>
           </div>
 
-          {/* ── Article Ranking per Category ── */}
+          {/* Article Ranking */}
           <div style={{ background:'var(--surface)', borderRadius:14, border:'1px solid var(--border)', overflow:'hidden' }}>
             <div style={{ padding:'13px 16px', borderBottom:'1px solid var(--border)', background:'var(--surface2)' }}>
-              <div style={{ fontSize:13, fontWeight:800, color:'var(--ink)', marginBottom:10 }}>📰 Article Ranking by Category</div>
-              <div style={{ display:'flex', gap:8, alignItems:'center', flexWrap:'wrap' }}>
+              <div style={{ fontSize:13, fontWeight:800, color:'var(--ink)', marginBottom:10 }}>\u1f4f0 Article Ranking by Category</div>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
                 <select value={rankCat} onChange={e => { setRankCat(e.target.value); loadRankItems(e.target.value) }}
                   style={{ flex:1, minWidth:120, padding:'8px 12px', border:'1.5px solid var(--border)', borderRadius:8, fontSize:13, fontWeight:600, background:'var(--surface)', color:'var(--ink)', cursor:'pointer', outline:'none' }}>
                   {CAT_OPTIONS.map(c => <option key={c} value={c}>{c}</option>)}
@@ -456,7 +460,7 @@ export default function ManagerPage() {
                 </button>
                 <button onClick={saveRankings} disabled={rankSaving || rankItems.length === 0}
                   style={{ padding:'8px 16px', background: rankItems.length ? '#34a853' : 'var(--border)', color: rankItems.length ? '#fff' : 'var(--muted)', border:'none', borderRadius:8, fontSize:12, fontWeight:700, cursor: rankItems.length ? 'pointer' : 'not-allowed', display:'flex', alignItems:'center', gap:6 }}>
-                  {rankSaving ? <><i className="fas fa-spinner fa-spin"/> Saving…</> : <><i className="fas fa-save"/> Save Rankings</>}
+                  {rankSaving ? <><i className="fas fa-spinner fa-spin"/> Saving\u2026</> : <><i className="fas fa-save"/> Save Rankings</>}
                 </button>
               </div>
             </div>
@@ -467,18 +471,18 @@ export default function ManagerPage() {
               <div style={{ padding:'32px 16px', textAlign:'center', color:'var(--muted)' }}>
                 <i className="fas fa-list-ol" style={{ fontSize:32, marginBottom:10, display:'block', opacity:.3 }}/>
                 <p style={{ fontWeight:600 }}>No articles in {rankCat}</p>
-                <p style={{ fontSize:12, marginTop:4 }}>Add news to this category first</p>
+                <p style={{ fontSize:12, marginTop:4 }}>Add news to this category first, then refresh</p>
               </div>
             ) : (
-              <div style={{ padding:'6px 0' }}>
-                <div style={{ padding:'6px 16px 10px', fontSize:11, color:'var(--muted)', fontWeight:600 }}>
-                  {rankItems.length} articles · Use ↑↓ to reorder · Rank #1 appears first in feed
+              <div>
+                <div style={{ padding:'8px 16px 6px', fontSize:11, color:'var(--muted)', fontWeight:600 }}>
+                  {rankItems.length} articles \u00b7 \u2191\u2193 to reorder \u00b7 #1 appears first in feed
                 </div>
                 {rankItems.map((item, idx) => (
                   <div key={item.id} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 16px',
-                    borderBottom: idx < rankItems.length-1 ? '1px solid var(--border2)' : 'none',
+                    borderTop:'1px solid var(--border2)',
                     background: idx < 3 ? 'rgba(52,168,83,.03)' : 'transparent' }}>
-                    <div style={{ width:28, textAlign:'center', flexShrink:0 }}>
+                    <div style={{ width:26, textAlign:'center', flexShrink:0 }}>
                       <span style={{ fontSize:13, fontWeight:800, color: idx < 3 ? '#34a853' : 'var(--muted)' }}>#{idx+1}</span>
                     </div>
                     {item.image ? (
@@ -494,17 +498,17 @@ export default function ManagerPage() {
                         display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>
                         {item.title}
                       </div>
-                      <div style={{ fontSize:11, color:'var(--muted)', marginTop:2 }}>{item.source || 'Unknown'}</div>
+                      <div style={{ fontSize:11, color:'var(--muted)', marginTop:2 }}>{item.source || ''} \u00b7 {timeAgo(item.pubDate || item.fetchedAt)}</div>
                     </div>
                     <div style={{ display:'flex', flexDirection:'column', gap:3, flexShrink:0 }}>
                       <button onClick={() => moveItem(idx, -1)} disabled={idx === 0}
-                        style={{ width:26, height:26, borderRadius:6, border:'1px solid var(--border)', background:'var(--surface2)',
+                        style={{ width:28, height:28, borderRadius:7, border:'1px solid var(--border)', background:'var(--surface2)',
                           color: idx===0 ? 'var(--border)' : '#1a73e8', cursor: idx===0 ? 'default' : 'pointer',
                           display:'flex', alignItems:'center', justifyContent:'center', fontSize:11 }}>
                         <i className="fas fa-chevron-up"/>
                       </button>
                       <button onClick={() => moveItem(idx, 1)} disabled={idx === rankItems.length-1}
-                        style={{ width:26, height:26, borderRadius:6, border:'1px solid var(--border)', background:'var(--surface2)',
+                        style={{ width:28, height:28, borderRadius:7, border:'1px solid var(--border)', background:'var(--surface2)',
                           color: idx===rankItems.length-1 ? 'var(--border)' : '#1a73e8', cursor: idx===rankItems.length-1 ? 'default' : 'pointer',
                           display:'flex', alignItems:'center', justifyContent:'center', fontSize:11 }}>
                         <i className="fas fa-chevron-down"/>

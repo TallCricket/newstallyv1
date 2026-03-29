@@ -17,7 +17,7 @@ import ProfilePage from '../components/ProfilePage'
 import { useTranslation, INDIAN_LANGS } from '../context/TranslationContext'
 
 
-// ── Followers/Following Modal ──────────────────────────────────────
+// \u2500\u2500 Followers/Following Modal \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 function FollowListModal({ title, uids, onClose, onOpenProfile }) {
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
@@ -83,7 +83,7 @@ const SETTINGS_LINKS = [
   { icon:'fas fa-envelope',       label:'Contact Us',       url:'/contact', color:'#9334e6' },
 ]
 
-// ── Profile Post Card ──
+// \u2500\u2500 Profile Post Card \u2500\u2500
 function ProfilePostCard({ post, onClick, onNavigateNews }) {
   const [imgErr, setImgErr] = useState(false)
   const isRepost = post.type === 'repost'
@@ -104,8 +104,8 @@ function ProfilePostCard({ post, onClick, onNavigateNews }) {
       <div style={{ padding:'10px 12px' }}>
         <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:6 }}>
           {isRepost
-            ? <span style={{ fontSize:9, fontWeight:800, textTransform:'uppercase', color:'#34a853', background:'#e6f4ea', padding:'2px 7px', borderRadius:4 }}>↺ Repost</span>
-            : <span style={{ fontSize:9, fontWeight:800, textTransform:'uppercase', color:'#1a73e8', background:'#e8f0fe', padding:'2px 7px', borderRadius:4 }}>💬 Post</span>
+            ? <span style={{ fontSize:9, fontWeight:800, textTransform:'uppercase', color:'#34a853', background:'#e6f4ea', padding:'2px 7px', borderRadius:4 }}>\u21ba Repost</span>
+            : <span style={{ fontSize:9, fontWeight:800, textTransform:'uppercase', color:'#1a73e8', background:'#e8f0fe', padding:'2px 7px', borderRadius:4 }}>\u1f4ac Post</span>
           }
           {post.newsCategory && (
             <span style={{ fontSize:9, fontWeight:700, color:'#9334e6', background:'#f3e8ff', padding:'2px 7px', borderRadius:4 }}>{post.newsCategory}</span>
@@ -129,7 +129,7 @@ function ProfilePostCard({ post, onClick, onNavigateNews }) {
   )
 }
 
-// ── Saved Article Card ──
+// \u2500\u2500 Saved Article Card \u2500\u2500
 function SavedCard({ item, onOpen }) {
   const [imgErr, setImgErr] = useState(false)
   const CAT_COLORS = { National:'#e53935', World:'#1a73e8', Business:'#34a853', Technology:'#9334e6', Health:'#f4a261', Education:'#0077b6', Sports:'#ff6d00', General:'#546e7a' }
@@ -155,7 +155,7 @@ function SavedCard({ item, onOpen }) {
   )
 }
 
-// ══════════════════════════════════════════════════════════
+// \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 export default function Profile() {
   const { user } = useAuth()
   const { dark, toggle: toggleDark } = useTheme()
@@ -185,7 +185,7 @@ export default function Profile() {
   const fileInputRef = useRef(null)
   const uid = user?.uid
 
-  // 1️⃣ Realtime profile listener
+  // 1\ufe0f\u20e3 Realtime profile listener
   useEffect(() => {
     if (!uid) { setLoading(false); return }
     setLoading(true)
@@ -208,7 +208,7 @@ export default function Profile() {
     return () => unsub()
   }, [uid]) // eslint-disable-line
 
-  // 5️⃣ Realtime posts listener (text + repost)
+  // 5\ufe0f\u20e3 Realtime posts listener (text + repost)
   useEffect(() => {
     if (!uid) return
     setPostsLoading(true)
@@ -225,7 +225,7 @@ export default function Profile() {
     return () => unsub()
   }, [uid])
 
-  // 2️⃣ Load saved articles from localStorage + Firestore
+  // 2\ufe0f\u20e3 Load saved articles from localStorage + Firestore
   useEffect(() => {
     if (tab !== 'saved') return
     try {
@@ -240,7 +240,7 @@ export default function Profile() {
     } catch { setSavedArticles([]) }
   }, [tab])
 
-  // 2️⃣ Username uniqueness check
+  // 2\ufe0f\u20e3 Username uniqueness check
   const checkUsernameUnique = async (username) => {
     if (!username || username.length < 3) { setUsernameError('Min 3 characters'); return false }
     if (!/^[a-z0-9_]+$/.test(username)) { setUsernameError('Only a-z, 0-9, _ allowed'); return false }
@@ -253,7 +253,7 @@ export default function Profile() {
     } catch { setUsernameError(''); return true }
   }
 
-  // 1️⃣ Save profile + propagate username to all posts
+  // 1\ufe0f\u20e3 Save profile + propagate username to all posts
   const handleSaveProfile = async () => {
     if (!user || !editName.trim()) return showToast('Name cannot be empty')
     const uname = editUsername.trim().toLowerCase()
@@ -270,7 +270,7 @@ export default function Profile() {
       await updateDoc(doc(db, 'users', uid), updates)
       await updateProfile(user, { displayName: editName.trim() }).catch(() => {})
 
-      // 1️⃣ Propagate new username to ALL user's posts (batch write)
+      // 1\ufe0f\u20e3 Propagate new username to ALL user's posts (batch write)
       if (uname !== profile?.username) {
         setPropagating(true)
         try {
@@ -291,13 +291,13 @@ export default function Profile() {
             }
           }
           if (count % BATCH_SIZE !== 0) await batch.commit()
-          showToast(`Profile updated — username changed everywhere ✅`)
+          showToast(`Profile updated \u2014 username changed everywhere \u2705`)
         } catch(e) {
           showToast('Profile saved, posts may take time to update')
         }
         setPropagating(false)
       } else {
-        showToast('Profile updated ✅')
+        showToast('Profile updated \u2705')
       }
 
       setEditMode(false); setUsernameError('')
@@ -317,7 +317,7 @@ export default function Profile() {
       const url = await getDownloadURL(storageRef)
       await updateProfile(user, { photoURL: url })
       await updateDoc(doc(db, 'users', uid), { photoURL: url })
-      showToast('Photo updated ✅')
+      showToast('Photo updated \u2705')
     } catch { showToast('Photo upload failed') }
     finally { setUploadingPhoto(false) }
   }
@@ -432,7 +432,7 @@ export default function Profile() {
                         placeholder="unique_username"
                         style={{ width:'100%', padding:'10px 14px 10px 28px', border:`1.5px solid ${usernameError ? '#ea4335' : 'var(--border)'}`, borderRadius:10, fontSize:14, outline:'none', background:'var(--surface2)', color:'var(--ink)', boxSizing:'border-box' }}/>
                     </div>
-                    <p style={{ fontSize:11, color:'var(--muted)', marginTop:4 }}>⚡ Changing username will update it on all your posts</p>
+                    <p style={{ fontSize:11, color:'var(--muted)', marginTop:4 }}>\u26a1 Changing username will update it on all your posts</p>
                   </div>
                   <div>
                     <label style={{ fontSize:11, fontWeight:700, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.04em', display:'block', marginBottom:4 }}>Bio</label>
@@ -458,7 +458,7 @@ export default function Profile() {
                 </div>
               )}
 
-              {/* Stats — realtime via onSnapshot */}
+              {/* Stats \u2014 realtime via onSnapshot */}
               <div style={{ display:'flex', marginTop:16, background:'var(--surface2)', borderRadius:12, overflow:'hidden', border:'1px solid var(--border)' }}>
                 {[{ label:'Posts', val: posts.length, onClick: null },
                   { label:'Followers', val: profile?.followersCount||0, onClick: () => setFollowList({ title:'Followers', uids: profile?.followers||[] }) },
@@ -513,13 +513,13 @@ export default function Profile() {
               )
             )}
 
-            {/* 2️⃣ Saved articles from localStorage → Firestore */}
+            {/* 2\ufe0f\u20e3 Saved articles from localStorage \u2192 Firestore */}
             {tab==='saved' && (
               savedArticles.length===0 ? (
                 <div style={{ textAlign:'center', padding:'60px 20px', color:'var(--muted)' }}>
                   <i className="far fa-bookmark" style={{ fontSize:36, marginBottom:12, display:'block', opacity:.4 }}/>
                   <p style={{ fontWeight:600, marginBottom:6 }}>No saved articles</p>
-                  <p style={{ fontSize:13 }}>Bookmark articles in NewsTally — they'll appear here</p>
+                  <p style={{ fontSize:13 }}>Bookmark articles in NewsTally \u2014 they'll appear here</p>
                   <button onClick={() => navigate('/news')}
                     style={{ marginTop:16, padding:'10px 24px', background:'#1a73e8', color:'#fff', border:'none', borderRadius:99, fontSize:14, fontWeight:700, cursor:'pointer' }}>
                     Browse News
@@ -545,7 +545,7 @@ export default function Profile() {
                   <div style={{ padding:'12px 16px', borderBottom:'1px solid var(--border2)', background:'var(--surface2)' }}>
                     <span style={{ fontSize:11, fontWeight:800, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.05em' }}>Account</span>
                   </div>
-                  {[{ icon:'fas fa-user-circle', label:'Name', val: profile?.displayName||'User' },{ icon:'fas fa-at', label:'Username', val: `@${profile?.username||'user'}` },{ icon:'fas fa-envelope', label:'Email', val: user?.email||'—' },{ icon:'fas fa-user-friends', label:'Followers', val: formatCount(profile?.followersCount||0) },{ icon:'fas fa-user-plus', label:'Following', val: formatCount(profile?.followingCount||0) },{ icon:'fas fa-phone', label:'Phone', val: profile?.phone||'Not set' }].map((row,i,arr) => (
+                  {[{ icon:'fas fa-user-circle', label:'Name', val: profile?.displayName||'User' },{ icon:'fas fa-at', label:'Username', val: `@${profile?.username||'user'}` },{ icon:'fas fa-envelope', label:'Email', val: user?.email||'\u2014' },{ icon:'fas fa-user-friends', label:'Followers', val: formatCount(profile?.followersCount||0) },{ icon:'fas fa-user-plus', label:'Following', val: formatCount(profile?.followingCount||0) },{ icon:'fas fa-phone', label:'Phone', val: profile?.phone||'Not set' }].map((row,i,arr) => (
                     <div key={row.label} style={{ display:'flex', alignItems:'center', gap:12, padding:'11px 16px', borderBottom: i<arr.length-1 ? '1px solid var(--border2)' : 'none' }}>
                       <div style={{ width:36, height:36, borderRadius:10, background:'var(--surface2)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
                         <i className={row.icon} style={{ fontSize:15, color:'var(--muted)' }}/>
@@ -572,7 +572,7 @@ export default function Profile() {
                     <div style={{ flex:1 }}>
                       <div style={{ fontSize:14, fontWeight:700, color:'var(--ink)' }}>Dark Mode</div>
                       <div style={{ fontSize:12, color:'var(--muted)' }}>
-                        {dark ? 'Currently Dark' : 'Currently Light'} · Follows device if not set
+                        {dark ? 'Currently Dark' : 'Currently Light'} \u00b7 Follows device if not set
                       </div>
                     </div>
                     <div onClick={toggleDark}
@@ -592,7 +592,7 @@ export default function Profile() {
                       <div style={{ flex:1 }}>
                         <div style={{ fontSize:14, fontWeight:700, color:'var(--ink)' }}>App Language</div>
                         <div style={{ fontSize:12, color:'var(--muted)' }}>
-                          Translate news to your language · Auto-detected from browser
+                          Translate news to your language \u00b7 Auto-detected from browser
                         </div>
                       </div>
                     </div>
@@ -610,7 +610,7 @@ export default function Profile() {
                     </div>
                     {lang !== 'en' && (
                       <p style={{ fontSize:11, color:'#9334e6', marginTop:8, fontWeight:600 }}>
-                        ✓ Articles will show a "Translate" button in {getLangName()}
+                        \u2713 Articles will show a "Translate" button in {getLangName()}
                       </p>
                     )}
                   </div>
@@ -642,13 +642,13 @@ export default function Profile() {
                   </div>
                   <div style={{ display:'flex', alignItems:'center', gap:12, padding:'13px 16px', borderBottom:'1px solid var(--border2)' }}>
                     <img src="https://i.postimg.cc/dLTgRxbL/cropped-circle-image.png" style={{ width:36, height:36, borderRadius:10 }} alt=""/>
-                    <div><div style={{ fontSize:14, fontWeight:700, color:'var(--ink)' }}>NewsTally</div><div style={{ fontSize:11, color:'var(--muted)' }}>Version 2.0 · Socialgati</div></div>
+                    <div><div style={{ fontSize:14, fontWeight:700, color:'var(--ink)' }}>NewsTally</div><div style={{ fontSize:11, color:'var(--muted)' }}>Version 2.0 \u00b7 Socialgati</div></div>
                   </div>
                   <div style={{ display:'flex', alignItems:'center', gap:12, padding:'13px 16px' }}>
                     <div style={{ width:36, height:36, borderRadius:10, background:'#fce4ec', display:'flex', alignItems:'center', justifyContent:'center' }}>
                       <i className="fas fa-globe" style={{ fontSize:16, color:'#e91e63' }}/>
                     </div>
-                    <div><div style={{ fontSize:14, fontWeight:700, color:'var(--ink)' }}>Websites</div><div style={{ fontSize:11, color:'var(--muted)' }}>newstally.online · socialgati.online</div></div>
+                    <div><div style={{ fontSize:14, fontWeight:700, color:'var(--ink)' }}>Websites</div><div style={{ fontSize:11, color:'var(--muted)' }}>newstally.online \u00b7 socialgati.online</div></div>
                   </div>
                 </div>
 

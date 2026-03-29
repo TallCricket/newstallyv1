@@ -40,7 +40,7 @@ export default function SearchPage() {
   const debounceRef = useRef(null)
   const inputRef    = useRef(null)
 
-  // ── Main search function ──────────────────────────────────────
+  // \u2500\u2500 Main search function \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
   const search = useCallback(async (val) => {
     const v = val.trim()
     if (!v) { setResults(null); setLoading(false); return }
@@ -148,7 +148,7 @@ export default function SearchPage() {
 
   return (
     <>
-      {/* ── Header ── */}
+      {/* \u2500\u2500 Header \u2500\u2500 */}
       <div style={{
         position: 'fixed', top: 0, left: 0, right: 0,
         background: 'var(--header-bg)', backdropFilter: 'blur(20px)',
@@ -187,7 +187,7 @@ export default function SearchPage() {
           </div>
         </div>
 
-        {/* Filter tabs — only when query active */}
+        {/* Filter tabs \u2014 only when query active */}
         {q.trim() && (
           <div style={{ display: 'flex', gap: 6, marginTop: 8, overflowX: 'auto', scrollbarWidth: 'none', paddingBottom: 2 }}>
             {[['all', 'All'], ['people', 'People'], ['posts', 'Posts'], ['hashtags', '#Tags']].map(([k, l]) => (
@@ -204,13 +204,13 @@ export default function SearchPage() {
         )}
       </div>
 
-      {/* ── Body ── */}
+      {/* \u2500\u2500 Body \u2500\u2500 */}
       <div style={{ paddingTop: topOffset, paddingBottom: 72, maxWidth: 600, margin: '0 auto', background: 'var(--bg)', minHeight: '100dvh' }}>
 
-        {/* Empty state — trending tags */}
+        {/* Empty state \u2014 trending tags */}
         {!q.trim() && (
           <div style={{ padding: '20px 16px' }}>
-            <h2 style={{ fontSize: 16, fontWeight: 800, color: 'var(--ink)', marginBottom: 16 }}>🔥 Trending on Socialgati</h2>
+            <h2 style={{ fontSize: 16, fontWeight: 800, color: 'var(--ink)', marginBottom: 16 }}>\u1f525 Trending on Socialgati</h2>
             <div style={{ display: 'flex', flexDirection: 'column', background: 'var(--surface)', borderRadius: 14, overflow: 'hidden', border: '1px solid var(--border)' }}>
               {TRENDING_TAGS.map((tag, i) => (
                 <div key={tag} onClick={() => navigate(`/hashtag/${tag.toLowerCase()}`)}

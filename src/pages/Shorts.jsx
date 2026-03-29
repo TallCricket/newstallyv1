@@ -33,7 +33,7 @@ function getItemDate(n) {
 }
 function sortByDate(items) { return [...items].sort((a,b) => getItemDate(b) - getItemDate(a)) }
 
-// ── Repost Modal ──
+// \u2500\u2500 Repost Modal \u2500\u2500
 function RepostModal({ item, onClose, onConfirm, reposting }) {
   const accent = CAT_COLORS[item?.category] || '#1a73e8'
   if (!item) return null
@@ -71,7 +71,7 @@ function RepostModal({ item, onClose, onConfirm, reposting }) {
   )
 }
 
-// ── Short Card ──
+// \u2500\u2500 Short Card \u2500\u2500
 function ShortCard({ item, height, idx, curIdx, onRepost }) {
   const [imgErr, setImgErr] = useState(false)
   const accent = CAT_COLORS[item.category] || '#1a73e8'
@@ -149,7 +149,7 @@ function ShortCard({ item, height, idx, curIdx, onRepost }) {
   )
 }
 
-// ── Main ──
+// \u2500\u2500 Main \u2500\u2500
 export default function Shorts() {
   const { user } = useAuth()
 
@@ -177,7 +177,7 @@ export default function Shorts() {
   const isDragging     = useRef(false)
   const getH = () => window.innerHeight
 
-  // ── Detect order field ──
+  // \u2500\u2500 Detect order field \u2500\u2500
   const detectOrderField = useCallback(async () => {
     for (const field of ['pubDate', 'fetchedAt', 'savedAt']) {
       try {
@@ -303,7 +303,7 @@ export default function Shorts() {
     setTimeout(() => { if (el) el.style.transition = '' }, 360)
   }, [curIdx])
 
-  // ── Smart Repost ──
+  // \u2500\u2500 Smart Repost \u2500\u2500
   const handleRepost = useCallback(async (item) => {
     if (!user) { setRepostItem(null); setShowAuth(true); return }
     setReposting(true)
@@ -323,7 +323,7 @@ export default function Shorts() {
       ))
       if (!existing.empty) {
         await updateDoc(existing.docs[0].ref, { repostCount: fbIncrement(1), repostedBy: arrayUnion(user.uid), repostedUsers: arrayUnion(myInfo) })
-        showToast('✅ You reposted this news!')
+        showToast('\u2705 You reposted this news!')
       } else {
         await addDoc(collection(db, 'artifacts', APP_ID, 'public', 'data', 'reposts'), {
           userId: user.uid, username: myInfo.username, userAvatar: myInfo.avatar,
@@ -332,7 +332,7 @@ export default function Shorts() {
           newsId: String(item.id||item.title), likes:[], commentsCount:0, repostCount:1,
           repostedBy:[user.uid], repostedUsers:[myInfo], timestamp:serverTimestamp(), type:'repost'
         })
-        showToast('✅ Reposted to Socialgati!')
+        showToast('\u2705 Reposted to Socialgati!')
       }
       setRepostItem(null)
     } catch(e) { showToast('Repost failed') }

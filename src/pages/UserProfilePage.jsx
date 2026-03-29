@@ -1,5 +1,5 @@
 /**
- * UserProfilePage — /u/:username  (Instagram-style public profile link)
+ * UserProfilePage \u2014 /u/:username  (Instagram-style public profile link)
  * Fetches user by username from Firestore, renders ProfilePage overlay.
  */
 import { useState, useEffect } from 'react'

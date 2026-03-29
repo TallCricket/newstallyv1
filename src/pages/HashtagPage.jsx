@@ -57,7 +57,7 @@ export default function HashtagPage() {
         setPosts(snap.docs.map(d => ({ id: d.id, ...d.data() })))
         setLoading(false)
       },
-      // Firestore index not ready yet — fall back to client-side filter
+      // Firestore index not ready yet \u2014 fall back to client-side filter
       async () => {
         try {
           const fallbackQ = query(

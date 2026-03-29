@@ -17,7 +17,7 @@ const CAT_COLORS = {
   Sports:'#ff6d00', General:'#546e7a', Entertainment:'#ad1457'
 }
 
-// ── LocalStorage helpers ──
+// \u2500\u2500 LocalStorage helpers \u2500\u2500
 function getSavedIds() { try { return JSON.parse(localStorage.getItem('nt_saved_news') || '[]') } catch { return [] } }
 function setSavedIds(ids) { localStorage.setItem('nt_saved_news', JSON.stringify(ids)) }
 function saveToHistory(item) {
@@ -30,7 +30,7 @@ function saveToHistory(item) {
   } catch {}
 }
 
-// ── Repost bottom-sheet modal ──
+// \u2500\u2500 Repost bottom-sheet modal \u2500\u2500
 function RepostModal({ item, onClose, onConfirm, reposting }) {
   if (!item) return null
   const accent = CAT_COLORS[item.category] || '#1a73e8'
@@ -68,7 +68,7 @@ function RepostModal({ item, onClose, onConfirm, reposting }) {
   )
 }
 
-// ── Related card ──
+// \u2500\u2500 Related card \u2500\u2500
 function RelatedCard({ item, onNavigate }) {
   const [imgErr, setImgErr] = useState(false)
   const accent = CAT_COLORS[item.category] || '#1a73e8'
@@ -84,15 +84,15 @@ function RelatedCard({ item, onNavigate }) {
       <div style={{ flex:1, minWidth:0 }}>
         <div style={{ fontSize:10, fontWeight:700, color:accent, textTransform:'uppercase', letterSpacing:'.05em', marginBottom:4 }}>{item.category}</div>
         <div style={{ fontSize:13, fontWeight:600, color:'var(--ink)', lineHeight:1.4, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{item.title}</div>
-        <div style={{ fontSize:11, color:'var(--muted)', marginTop:4 }}>{item.source} · {timeAgo(item.date)}</div>
+        <div style={{ fontSize:11, color:'var(--muted)', marginTop:4 }}>{item.source} \u00b7 {timeAgo(item.date)}</div>
       </div>
     </div>
   )
 }
 
-// ═══════════════════════════════════════════════════════════════════
+// \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 // MAIN PAGE
-// ═══════════════════════════════════════════════════════════════════
+// \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 export default function NewsOpen() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -155,24 +155,47 @@ export default function NewsOpen() {
     window.scrollTo(0, 0)
   }, [id])
 
+  // \u2500\u2500 AUTO-TRANSLATE when article loads or language changes \u2500\u2500
+  useEffect(() => {
+    setShowOriginal(false) // always show translated version by default
+    if (!item || lang === 'en') {
+      setTranslated(null)
+      return
+    }
+    let cancelled = false
+    setTranslating(true)
+    Promise.all([
+      translate(item.title || ''),
+      translate(item.description || '')
+    ]).then(([tTitle, tDesc]) => {
+      if (!cancelled) {
+        setTranslated({ title: tTitle, description: tDesc })
+        setTranslating(false)
+      }
+    }).catch(() => {
+      if (!cancelled) setTranslating(false)
+    })
+    return () => { cancelled = true }
+  }, [item, lang]) // eslint-disable-line
+
   // Save / bookmark
   const toggleSave = () => {
     const ids = getSavedIds()
     if (saved) { setSavedIds(ids.filter(i => i !== id)); setSaved(false); showToast('Removed from saved') }
-    else { setSavedIds([id, ...ids]); setSaved(true); showToast('🔖 Saved!') }
+    else { setSavedIds([id, ...ids]); setSaved(true); showToast('\u1f516 Saved!') }
   }
 
   // Share helpers
   const shareUrl = () => `${window.location.origin}/news/${id}`
-  const shareWA  = () => item && window.open(`https://wa.me/?text=${encodeURIComponent(`📰 *${item.title}*\n\n${(item.description||'').substring(0,120)}...\n\n🔗 ${shareUrl()}\n\n📲 *NewsTally*`)}`, '_blank')
-  const shareTW  = () => item && window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent('📰 '+item.title)}&url=${encodeURIComponent(shareUrl())}&via=newstallyofficial`, '_blank')
-  const shareTG  = () => item && window.open(`https://t.me/share/url?url=${encodeURIComponent(shareUrl())}&text=${encodeURIComponent(`📰 ${item.title}\n\n${(item.description||'').substring(0,100)}...`)}`, '_blank')
+  const shareWA  = () => item && window.open(`https://wa.me/?text=${encodeURIComponent(`\u1f4f0 *${item.title}*\n\n${(item.description||'').substring(0,120)}...\n\n\u1f517 ${shareUrl()}\n\n\u1f4f2 *NewsTally*`)}`, '_blank')
+  const shareTW  = () => item && window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent('\u1f4f0 '+item.title)}&url=${encodeURIComponent(shareUrl())}&via=newstallyofficial`, '_blank')
+  const shareTG  = () => item && window.open(`https://t.me/share/url?url=${encodeURIComponent(shareUrl())}&text=${encodeURIComponent(`\u1f4f0 ${item.title}\n\n${(item.description||'').substring(0,100)}...`)}`, '_blank')
   const shareCopy = () => {
-    navigator.clipboard?.writeText(shareUrl()).then(() => showToast('🔗 Link copied!')).catch(() => {
+    navigator.clipboard?.writeText(shareUrl()).then(() => showToast('\u1f517 Link copied!')).catch(() => {
       const ta = document.createElement('textarea')
       ta.value = shareUrl(); ta.style.cssText = 'position:fixed;opacity:0'
       document.body.appendChild(ta); ta.select(); document.execCommand('copy')
-      document.body.removeChild(ta); showToast('🔗 Link copied!')
+      document.body.removeChild(ta); showToast('\u1f517 Link copied!')
     })
   }
   const handleNativeShare = () => {
@@ -200,7 +223,7 @@ export default function NewsOpen() {
       ))
       if (!existing.empty) {
         await updateDoc(existing.docs[0].ref, { repostCount:fbIncrement(1), repostedBy:arrayUnion(user.uid), repostedUsers:arrayUnion(myInfo) })
-        showToast('✅ You reposted this news!')
+        showToast('\u2705 You reposted this news!')
       } else {
         await addDoc(collection(db,'artifacts',APP_ID,'public','data','reposts'), {
           userId:user.uid, username:myInfo.username, userAvatar:myInfo.avatar,
@@ -209,27 +232,15 @@ export default function NewsOpen() {
           newsId:String(newsItem.id||newsItem.title), likes:[], commentsCount:0, repostCount:1,
           repostedBy:[user.uid], repostedUsers:[myInfo], timestamp:serverTimestamp(), type:'repost'
         })
-        showToast('✅ Reposted to Socialgati!')
+        showToast('\u2705 Reposted to Socialgati!')
       }
       setRepostItem(null)
     } catch(e) { console.error(e); showToast('Repost failed') }
     finally { setReposting(false) }
   }
 
-  // Translate article
-  const handleTranslate = async () => {
-    if (!item) return
-    if (translated) { setTranslated(null); return }   // toggle off
-    setTranslating(true)
-    try {
-      const [tTitle, tDesc] = await Promise.all([
-        translate(item.title || ''),
-        translate(item.description || '')
-      ])
-      setTranslated({ title: tTitle, description: tDesc })
-    } catch { showToast('Translation failed, try again') }
-    finally { setTranslating(false) }
-  }
+  // Show original toggle (translation is now automatic)
+  const [showOriginal, setShowOriginal] = useState(false)
 
   const readTime = item ? Math.max(1, Math.ceil(((item.title||'').length + (item.description||'').length) / 200)) : 1
   const accent   = CAT_COLORS[item?.category] || '#1a73e8'
@@ -248,20 +259,20 @@ export default function NewsOpen() {
     <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'100dvh', gap:16, padding:20, background:'var(--bg)' }}>
       <i className="fas fa-newspaper" style={{ fontSize:48, color:'var(--border)' }}/>
       <p style={{ fontWeight:600, color:'var(--muted)' }}>Article not found</p>
-      <button onClick={() => navigate('/news')} style={{ padding:'10px 24px', background:'#1a73e8', color:'#fff', border:'none', borderRadius:8, fontWeight:600, cursor:'pointer' }}>← Back to News</button>
+      <button onClick={() => navigate('/news')} style={{ padding:'10px 24px', background:'#1a73e8', color:'#fff', border:'none', borderRadius:8, fontWeight:600, cursor:'pointer' }}>\u2190 Back to News</button>
     </div>
   )
 
   return (
     <>
-      {/* ── Reading progress bar ── */}
+      {/* \u2500\u2500 Reading progress bar \u2500\u2500 */}
       <div style={{ position:'fixed', top:0, left:0, right:0, height:3, background:'var(--border)', zIndex:201 }}>
         <div style={{ height:'100%', width:`${readPct}%`, background:`linear-gradient(90deg,${accent},#9334e6)`, transition:'width .1s', borderRadius:2 }}/>
       </div>
 
       <div style={{ maxWidth:720, margin:'0 auto', minHeight:'100dvh', background:'var(--surface)', paddingBottom:80 }}>
 
-        {/* ── Sticky header ── */}
+        {/* \u2500\u2500 Sticky header \u2500\u2500 */}
         <div style={{ padding:'12px 16px', display:'flex', alignItems:'center', gap:10, borderBottom:'1px solid var(--border)', position:'sticky', top:0, background:'var(--header-bg)', backdropFilter:'blur(20px)', zIndex:100 }}>
           <button onClick={() => navigate(-1)} className="page-back-btn"><i className="fas fa-arrow-left"/></button>
           <div style={{ display:'flex', alignItems:'center', gap:8, flex:1, overflow:'hidden', cursor:'pointer' }} onClick={() => navigate('/news')}>
@@ -281,7 +292,7 @@ export default function NewsOpen() {
           </div>
         </div>
 
-        {/* ── Hero image ── */}
+        {/* \u2500\u2500 Hero image \u2500\u2500 */}
         {item.image && (
           <div style={{ width:'100%', aspectRatio:'16/9', overflow:'hidden', background:'var(--surface2)' }}>
             <img src={item.image} alt={item.title} style={{ width:'100%', height:'100%', objectFit:'cover' }}
@@ -291,7 +302,7 @@ export default function NewsOpen() {
 
         <div style={{ padding:'20px 16px 0' }}>
 
-          {/* ── Category + read time ── */}
+          {/* \u2500\u2500 Category + read time \u2500\u2500 */}
           <div style={{ display:'flex', alignItems:'center', gap:10, flexWrap:'wrap', marginBottom:14 }}>
             <span style={{ background:`${accent}20`, color:accent, fontSize:11, fontWeight:700, padding:'4px 12px', borderRadius:99, textTransform:'uppercase', letterSpacing:'.07em', display:'flex', alignItems:'center', gap:5 }}>
               <i className={catIcon(item.category)} style={{ fontSize:10 }}/> {item.category || 'News'}
@@ -301,12 +312,18 @@ export default function NewsOpen() {
             </span>
           </div>
 
-          {/* ── Title ── */}
+          {/* \u2500\u2500 Title \u2500\u2500 */}
+          {translating && lang !== 'en' && (
+            <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:10, padding:'8px 12px', background:'rgba(147,52,230,.06)', borderRadius:8, border:'1px solid rgba(147,52,230,.15)' }}>
+              <i className="fas fa-spinner fa-spin" style={{ color:'#9334e6', fontSize:12 }}/>
+              <span style={{ fontSize:12, color:'#9334e6', fontWeight:600 }}>Translating to {getLangName()}\u2026</span>
+            </div>
+          )}
           <h1 style={{ fontSize:'clamp(20px,4.5vw,28px)', fontWeight:700, lineHeight:1.4, color:'var(--ink)', letterSpacing:'-.3px', marginBottom:16 }}>
-            {translated?.title || item.title}
+            {(!showOriginal && translated?.title) ? translated.title : item.title}
           </h1>
 
-          {/* ── Source bar ── */}
+          {/* \u2500\u2500 Source bar \u2500\u2500 */}
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 14px', background:'var(--surface2)', borderRadius:10, borderLeft:`3px solid ${accent}`, marginBottom:20, gap:10, flexWrap:'wrap' }}>
             <div>
               <div style={{ fontSize:13, fontWeight:700, color:'var(--ink)' }}>{item.source || 'NewsTally'}</div>
@@ -321,15 +338,14 @@ export default function NewsOpen() {
                 style={{ display:'flex', alignItems:'center', gap:5, padding:'7px 14px', borderRadius:8, background:'rgba(52,168,83,.1)', border:'1.5px solid rgba(52,168,83,.3)', fontSize:12, fontWeight:700, color:'#2e7d32', cursor:'pointer' }}>
                 <i className="fas fa-retweet"/> Repost
               </button>
-              {lang !== 'en' && (
-                <button onClick={handleTranslate} disabled={translating}
+              {lang !== 'en' && translated && (
+                <button onClick={() => setShowOriginal(v => !v)}
                   style={{ display:'flex', alignItems:'center', gap:5, padding:'7px 14px', borderRadius:8,
-                    background: translated ? 'rgba(147,52,230,.15)' : 'rgba(147,52,230,.08)',
-                    border:`1.5px solid rgba(147,52,230,${translated ? '.5' : '.25'})`,
-                    fontSize:12, fontWeight:700, color:'#9334e6', cursor:'pointer' }}>
-                  {translating ? <><i className="fas fa-spinner fa-spin"/> Translating...</>
-                    : translated ? <><i className="fas fa-language"/> Show Original</>
-                    : <><i className="fas fa-language"/> Translate ({getLangName().split(' ')[0]})</>}
+                    background: showOriginal ? 'var(--surface2)' : 'rgba(147,52,230,.12)',
+                    border:`1.5px solid ${showOriginal ? 'var(--border)' : 'rgba(147,52,230,.4)'}`,
+                    fontSize:12, fontWeight:700, color: showOriginal ? 'var(--muted)' : '#9334e6', cursor:'pointer' }}>
+                  <i className="fas fa-language"/>
+                  {showOriginal ? 'Show Translated' : getLangName().split(' ')[0]}
                 </button>
               )}
               <button onClick={() => setShowShare(s => !s)}
@@ -339,7 +355,7 @@ export default function NewsOpen() {
             </div>
           </div>
 
-          {/* ── Share panel ── */}
+          {/* \u2500\u2500 Share panel \u2500\u2500 */}
           {showShare && (
             <div style={{ display:'flex', gap:8, flexWrap:'wrap', paddingBottom:16, marginBottom:4, borderBottom:'1px solid var(--border)' }}>
               <button onClick={shareWA} style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 16px', borderRadius:99, background:'#25d366', color:'#fff', fontSize:13, fontWeight:600, border:'none', cursor:'pointer' }}>
@@ -357,16 +373,16 @@ export default function NewsOpen() {
             </div>
           )}
 
-          {/* ── Article body ── */}
-          {(translated?.description || item.description) ? (
+          {/* \u2500\u2500 Article body \u2500\u2500 */}
+          {(item.description) ? (
             <div ref={articleRef} style={{ fontSize:16, lineHeight:1.85, color:'var(--ink2)', marginBottom:24 }}>
-              {translated && (
+              {translated && !showOriginal && (
                 <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:12, padding:'8px 12px', background:'rgba(147,52,230,.08)', borderRadius:8, border:'1px solid rgba(147,52,230,.2)' }}>
                   <i className="fas fa-language" style={{ color:'#9334e6', fontSize:13 }}/>
                   <span style={{ fontSize:12, color:'#9334e6', fontWeight:600 }}>Translated to {getLangName()}</span>
                 </div>
               )}
-              {(translated?.description || item.description).split(/(?<=[.!?।])\s+/).filter(s => s.trim().length > 5).map((s, i) => (
+              {((!showOriginal && translated?.description) || item.description).split(/(?<=[.!?\u0964])\s+/).filter(s => s.trim().length > 5).map((s, i) => (
                 <p key={i} style={{ marginBottom:14 }}>{s.trim()}</p>
               ))}
             </div>
@@ -377,7 +393,7 @@ export default function NewsOpen() {
             </div>
           )}
 
-          {/* ── Read full + repost buttons ── */}
+                    {/* \u2500\u2500 Read full + repost buttons \u2500\u2500 */}
           <div style={{ display:'flex', gap:10, marginBottom:20 }}>
             {item.url && item.url !== '#' && (
               <a href={item.url} target="_blank" rel="noopener noreferrer"
@@ -391,7 +407,7 @@ export default function NewsOpen() {
             </button>
           </div>
 
-          {/* ── Tags ── */}
+          {/* \u2500\u2500 Tags \u2500\u2500 */}
           <div style={{ display:'flex', flexWrap:'wrap', gap:8, marginBottom:20, alignItems:'center', paddingTop:12, borderTop:'1px solid var(--border)' }}>
             {item.category && (
               <span style={{ fontSize:12, fontWeight:600, color:accent, background:`${accent}18`, padding:'4px 12px', borderRadius:99 }}>
@@ -412,7 +428,7 @@ export default function NewsOpen() {
           </div>
         </div>
 
-        {/* ── Related articles ── */}
+        {/* \u2500\u2500 Related articles \u2500\u2500 */}
         {related.length > 0 && (
           <div style={{ padding:'0 16px 20px' }}>
             <h2 style={{ fontSize:16, fontWeight:700, color:'var(--ink)', marginBottom:14, display:'flex', alignItems:'center', gap:8 }}>

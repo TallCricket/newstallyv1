@@ -1,7 +1,7 @@
 /**
- * CategoryPage — /news/category/:cat
+ * CategoryPage \u2014 /news/category/:cat
  * Shows news for a specific category (or "all") with the exact same
- * Hero → Latest Updates → Grid → Sections layout as the home feed.
+ * Hero \u2192 Latest Updates \u2192 Grid \u2192 Sections layout as the home feed.
  * Categories are dynamic: whatever is in Firestore shows up.
  */
 import { useEffect, useState, useCallback, useRef } from 'react'
@@ -31,7 +31,7 @@ function getItemDate(n) {
 }
 const sortByDate = items => [...items].sort((a, b) => getItemDate(b) - getItemDate(a))
 
-// ─── Skeletons ──────────────────────────────────────────────────
+// \u2500\u2500\u2500 Skeletons \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 function HeroSkeleton() {
   return (
     <div style={{ margin:'16px', borderRadius:16, overflow:'hidden', background:'var(--surface)', border:'1px solid var(--border)' }}>
@@ -45,7 +45,7 @@ function HeroSkeleton() {
   )
 }
 
-// ─── Shared card components ──────────────────────────────────────
+// \u2500\u2500\u2500 Shared card components \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 function HeroCard({ item, onRepost }) {
   const navigate = useNavigate()
   const [imgErr, setImgErr] = useState(false)
@@ -61,7 +61,7 @@ function HeroCard({ item, onRepost }) {
             <span style={{ background:ac, color:'#fff', fontSize:10, fontWeight:800, padding:'4px 10px', borderRadius:99, textTransform:'uppercase' }}>{item.category}</span>
           </div>
           <div style={{ position:'absolute', bottom:12, left:14, right:14 }}>
-            <p style={{ color:'rgba(255,255,255,.75)', fontSize:11, fontWeight:600, marginBottom:4 }}>{item.source} · {timeAgo(item.date || item.pubDate)}</p>
+            <p style={{ color:'rgba(255,255,255,.75)', fontSize:11, fontWeight:600, marginBottom:4 }}>{item.source} \u00b7 {timeAgo(item.date || item.pubDate)}</p>
             <h2 style={{ color:'#fff', fontSize:18, fontWeight:700, lineHeight:1.4, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{item.title}</h2>
           </div>
         </div>
@@ -69,7 +69,7 @@ function HeroCard({ item, onRepost }) {
         <div style={{ background:`linear-gradient(135deg,${ac}22,${ac}44)`, padding:'24px 20px' }}>
           <span style={{ background:ac, color:'#fff', fontSize:10, fontWeight:800, padding:'4px 10px', borderRadius:99, textTransform:'uppercase', display:'inline-block', marginBottom:12 }}>{item.category}</span>
           <h2 style={{ fontSize:20, fontWeight:700, color:'var(--ink)', lineHeight:1.4, marginBottom:8 }}>{item.title}</h2>
-          <p style={{ fontSize:12, color:'var(--muted)' }}>{item.source} · {timeAgo(item.date || item.pubDate)}</p>
+          <p style={{ fontSize:12, color:'var(--muted)' }}>{item.source} \u00b7 {timeAgo(item.date || item.pubDate)}</p>
         </div>
       )}
       <div style={{ padding:'12px 16px' }}>
@@ -151,7 +151,7 @@ function GridCard({ item }) {
   )
 }
 
-// ─── Repost Modal ────────────────────────────────────────────────
+// \u2500\u2500\u2500 Repost Modal \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 function RepostModal({ item, onClose, onConfirm, reposting }) {
   if (!item) return null
   const ac = accent(item.category)
@@ -179,13 +179,13 @@ function RepostModal({ item, onClose, onConfirm, reposting }) {
   )
 }
 
-// ═══════════════════════════════════════════════════════════════════
+// \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 export default function CategoryPage() {
   const { cat: catParam } = useParams()         // e.g. "all", "sports", "technology"
   const navigate = useNavigate()
   const { user } = useAuth()
 
-  // Normalise: "all" → 'All', "sports" → "Sports"
+  // Normalise: "all" \u2192 'All', "sports" \u2192 "Sports"
   const cat = catParam === 'all'
     ? 'All'
     : catParam.charAt(0).toUpperCase() + catParam.slice(1).toLowerCase()
@@ -202,7 +202,7 @@ export default function CategoryPage() {
   const lastDocRef = useRef(null)
   const sentinelRef = useRef(null)
 
-  // ── Fetch: NO source filter, sorted by fetchedAt/pubDate desc ──
+  // \u2500\u2500 Fetch: NO source filter, sorted by fetchedAt/pubDate desc \u2500\u2500
   // KEY FIX: fetch ALL news without source filter, large batch, sort in JS
   const fetchItems = useCallback(async (isFirst = false) => {
     let q
@@ -228,7 +228,7 @@ export default function CategoryPage() {
     return snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(n => n.title)
   }, [cat])
 
-  // ── Fetch all distinct categories for the sidebar ──
+  // \u2500\u2500 Fetch all distinct categories for the sidebar \u2500\u2500
   const fetchCategories = useCallback(async () => {
     try {
       const snap = await getDocs(query(collection(db, 'news'), limit(200)))
@@ -272,7 +272,7 @@ export default function CategoryPage() {
     return () => obs.disconnect()
   }, [loadMore])
 
-  // ── Repost ──
+  // \u2500\u2500 Repost \u2500\u2500
   const handleRepost = async (item) => {
     if (!user) return setShowAuth(true)
     setReposting(true)
@@ -286,10 +286,10 @@ export default function CategoryPage() {
       const ex = await gd2(q2(col2(db,'artifacts',APP_ID,'public','data','reposts'), w2('newsId','==',String(item.id||item.title)), w2('type','==','repost'), l2(1)))
       if (!ex.empty) {
         await updateDoc(ex.docs[0].ref, { repostCount:fbIncrement(1), repostedBy:arrayUnion(user.uid), repostedUsers:arrayUnion(myInfo) })
-        showToast('✅ Reposted!')
+        showToast('\u2705 Reposted!')
       } else {
         await addDoc(col2(db,'artifacts',APP_ID,'public','data','reposts'), { userId:user.uid, username:myInfo.username, userAvatar:myInfo.avatar, image:item.image||'', headline:item.title, newsUrl:item.url||'', newsSource:item.source||'', newsCategory:item.category||'', newsId:String(item.id||item.title), likes:[], commentsCount:0, repostCount:1, repostedBy:[user.uid], repostedUsers:[myInfo], timestamp:serverTimestamp(), type:'repost' })
-        showToast('✅ Reposted to Socialgati!')
+        showToast('\u2705 Reposted to Socialgati!')
       }
       setRepostItem(null)
     } catch(e) { console.error(e); showToast('Repost failed') }
@@ -313,7 +313,7 @@ export default function CategoryPage() {
 
       <div className="main-wrapper" style={{ paddingBottom:80 }}>
 
-        {/* ── Category scroll bar ── */}
+        {/* \u2500\u2500 Category scroll bar \u2500\u2500 */}
         <div className="cat-bar" style={{ position:'sticky', top:56, zIndex:49 }}>
           {allCategories.map(c => (
             <Link key={c}
@@ -328,7 +328,7 @@ export default function CategoryPage() {
           ))}
         </div>
 
-        {/* ── Category header ── */}
+        {/* \u2500\u2500 Category header \u2500\u2500 */}
         {cat !== 'All' && (
           <div style={{ padding:'12px 16px 4px', display:'flex', alignItems:'center', gap:8 }}>
             <div style={{ width:4, height:22, background:ac, borderRadius:2 }}/>
@@ -337,7 +337,7 @@ export default function CategoryPage() {
           </div>
         )}
 
-        {/* ── Content ── */}
+        {/* \u2500\u2500 Content \u2500\u2500 */}
         {loading ? (
           <div>
             <HeroSkeleton/>
@@ -358,7 +358,7 @@ export default function CategoryPage() {
           <div style={{ textAlign:'center', padding:'60px 20px' }}>
             <i className="fas fa-exclamation-circle" style={{ fontSize:36, color:'#ea4335', marginBottom:12, display:'block' }}/>
             <p style={{ color:'var(--ink)', fontWeight:600, marginBottom:8 }}>Could not load news</p>
-            <button onClick={loadInitial} style={{ padding:'10px 24px', background:'#1a73e8', color:'#fff', border:'none', borderRadius:8, fontWeight:600, cursor:'pointer' }}>↺ Retry</button>
+            <button onClick={loadInitial} style={{ padding:'10px 24px', background:'#1a73e8', color:'#fff', border:'none', borderRadius:8, fontWeight:600, cursor:'pointer' }}>\u21ba Retry</button>
           </div>
         ) : items.length === 0 ? (
           <div style={{ textAlign:'center', padding:'60px 20px', color:'var(--muted)' }}>
@@ -367,10 +367,10 @@ export default function CategoryPage() {
           </div>
         ) : (
           <div style={{ background:'var(--bg)' }}>
-            {/* Hero — most recent */}
+            {/* Hero \u2014 most recent */}
             <HeroCard item={items[0]} onRepost={setRepostItem}/>
 
-            {/* Latest Updates — items 1–4 */}
+            {/* Latest Updates \u2014 items 1\u20134 */}
             {items.length > 1 && (
               <div style={{ margin:'4px 16px 16px', background:'var(--surface)', borderRadius:12, border:'1px solid var(--border)', overflow:'hidden' }}>
                 <div style={{ background:ac, padding:'8px 14px', display:'flex', alignItems:'center', gap:8 }}>
@@ -383,7 +383,7 @@ export default function CategoryPage() {
               </div>
             )}
 
-            {/* 2-col grid — items 5–10 */}
+            {/* 2-col grid \u2014 items 5\u201310 */}
             {items.length > 5 && (
               <div style={{ padding:'0 16px', marginBottom:20 }}>
                 <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:12 }}>
@@ -422,7 +422,7 @@ export default function CategoryPage() {
               </div>
             )}
             {!hasMore && items.length > 10 && (
-              <p style={{ textAlign:'center', color:'var(--muted)', fontSize:13, padding:'20px 0' }}>All {items.length} articles loaded ✓</p>
+              <p style={{ textAlign:'center', color:'var(--muted)', fontSize:13, padding:'20px 0' }}>All {items.length} articles loaded \u2713</p>
             )}
           </div>
         )}

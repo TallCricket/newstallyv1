@@ -14,7 +14,7 @@ import NotificationsPage from '../components/NotificationsPage'
 import AuthModal from '../components/AuthModal'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
-// ── Skeleton ──────────────────────────────────────────────────────
+// \u2500\u2500 Skeleton \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 function PostSkeleton() {
   return (
     <div style={{ background:'var(--surface)', borderRadius:12, padding:16, marginBottom:8, border:'1px solid var(--border)' }}>
@@ -31,7 +31,7 @@ function PostSkeleton() {
   )
 }
 
-// ── MentionInput — textarea with @ autocomplete ───────────────────
+// \u2500\u2500 MentionInput \u2014 textarea with @ autocomplete \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 function MentionInput({ value, onChange, placeholder }) {
   const [suggestions, setSuggestions] = useState([])
   const [mentionQuery, setMentionQuery] = useState(null)
@@ -123,15 +123,15 @@ function MentionInput({ value, onChange, placeholder }) {
   )
 }
 
-// ═══════════════════════════════════════════════════════════════════
+// \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 // MAIN PAGE
-// ═══════════════════════════════════════════════════════════════════
+// \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 export default function Socialgati() {
   const { user, userData } = useAuth()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
 
-  // ── Deep-link: /?post=ID opens that post directly ──
+  // \u2500\u2500 Deep-link: /?post=ID opens that post directly \u2500\u2500
   useEffect(() => {
     const postId = searchParams.get('post')
     if (postId) setOpenCommentPost(postId)
@@ -156,7 +156,7 @@ export default function Socialgati() {
   const av = user?.photoURL
     || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData?.displayName || 'U')}&background=1a73e8&color=fff`
 
-  // ── Real-time feed ──
+  // \u2500\u2500 Real-time feed \u2500\u2500
   const loadFeed = useCallback(() => {
     if (unsubRef.current) { unsubRef.current(); unsubRef.current = null }
     setLoading(true)
@@ -178,7 +178,7 @@ export default function Socialgati() {
     return () => { if (unsubRef.current) unsubRef.current() }
   }, [loadFeed])
 
-  // ── Submit post ──
+  // \u2500\u2500 Submit post \u2500\u2500
   const submitPost = async () => {
     if (!user) return setShowAuth(true)
     const t = postText.trim()
@@ -202,12 +202,12 @@ export default function Socialgati() {
       })
       setPostText('')
       setShowCreateModal(false)
-      showToast('Posted! ✅')
+      showToast('Posted! \u2705')
     } catch { showToast('Failed. Try again.') }
     finally { setPosting(false) }
   }
 
-  // ── Quick search (inline dropdown) ──
+  // \u2500\u2500 Quick search (inline dropdown) \u2500\u2500
   const handleSearch = async val => {
     setSearchVal(val)
     if (!val.trim()) { setSearchResults(null); return }
@@ -223,7 +223,7 @@ export default function Socialgati() {
     } catch { setSearchResults(null) }
   }
 
-  // ── Open profile by @username ──
+  // \u2500\u2500 Open profile by @username \u2500\u2500
   const handleMentionClick = async (username) => {
     try {
       const snap = await getDocs(query(
@@ -236,11 +236,11 @@ export default function Socialgati() {
     } catch { showToast('Could not open profile') }
   }
 
-  const TABS = [['all', 'For You'], ['trending', '🔥 Trending'], ['following', 'Following']]
+  const TABS = [['all', 'For You'], ['trending', '\u1f525 Trending'], ['following', 'Following']]
 
   return (
     <>
-      {/* ── Header ── */}
+      {/* \u2500\u2500 Header \u2500\u2500 */}
       <header style={{
         position: 'fixed', top: 0, left: 0, right: 0, height: 56,
         background: 'var(--header-bg)', backdropFilter: 'blur(20px)',
@@ -272,7 +272,7 @@ export default function Socialgati() {
 
       <div style={{ paddingTop: 56, paddingBottom: 72, background: 'var(--bg)', minHeight: '100dvh' }}>
 
-        {/* ── Feed Tabs ── */}
+        {/* \u2500\u2500 Feed Tabs \u2500\u2500 */}
         <div style={{
           display: 'flex', background: 'var(--surface)',
           borderBottom: '1px solid var(--border)',
@@ -293,7 +293,7 @@ export default function Socialgati() {
           ))}
         </div>
 
-        {/* ── Compose bar ── */}
+        {/* \u2500\u2500 Compose bar \u2500\u2500 */}
         <div style={{
           display: 'flex', gap: 10, padding: '12px 16px',
           background: 'var(--surface)', borderBottom: '1px solid var(--border)',
@@ -313,7 +313,7 @@ export default function Socialgati() {
           </button>
         </div>
 
-        {/* ── Feed ── */}
+        {/* \u2500\u2500 Feed \u2500\u2500 */}
         <div style={{ padding: '8px 12px' }}>
           {loading
             ? Array.from({ length: 4 }).map((_, i) => <PostSkeleton key={i} />)
@@ -345,7 +345,7 @@ export default function Socialgati() {
         </div>
       </div>
 
-      {/* ── Floating + button ── */}
+      {/* \u2500\u2500 Floating + button \u2500\u2500 */}
       <button
         onClick={() => user ? setShowCreateModal(true) : setShowAuth(true)}
         style={{
@@ -358,7 +358,7 @@ export default function Socialgati() {
         <i className="fas fa-plus" />
       </button>
 
-      {/* ── Create Post Modal ── */}
+      {/* \u2500\u2500 Create Post Modal \u2500\u2500 */}
       {showCreateModal && (
         <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setShowCreateModal(false)}>
           <div className="modal">

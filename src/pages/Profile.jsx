@@ -159,7 +159,7 @@ function SavedCard({ item, onOpen }) {
 export default function Profile() {
   const { user } = useAuth()
   const { dark, toggle: toggleDark } = useTheme()
-  const { lang, setLang, getLangName } = useTranslation()
+  const { lang, setLang, getLangName, t, uiLang } = useTranslation()
   const navigate = useNavigate()
 
   const [profile, setProfile]       = useState(null)
@@ -562,17 +562,18 @@ export default function Profile() {
                 {/* Appearance: Dark Mode + Language */}
                 <div style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:14, marginBottom:16, overflow:'hidden' }}>
                   <div style={{ padding:'12px 16px', borderBottom:'1px solid var(--border2)', background:'var(--surface2)' }}>
-                    <span style={{ fontSize:11, fontWeight:800, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.05em' }}>Appearance & Language</span>
+                    <span style={{ fontSize:11, fontWeight:800, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.05em' }}>{t('appearance')}</span>
                   </div>
+
                   {/* Dark Mode */}
                   <div style={{ display:'flex', alignItems:'center', gap:12, padding:'14px 16px', borderBottom:'1px solid var(--border2)' }}>
                     <div style={{ width:36, height:36, borderRadius:10, background: dark ? '#1a1a2e' : '#f8f6f0', display:'flex', alignItems:'center', justifyContent:'center' }}>
                       <i className={dark ? 'fas fa-moon' : 'fas fa-sun'} style={{ fontSize:16, color: dark ? '#aaa0ff' : '#f5c518' }}/>
                     </div>
                     <div style={{ flex:1 }}>
-                      <div style={{ fontSize:14, fontWeight:700, color:'var(--ink)' }}>Dark Mode</div>
+                      <div style={{ fontSize:14, fontWeight:700, color:'var(--ink)' }}>{t('darkMode')}</div>
                       <div style={{ fontSize:12, color:'var(--muted)' }}>
-                        {dark ? 'Currently Dark' : 'Currently Light'} \u00b7 Follows device if not set
+                        {dark ? t('currentlyDark') : t('currentlyLight')} \u00b7 {t('followsDevice')}
                       </div>
                     </div>
                     <div onClick={toggleDark}
@@ -583,35 +584,64 @@ export default function Profile() {
                         transition:'left .25s', boxShadow:'0 1px 4px rgba(0,0,0,.3)' }}/>
                     </div>
                   </div>
-                  {/* Language Selector */}
-                  <div style={{ padding:'14px 16px' }}>
-                    <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:10 }}>
-                      <div style={{ width:36, height:36, borderRadius:10, background:'rgba(147,52,230,.1)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                        <i className="fas fa-globe" style={{ fontSize:16, color:'#9334e6' }}/>
+
+                  {/* UI Language: only English / Hindi */}
+                  <div style={{ padding:'14px 16px', borderBottom:'1px solid var(--border2)' }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:10 }}>
+                      <div style={{ width:36, height:36, borderRadius:10, background:'rgba(26,115,232,.1)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                        <i className="fas fa-keyboard" style={{ fontSize:15, color:'#1a73e8' }}/>
                       </div>
                       <div style={{ flex:1 }}>
-                        <div style={{ fontSize:14, fontWeight:700, color:'var(--ink)' }}>App Language</div>
-                        <div style={{ fontSize:12, color:'var(--muted)' }}>
-                          Translate news to your language \u00b7 Auto-detected from browser
-                        </div>
+                        <div style={{ fontSize:14, fontWeight:700, color:'var(--ink)' }}>{t('uiLang')}</div>
+                        <div style={{ fontSize:12, color:'var(--muted)' }}>{t('uiLangDesc')}</div>
+                      </div>
+                    </div>
+                    <div style={{ display:'flex', gap:8 }}>
+                      {[{code:'en', label:'English'}, {code:'hi', label:'\u0939\u093f\u0928\u094d\u0926\u0940'}].map(l => (
+                        <button key={l.code}
+                          onClick={() => setLang(l.code === 'en' ? 'en' : (lang === 'en' ? 'hi' : lang))}
+                          style={{ flex:1, padding:'9px 0', borderRadius:10,
+                            border:`2px solid ${uiLang===l.code ? '#1a73e8' : 'var(--border)'}`,
+                            background: uiLang===l.code ? 'rgba(26,115,232,.08)' : 'var(--surface2)',
+                            color: uiLang===l.code ? '#1a73e8' : 'var(--muted)',
+                            fontSize:14, fontWeight: uiLang===l.code ? 800 : 500, cursor:'pointer' }}>
+                          {l.label}
+                          {uiLang===l.code && <span style={{ marginLeft:5, fontSize:11 }}>\u2713</span>}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* News/Content Language: all Indian langs */}
+                  <div style={{ padding:'14px 16px' }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:10 }}>
+                      <div style={{ width:36, height:36, borderRadius:10, background:'rgba(147,52,230,.1)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                        <i className="fas fa-globe" style={{ fontSize:15, color:'#9334e6' }}/>
+                      </div>
+                      <div style={{ flex:1 }}>
+                        <div style={{ fontSize:14, fontWeight:700, color:'var(--ink)' }}>{t('contentLang')}</div>
+                        <div style={{ fontSize:12, color:'var(--muted)' }}>{t('contentLangDesc')}</div>
                       </div>
                     </div>
                     <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
                       {INDIAN_LANGS.map(l => (
                         <button key={l.code} onClick={() => setLang(l.code)}
-                          style={{ padding:'6px 14px', borderRadius:99, border:`1.5px solid ${lang===l.code ? '#9334e6' : 'var(--border)'}`,
+                          style={{ padding:'7px 14px', borderRadius:99,
+                            border:`1.5px solid ${lang===l.code ? '#9334e6' : 'var(--border)'}`,
                             background: lang===l.code ? 'rgba(147,52,230,.12)' : 'var(--surface2)',
                             color: lang===l.code ? '#9334e6' : 'var(--muted)',
-                            fontSize:12, fontWeight: lang===l.code ? 700 : 500, cursor:'pointer',
-                            transition:'all .15s' }}>
+                            fontSize:12, fontWeight: lang===l.code ? 700 : 500, cursor:'pointer', transition:'all .15s' }}>
                           {l.native}
+                          {lang===l.code && <span style={{ marginLeft:4, fontSize:10 }}>\u2713</span>}
                         </button>
                       ))}
                     </div>
                     {lang !== 'en' && (
-                      <p style={{ fontSize:11, color:'#9334e6', marginTop:8, fontWeight:600 }}>
-                        \u2713 Articles will show a "Translate" button in {getLangName()}
-                      </p>
+                      <div style={{ marginTop:10, padding:'8px 12px', background:'rgba(147,52,230,.06)', borderRadius:8, border:'1px solid rgba(147,52,230,.18)' }}>
+                        <p style={{ fontSize:12, color:'#9334e6', fontWeight:600, margin:0 }}>
+                          \u2713 {t('autoTranslated')} \u2014 {getLangName()}
+                        </p>
+                      </div>
                     )}
                   </div>
                 </div>

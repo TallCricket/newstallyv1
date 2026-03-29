@@ -10,6 +10,8 @@ import { showToast, timeAgo, catIcon } from '../utils'
 import BottomNav from '../components/BottomNav'
 import AuthModal from '../components/AuthModal'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from '../context/TranslationContext'
+import { useTranslate } from '../hooks/useTranslate'
 
 const DEFAULT_CATS = ['All','National','World','Business','Technology','Health','Education','Sports','General']
 const PAGE_SIZE = 20
@@ -65,8 +67,11 @@ function SmallSkeleton() {
 // \u2500\u2500\u2500 Hero Card \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 function HeroCard({ item, onRepost }) {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [imgErr, setImgErr] = useState(false)
   const accent = CAT_COLORS[item.category] || '#1a73e8'
+  const { text: title } = useTranslate(item.title)
+  const { text: desc } = useTranslate(item.description || '')
   return (
     <div style={{ margin:'12px 16px', borderRadius:16, overflow:'hidden', background:'var(--surface)', boxShadow:'var(--shadow-md)', cursor:'pointer' }}
       onClick={() => navigate(`/news/${item.id}`)}>
@@ -79,28 +84,28 @@ function HeroCard({ item, onRepost }) {
           </div>
           <div style={{ position:'absolute', bottom:12, left:14, right:14 }}>
             <p style={{ color:'rgba(255,255,255,.75)', fontSize:11, fontWeight:600, marginBottom:4 }}>{item.source} \u00b7 {timeAgo(item.date || item.pubDate)}</p>
-            <h2 style={{ color:'#fff', fontSize:18, fontWeight:700, lineHeight:1.4, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{item.title}</h2>
+            <h2 style={{ color:'#fff', fontSize:18, fontWeight:700, lineHeight:1.4, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{title}</h2>
           </div>
         </div>
       ) : (
         <div style={{ background:`linear-gradient(135deg,${accent}22,${accent}44)`, padding:'28px 20px' }}>
           <span style={{ background:accent, color:'#fff', fontSize:10, fontWeight:800, padding:'4px 10px', borderRadius:99, textTransform:'uppercase', display:'inline-block', marginBottom:12 }}>{item.category}</span>
-          <h2 style={{ fontSize:20, fontWeight:700, color:'var(--ink)', lineHeight:1.4, marginBottom:8 }}>{item.title}</h2>
+          <h2 style={{ fontSize:20, fontWeight:700, color:'var(--ink)', lineHeight:1.4, marginBottom:8 }}>{title}</h2>
           <p style={{ fontSize:12, color:'var(--muted)' }}>{item.source} \u00b7 {timeAgo(item.date || item.pubDate)}</p>
         </div>
       )}
       <div style={{ padding:'14px 16px' }}>
         {item.description && (
-          <p style={{ fontSize:14, color:'var(--muted)', lineHeight:1.6, marginBottom:12, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{item.description}</p>
+          <p style={{ fontSize:14, color:'var(--muted)', lineHeight:1.6, marginBottom:12, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{desc}</p>
         )}
         <div style={{ display:'flex', gap:8 }} onClick={e => e.stopPropagation()}>
-          <a href={item.url} target="_blank" rel="noopener" onClick={e => e.stopPropagation()}
-            style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:6, padding:'9px 0', background:'#1a73e8', color:'#fff', borderRadius:8, fontSize:13, fontWeight:700, textDecoration:'none' }}>
-            <i className="fas fa-external-link-alt" style={{ fontSize:11 }}/> Read Full Story
-          </a>
+          <button onClick={() => navigate(`/news/${item.id}`)}
+            style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:6, padding:'9px 0', background:'#1a73e8', color:'#fff', borderRadius:8, fontSize:13, fontWeight:700, border:'none', cursor:'pointer' }}>
+            <i className="fas fa-newspaper" style={{ fontSize:11 }}/> {t('readFull')}
+          </button>
           <button onClick={e => { e.stopPropagation(); onRepost(item) }}
             style={{ padding:'9px 16px', border:'1px solid var(--border)', borderRadius:8, fontSize:13, fontWeight:700, color:'#34a853', background:'var(--surface)', cursor:'pointer', display:'flex', alignItems:'center', gap:6 }}>
-            <i className="fas fa-retweet"/> Repost
+            <i className="fas fa-retweet"/> {t('repost')}
           </button>
         </div>
       </div>
@@ -108,11 +113,12 @@ function HeroCard({ item, onRepost }) {
   )
 }
 
-// \u2500\u2500\u2500 Compact Card \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 function CompactCard({ item, onRepost }) {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [imgErr, setImgErr] = useState(false)
   const accent = CAT_COLORS[item.category] || '#1a73e8'
+  const { text: title } = useTranslate(item.title)
   return (
     <div style={{ display:'flex', gap:12, padding:'12px 0', borderBottom:'1px solid var(--border2)', cursor:'pointer' }}
       onClick={() => navigate(`/news/${item.id}`)}>
@@ -122,13 +128,13 @@ function CompactCard({ item, onRepost }) {
           <span style={{ fontSize:10, fontWeight:700, color:accent, textTransform:'uppercase', letterSpacing:'.04em', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{item.category}</span>
           <span style={{ fontSize:10, color:'var(--muted2)', marginLeft:'auto', flexShrink:0 }}>{timeAgo(item.date || item.pubDate)}</span>
         </div>
-        <p style={{ fontSize:14, fontWeight:600, color:'var(--ink)', lineHeight:1.45, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden', marginBottom:4 }}>{item.title}</p>
+        <p style={{ fontSize:14, fontWeight:600, color:'var(--ink)', lineHeight:1.45, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden', marginBottom:4 }}>{title}</p>
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
           <p style={{ fontSize:11, color:'var(--muted2)', fontWeight:500 }}>{item.source}</p>
           {onRepost && (
             <button onClick={e => { e.stopPropagation(); onRepost(item) }}
               style={{ fontSize:11, color:'#34a853', background:'none', border:'none', cursor:'pointer', fontWeight:700, display:'flex', alignItems:'center', gap:4, padding:'2px 6px', borderRadius:6 }}>
-              <i className="fas fa-retweet" style={{ fontSize:11 }}/> Repost
+              <i className="fas fa-retweet" style={{ fontSize:11 }}/> {t('repost')}
             </button>
           )}
         </div>
@@ -141,11 +147,11 @@ function CompactCard({ item, onRepost }) {
   )
 }
 
-// \u2500\u2500\u2500 Grid Card \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 function GridCard({ item }) {
   const navigate = useNavigate()
   const [imgErr, setImgErr] = useState(false)
   const accent = CAT_COLORS[item.category] || '#1a73e8'
+  const { text: title } = useTranslate(item.title)
   return (
     <div style={{ background:'var(--surface)', borderRadius:12, overflow:'hidden', border:'1px solid var(--border)', boxShadow:'var(--shadow-sm)', cursor:'pointer' }}
       onClick={() => navigate(`/news/${item.id}`)}>
@@ -162,7 +168,7 @@ function GridCard({ item }) {
         </div>
       )}
       <div style={{ padding:'10px 10px 12px' }}>
-        <p style={{ fontSize:12, fontWeight:700, color:'var(--ink)', lineHeight:1.4, marginBottom:6, display:'-webkit-box', WebkitLineClamp:3, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{item.title}</p>
+        <p style={{ fontSize:12, fontWeight:700, color:'var(--ink)', lineHeight:1.4, marginBottom:6, display:'-webkit-box', WebkitLineClamp:3, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{title}</p>
         <div style={{ fontSize:10, color:'var(--muted2)', display:'flex', justifyContent:'space-between' }}>
           <span style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:'60%' }}>{item.source}</span>
           <span>{timeAgo(item.date || item.pubDate)}</span>
@@ -172,7 +178,6 @@ function GridCard({ item }) {
   )
 }
 
-// \u2500\u2500\u2500 Category Section (inside home layout) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 function CategorySection({ title, items, accent, onRepost, onSeeAll }) {
   const navigate = useNavigate()
   if (!items.length) return null
@@ -234,7 +239,7 @@ function NewsLayout({ items, cat, onRepost, onSeeAll, sentinelRef, loadingMore, 
   if (!items.length) return (
     <div style={{ textAlign:'center', padding:'60px 20px', color:'var(--muted)' }}>
       <i className="fas fa-newspaper" style={{ fontSize:40, marginBottom:12, display:'block', opacity:.3 }}/>
-      <p style={{ fontWeight:600, color:'var(--ink)', marginBottom:6 }}>No news found</p>
+      <p style={{ fontWeight:600, color:'var(--ink)', marginBottom:6 }}>{t('noNews')}</p>
       <p style={{ fontSize:13 }}>Check back later for the latest updates</p>
     </div>
   )
@@ -249,7 +254,7 @@ function NewsLayout({ items, cat, onRepost, onSeeAll, sentinelRef, loadingMore, 
         <div style={{ margin:'4px 16px 16px', background:'var(--surface)', borderRadius:12, border:'1px solid var(--border)', overflow:'hidden' }}>
           <div style={{ background:'#1a73e8', padding:'8px 14px', display:'flex', alignItems:'center', gap:8 }}>
             <span style={{ width:8, height:8, borderRadius:'50%', background:'#ff1744', animation:'pulse 1s infinite' }}/>
-            <span style={{ color:'#fff', fontSize:11, fontWeight:800, textTransform:'uppercase', letterSpacing:'.06em' }}>Latest Updates</span>
+            <span style={{ color:'#fff', fontSize:11, fontWeight:800, textTransform:'uppercase', letterSpacing:'.06em' }}>{t('latestUpdates')}</span>
           </div>
           <div style={{ padding:'0 14px' }}>
             {items.slice(1, 5).map(item => <CompactCard key={item.id} item={item} onRepost={onRepost}/>)}
@@ -354,6 +359,7 @@ function RepostModal({ item, onClose, onConfirm, reposting }) {
 export default function NewsTally() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const { t, lang } = useTranslation()
 
   const [allNews, setAllNews]         = useState([])
   const lastDocRef                    = useRef(null)
@@ -419,7 +425,7 @@ export default function NewsTally() {
     setLoading(true); setError(''); setHasMore(true); lastDocRef.current = null
     try {
       const items = await fetchBatch(true)
-      if (!items.length) { setError('No news yet.'); return }
+      if (!items.length) { setError(t('noNews')); return }
       setAllNews(sortByDate(items))
     } catch(e) { setError(e.message) }
     finally { setLoading(false) }

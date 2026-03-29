@@ -10,6 +10,7 @@ import { timeAgo, catIcon, showToast } from '../utils'
 import BottomNav from '../components/BottomNav'
 import AuthModal from '../components/AuthModal'
 import { useTranslation } from '../context/TranslationContext'
+import { useTranslate } from '../hooks/useTranslate'
 
 const CAT_COLORS = {
   National:'#e53935', World:'#1a73e8', Business:'#34a853',
@@ -60,7 +61,7 @@ function RepostModal({ item, onClose, onConfirm, reposting }) {
           </button>
           <button onClick={() => onConfirm(item)} disabled={reposting}
             style={{ flex:2, padding:'13px 0', background:'linear-gradient(135deg,#1a73e8,#1557b0)', border:'none', borderRadius:12, color:'#fff', fontSize:14, fontWeight:700, cursor: reposting ? 'not-allowed' : 'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8, opacity: reposting ? .7 : 1 }}>
-            {reposting ? <><i className="fas fa-spinner fa-spin"/> Posting...</> : <><i className="fas fa-retweet"/> Repost</>}
+            {reposting ? <><i className="fas fa-spinner fa-spin"/> Posting...</> : <><i className="fas fa-retweet"/>{t('repost')}</>}
           </button>
         </div>
       </div>
@@ -97,7 +98,7 @@ export default function NewsOpen() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
-  const { lang, translate, getLangName } = useTranslation()
+  const { lang, translate, getLangName, t } = useTranslation()
 
   const [item, setItem]             = useState(null)
   const [related, setRelated]       = useState([])
@@ -332,7 +333,7 @@ export default function NewsOpen() {
             <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
               <button onClick={toggleSave}
                 style={{ display:'flex', alignItems:'center', gap:5, padding:'7px 14px', borderRadius:8, background: saved ? `${accent}15` : 'var(--surface)', border: saved ? `1.5px solid ${accent}44` : '1.5px solid var(--border)', fontSize:12, fontWeight:600, color: saved ? accent : 'var(--ink)', cursor:'pointer' }}>
-                <i className={saved ? 'fas fa-bookmark' : 'far fa-bookmark'}/> {saved ? 'Saved' : 'Save'}
+                <i className={saved ? 'fas fa-bookmark' : 'far fa-bookmark'}/> {saved ? t('saved') : t('save')}
               </button>
               <button onClick={() => setRepostItem(item)}
                 style={{ display:'flex', alignItems:'center', gap:5, padding:'7px 14px', borderRadius:8, background:'rgba(52,168,83,.1)', border:'1.5px solid rgba(52,168,83,.3)', fontSize:12, fontWeight:700, color:'#2e7d32', cursor:'pointer' }}>

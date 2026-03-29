@@ -12,6 +12,8 @@ import { showToast, timeAgo, catIcon } from '../utils'
 import BottomNav from '../components/BottomNav'
 import AuthModal from '../components/AuthModal'
 import { useNavigate, useParams, Link } from 'react-router-dom'
+import { useTranslation } from '../context/TranslationContext'
+import { useTranslate } from '../hooks/useTranslate'
 
 const PAGE_SIZE = 24
 const CAT_COLORS = {
@@ -48,8 +50,11 @@ function HeroSkeleton() {
 // \u2500\u2500\u2500 Shared card components \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 function HeroCard({ item, onRepost }) {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [imgErr, setImgErr] = useState(false)
   const ac = accent(item.category)
+  const { text: title } = useTranslate(item.title)
+  const { text: desc } = useTranslate(item.description || '')
   return (
     <div style={{ margin:'12px 16px', borderRadius:16, overflow:'hidden', background:'var(--surface)', boxShadow:'var(--shadow-md)', cursor:'pointer' }}
       onClick={() => navigate(`/news/${item.id}`)}>
@@ -62,26 +67,26 @@ function HeroCard({ item, onRepost }) {
           </div>
           <div style={{ position:'absolute', bottom:12, left:14, right:14 }}>
             <p style={{ color:'rgba(255,255,255,.75)', fontSize:11, fontWeight:600, marginBottom:4 }}>{item.source} \u00b7 {timeAgo(item.date || item.pubDate)}</p>
-            <h2 style={{ color:'#fff', fontSize:18, fontWeight:700, lineHeight:1.4, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{item.title}</h2>
+            <h2 style={{ color:'#fff', fontSize:17, fontWeight:700, lineHeight:1.4, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{title}</h2>
           </div>
         </div>
       ) : (
         <div style={{ background:`linear-gradient(135deg,${ac}22,${ac}44)`, padding:'24px 20px' }}>
-          <span style={{ background:ac, color:'#fff', fontSize:10, fontWeight:800, padding:'4px 10px', borderRadius:99, textTransform:'uppercase', display:'inline-block', marginBottom:12 }}>{item.category}</span>
-          <h2 style={{ fontSize:20, fontWeight:700, color:'var(--ink)', lineHeight:1.4, marginBottom:8 }}>{item.title}</h2>
-          <p style={{ fontSize:12, color:'var(--muted)' }}>{item.source} \u00b7 {timeAgo(item.date || item.pubDate)}</p>
+          <span style={{ background:ac, color:'#fff', fontSize:10, fontWeight:800, padding:'4px 10px', borderRadius:99, textTransform:'uppercase', display:'inline-block', marginBottom:10 }}>{item.category}</span>
+          <h2 style={{ fontSize:18, fontWeight:700, color:'var(--ink)', lineHeight:1.4, marginBottom:6 }}>{title}</h2>
+          <p style={{ fontSize:12, color:'var(--muted)' }}>{item.source}</p>
         </div>
       )}
       <div style={{ padding:'12px 16px' }}>
-        {item.description && <p style={{ fontSize:14, color:'var(--muted)', lineHeight:1.6, marginBottom:12, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{item.description}</p>}
+        {item.description && <p style={{ fontSize:13, color:'var(--muted)', lineHeight:1.55, marginBottom:10, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{desc}</p>}
         <div style={{ display:'flex', gap:8 }} onClick={e => e.stopPropagation()}>
-          <a href={item.url} target="_blank" rel="noopener" onClick={e => e.stopPropagation()}
-            style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:6, padding:'9px 0', background:'#1a73e8', color:'#fff', borderRadius:8, fontSize:13, fontWeight:700, textDecoration:'none' }}>
-            <i className="fas fa-external-link-alt" style={{ fontSize:11 }}/> Read Full Story
-          </a>
+          <button onClick={() => navigate(`/news/${item.id}`)}
+            style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:6, padding:'9px 0', background:'#1a73e8', color:'#fff', borderRadius:8, fontSize:13, fontWeight:700, border:'none', cursor:'pointer' }}>
+            <i className="fas fa-newspaper" style={{ fontSize:11 }}/> {t('readFull')}
+          </button>
           <button onClick={e => { e.stopPropagation(); onRepost(item) }}
-            style={{ padding:'9px 16px', border:'1px solid var(--border)', borderRadius:8, fontSize:13, fontWeight:700, color:'#34a853', background:'var(--surface)', cursor:'pointer', display:'flex', alignItems:'center', gap:6 }}>
-            <i className="fas fa-retweet"/> Repost
+            style={{ padding:'9px 14px', border:'1px solid var(--border)', borderRadius:8, fontSize:13, fontWeight:700, color:'#34a853', background:'var(--surface)', cursor:'pointer', display:'flex', alignItems:'center', gap:6 }}>
+            <i className="fas fa-retweet"/> {t('repost')}
           </button>
         </div>
       </div>
@@ -91,32 +96,31 @@ function HeroCard({ item, onRepost }) {
 
 function CompactCard({ item, onRepost }) {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [imgErr, setImgErr] = useState(false)
   const ac = accent(item.category)
+  const { text: title } = useTranslate(item.title)
   return (
     <div style={{ display:'flex', gap:12, padding:'12px 0', borderBottom:'1px solid var(--border2)', cursor:'pointer' }}
       onClick={() => navigate(`/news/${item.id}`)}>
       <div style={{ flex:1, minWidth:0 }}>
-        <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:5 }}>
-          <span style={{ width:7, height:7, borderRadius:'50%', background:ac, flexShrink:0 }}/>
-          <span style={{ fontSize:10, fontWeight:700, color:ac, textTransform:'uppercase', letterSpacing:'.04em', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{item.category}</span>
-          <span style={{ fontSize:10, color:'var(--muted2)', marginLeft:'auto', flexShrink:0 }}>{timeAgo(item.date || item.pubDate)}</span>
+        <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:4 }}>
+          <span style={{ fontSize:10, fontWeight:700, color:ac, textTransform:'uppercase' }}>{item.category}</span>
+          <span style={{ fontSize:10, color:'var(--muted)', marginLeft:'auto' }}>{timeAgo(item.date || item.pubDate)}</span>
         </div>
-        <p style={{ fontSize:14, fontWeight:600, color:'var(--ink)', lineHeight:1.45, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden', marginBottom:4 }}>{item.title}</p>
+        <p style={{ fontSize:13, fontWeight:600, color:'var(--ink)', lineHeight:1.45, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden', marginBottom:4 }}>{title}</p>
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-          <p style={{ fontSize:11, color:'var(--muted2)', fontWeight:500 }}>{item.source}</p>
+          <p style={{ fontSize:11, color:'var(--muted)' }}>{item.source}</p>
           {onRepost && (
             <button onClick={e => { e.stopPropagation(); onRepost(item) }}
-              style={{ fontSize:11, color:'#34a853', background:'none', border:'none', cursor:'pointer', fontWeight:700, display:'flex', alignItems:'center', gap:4, padding:'2px 6px', borderRadius:6 }}>
-              <i className="fas fa-retweet" style={{ fontSize:11 }}/> Repost
+              style={{ fontSize:11, color:'#34a853', background:'none', border:'none', cursor:'pointer', fontWeight:700, display:'flex', alignItems:'center', gap:4 }}>
+              <i className="fas fa-retweet" style={{ fontSize:11 }}/> {t('repost')}
             </button>
           )}
         </div>
       </div>
-      {item.image && !imgErr && (
-        <img src={item.image} alt="" loading="lazy" onError={() => setImgErr(true)}
-          style={{ width:80, height:60, borderRadius:8, objectFit:'cover', flexShrink:0, background:'var(--surface2)' }}/>
-      )}
+      {item.image && !imgErr && <img src={item.image} alt="" loading="lazy" onError={() => setImgErr(true)}
+        style={{ width:80, height:60, borderRadius:8, objectFit:'cover', flexShrink:0 }}/>}
     </div>
   )
 }
@@ -125,24 +129,23 @@ function GridCard({ item }) {
   const navigate = useNavigate()
   const [imgErr, setImgErr] = useState(false)
   const ac = accent(item.category)
+  const { text: title } = useTranslate(item.title)
   return (
     <div style={{ background:'var(--surface)', borderRadius:12, overflow:'hidden', border:'1px solid var(--border)', boxShadow:'var(--shadow-sm)', cursor:'pointer' }}
       onClick={() => navigate(`/news/${item.id}`)}>
       {item.image && !imgErr ? (
-        <div style={{ height:110, overflow:'hidden', background:'var(--surface2)', position:'relative' }}>
+        <div style={{ height:100, overflow:'hidden', background:'var(--surface2)', position:'relative' }}>
           <img src={item.image} alt="" loading="lazy" onError={() => setImgErr(true)} style={{ width:'100%', height:'100%', objectFit:'cover' }}/>
-          <div style={{ position:'absolute', top:6, left:6 }}>
-            <span style={{ background:ac, color:'#fff', fontSize:9, fontWeight:800, padding:'2px 7px', borderRadius:99, textTransform:'uppercase' }}>{item.category}</span>
-          </div>
+          <span style={{ position:'absolute', top:5, left:5, background:ac, color:'#fff', fontSize:9, fontWeight:800, padding:'2px 7px', borderRadius:99, textTransform:'uppercase' }}>{item.category}</span>
         </div>
       ) : (
-        <div style={{ height:60, background:`linear-gradient(135deg,${ac}22,${ac}33)`, display:'flex', alignItems:'center', justifyContent:'center' }}>
-          <i className={catIcon(item.category)} style={{ fontSize:20, color:ac, opacity:.5 }}/>
+        <div style={{ height:55, background:`linear-gradient(135deg,${ac}22,${ac}33)`, display:'flex', alignItems:'center', justifyContent:'center' }}>
+          <i className={catIcon(item.category)} style={{ fontSize:18, color:ac, opacity:.5 }}/>
         </div>
       )}
-      <div style={{ padding:'10px 10px 12px' }}>
-        <p style={{ fontSize:12, fontWeight:700, color:'var(--ink)', lineHeight:1.4, marginBottom:6, display:'-webkit-box', WebkitLineClamp:3, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{item.title}</p>
-        <div style={{ fontSize:10, color:'var(--muted2)', display:'flex', justifyContent:'space-between' }}>
+      <div style={{ padding:'8px 10px 10px' }}>
+        <p style={{ fontSize:12, fontWeight:700, color:'var(--ink)', lineHeight:1.4, marginBottom:4, display:'-webkit-box', WebkitLineClamp:3, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{title}</p>
+        <div style={{ fontSize:10, color:'var(--muted)', display:'flex', justifyContent:'space-between' }}>
           <span style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:'60%' }}>{item.source}</span>
           <span>{timeAgo(item.date || item.pubDate)}</span>
         </div>
@@ -151,36 +154,8 @@ function GridCard({ item }) {
   )
 }
 
-// \u2500\u2500\u2500 Repost Modal \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-function RepostModal({ item, onClose, onConfirm, reposting }) {
-  if (!item) return null
-  const ac = accent(item.category)
-  return (
-    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className="modal">
-        <div className="modal-header">
-          <span className="modal-title">Share to Socialgati?</span>
-          <button className="icon-btn" onClick={onClose}><i className="fas fa-times"/></button>
-        </div>
-        <div style={{ display:'flex', gap:12, marginBottom:20, background:'var(--surface2)', padding:12, borderRadius:10 }}>
-          {item.image && <img src={item.image} style={{ width:64, height:64, borderRadius:8, objectFit:'cover', flexShrink:0 }} alt=""/>}
-          <div style={{ flex:1, minWidth:0 }}>
-            <div style={{ fontSize:11, color:ac, fontWeight:700, textTransform:'uppercase', marginBottom:4 }}>{item.category}</div>
-            <div style={{ fontSize:14, fontWeight:600, color:'var(--ink)', lineHeight:1.4, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{item.title}</div>
-            <div style={{ fontSize:11, color:'var(--muted)', marginTop:4 }}>{item.source}</div>
-          </div>
-        </div>
-        <button onClick={() => onConfirm(item)} disabled={reposting}
-          style={{ width:'100%', padding:13, background:'linear-gradient(135deg,#1a73e8,#1557b0)', color:'#fff', border:'none', borderRadius:10, fontSize:15, fontWeight:700, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
-          {reposting ? <><i className="fas fa-spinner fa-spin"/> Posting...</> : <><i className="fas fa-retweet"/> Repost to Community</>}
-        </button>
-      </div>
-    </div>
-  )
-}
-
-// \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 export default function CategoryPage() {
+  const { t } = useTranslation()
   const { cat: catParam } = useParams()         // e.g. "all", "sports", "technology"
   const navigate = useNavigate()
   const { user } = useAuth()

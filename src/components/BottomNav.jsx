@@ -1,4 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom'
+import { useTranslation } from '../context/TranslationContext'
 import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { collection, query, where, limit, onSnapshot } from 'firebase/firestore'
@@ -7,6 +8,7 @@ import { db } from '../firebase/config'
 export default function BottomNav({ darkMode = false }) {
   const navigate = useNavigate()
   const { pathname } = useLocation()
+  const { t } = useTranslation()
   const { user } = useAuth()
   const [unread, setUnread] = useState(0)
 
@@ -38,14 +40,14 @@ export default function BottomNav({ darkMode = false }) {
       <button className={`nav-btn ${isActive('/') ? 'active' : ''}`}
         style={{ color: active(isActive('/')) }} onClick={() => navigate('/')}>
         <i className="fas fa-house" />
-        <span>Home</span>
+        <span>{t('home')}</span>
       </button>
 
       {/* News */}
       <button className={`nav-btn ${isActive('/news') ? 'active' : ''}`}
         style={{ color: active(isActive('/news')) }} onClick={() => navigate('/news')}>
         <i className="fas fa-newspaper" />
-        <span>News</span>
+        <span>{t('news')}</span>
       </button>
 
       {/* Shorts \u2014 special pill button */}
@@ -60,7 +62,7 @@ export default function BottomNav({ darkMode = false }) {
       <button className={`nav-btn ${isActive('/search') ? 'active' : ''}`}
         style={{ color: active(isActive('/search')) }} onClick={() => navigate('/search')}>
         <i className="fas fa-magnifying-glass" />
-        <span>Search</span>
+        <span>{t('search')}</span>
       </button>
 
       {/* Profile \u2014 shows avatar if available + notification dot for unread */}
@@ -74,7 +76,7 @@ export default function BottomNav({ darkMode = false }) {
               alt="" />
           : <i className="fas fa-user" />
         }
-        <span>Profile</span>
+        <span>{t('profile')}</span>
         {unread > 0 && (
           <span style={{
             position: 'absolute', top: 2, right: 10,

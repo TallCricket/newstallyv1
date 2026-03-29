@@ -180,6 +180,7 @@ function GridCard({ item }) {
 
 function CategorySection({ title, items, accent, onRepost, onSeeAll }) {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   if (!items.length) return null
   const [main, ...rest] = items
   return (
@@ -231,6 +232,7 @@ function CategorySection({ title, items, accent, onRepost, onSeeAll }) {
 
 // \u2500\u2500\u2500 Home/Category layout \u2014 same for ALL and every specific category \u2500\u2500
 function NewsLayout({ items, cat, onRepost, onSeeAll, sentinelRef, loadingMore, hasMore, onLoadMore, totalLoaded }) {
+  const { t } = useTranslation()
   const groupByCategory = (arr) => {
     const map = {}
     arr.forEach(n => { if (!map[n.category]) map[n.category] = []; map[n.category].push(n) })
@@ -425,7 +427,7 @@ export default function NewsTally() {
     setLoading(true); setError(''); setHasMore(true); lastDocRef.current = null
     try {
       const items = await fetchBatch(true)
-      if (!items.length) { setError(t('noNews')); return }
+      if (!items.length) { setError('no_news'); return }
       setAllNews(sortByDate(items))
     } catch(e) { setError(e.message) }
     finally { setLoading(false) }

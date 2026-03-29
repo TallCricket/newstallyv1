@@ -13,6 +13,7 @@ import ProfilePage from '../components/ProfilePage'
 import NotificationsPage from '../components/NotificationsPage'
 import AuthModal from '../components/AuthModal'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import DesktopNav from '../components/DesktopNav'
 
 // \u2500\u2500 Skeleton \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 function PostSkeleton() {
@@ -346,6 +347,289 @@ export default function Socialgati() {
       </div>
 
       {/* \u2500\u2500 Floating + button \u2500\u2500 */}
+      <button
+        onClick={() => user ? setShowCreateModal(true) : setShowAuth(true)}
+        style={{
+          position: 'fixed', bottom: 72, right: 16, width: 50, height: 50,
+          borderRadius: '50%', background: '#1a73e8', color: '#fff', border: 'none',
+          cursor: 'pointer', fontSize: 18, display: 'flex', alignItems: 'center',
+          justifyContent: 'center', zIndex: 90,
+          boxShadow: '0 3px 14px rgba(26,115,232,.45)'
+        }}>
+        <i className="fas fa-plus" />
+      </button>
+
+      {/* \u2500\u2500 Create Post Modal \u2500\u2500 */}
+      {showCreateModal && (
+        <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setShowCreateModal(false)}>
+          <div className="modal">
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+              <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--ink)' }}>New Post</span>
+              <button onClick={() => setShowCreateModal(false)}
+                style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--surface2)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)', fontSize: 13 }}>
+                <i className="fas fa-times" />
+              </button>
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <img src={av} style={{ width: 38, height: 38, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} alt="" />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontSize: 13, fontWeight: 700, color: '#1a73e8', marginBottom: 6 }}>
+                  {userData?.username ? '@' + userData.username : user?.displayName || 'You'}
+                </p>
+                <MentionInput
+                  value={postText}
+                  onChange={setPostText}
+                  placeholder={"What's on your mind?\nUse @ to mention, # for hashtags"}
+                />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 12, padding: '8px 0' }}>
+              <span style={{ fontSize: 12, color: '#9334e6', fontWeight: 600 }}>@mention</span>
+              <span style={{ fontSize: 12, color: '#1a73e8', fontWeight: 600 }}>#hashtag</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8, paddingTop: 10, borderTop: '1px solid var(--border)' }}>
+              <span style={{ fontSize: 12, color: postText.length > 450 ? '#e53935' : 'var(--muted)' }}>
+                {500 - postText.length} chars left
+              </span>
+              <button onClick={submitPost} disabled={!postText.trim() || posting}
+                style={{
+                  padding: '9px 24px',
+                  background: postText.trim() ? '#1a73e8' : 'var(--border)',
+                  color: postText.trim() ? '#fff' : 'var(--muted)',
+                  borderRadius: 99, fontSize: 14, fontWeight: 700, border: 'none',
+                  cursor: postText.trim() ? 'pointer' : 'not-allowed'
+                }}>
+                {posting ? <i className="fas fa-spinner fa-spin" /> : 'Post'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
+      <CommentsPage postId={openCommentPost} onClose={() => setOpenCommentPost(null)}
+        onOpenProfile={uid => { setOpenCommentPost(null); setOpenProfileUid(uid) }} />
+      {openProfileUid && (
+        <ProfilePage uid={openProfileUid} onClose={() => setOpenProfileUid(null)}
+          onOpenComments={setOpenCommentPost} onOpenProfile={setOpenProfileUid}
+          onAuthRequired={() => setShowAuth(true)} />
+      )}
+      <NotificationsPage open={showNotifs} onClose={() => setShowNotifs(false)}
+        onOpenProfile={uid => { setShowNotifs(false); setOpenProfileUid(uid) }}
+        onOpenPost={pid => { setShowNotifs(false); setOpenCommentPost(pid) }} />
+      <BottomNav />
+    </>
+  )
+}  return (
+    <>
+      {/* \u2500\u2500 Desktop Sidebar (hidden on mobile via CSS) \u2500\u2500 */}
+      <DesktopNav onNewPost={() => user ? setShowCreateModal(true) : setShowAuth(true)} />
+
+      {/* \u2500\u2500 Mobile Header (hidden on desktop via CSS) \u2500\u2500 */}
+      <header className="sg-desktop-header-hidden" style={{
+        position: 'fixed', top: 0, left: 0, right: 0, height: 56,
+        background: 'var(--header-bg)', backdropFilter: 'blur(20px)',
+        borderBottom: '1px solid var(--border)',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '0 16px', zIndex: 100
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }} onClick={() => navigate('/')}>
+          <img src="https://i.postimg.cc/dLTgRxbL/cropped-circle-image.png"
+            style={{ width: 32, height: 32, borderRadius: '50%' }} alt="Socialgati" />
+          <div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: '#1a73e8', lineHeight: 1.1, letterSpacing: '-.2px' }}>Socialgati</div>
+            <div style={{ fontSize: 9, color: 'var(--muted)', fontWeight: 500, lineHeight: 1 }}>by NewsTally</div>
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <button onClick={() => user ? navigate('/alerts') : setShowAuth(true)}
+            style={{ width: 36, height: 36, borderRadius: 8, border: 'none', background: 'transparent', color: 'var(--muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>
+            <i className="fas fa-bell" />
+          </button>
+          {!user && (
+            <button onClick={() => setShowAuth(true)}
+              style={{ padding: '6px 16px', background: '#1a73e8', color: '#fff', borderRadius: 99, fontSize: 13, fontWeight: 700, border: 'none', cursor: 'pointer' }}>
+              Sign In
+            </button>
+          )}
+        </div>
+      </header>
+
+      {/* \u2500\u2500 Mobile layout wrapper \u2500\u2500 */}
+      <div className="sg-mobile-only" style={{ paddingTop: 56, paddingBottom: 72, background: 'var(--bg)', minHeight: '100dvh' }}>
+
+        {/* Feed Tabs */}
+        <div style={{
+          display: 'flex', background: 'var(--surface)',
+          borderBottom: '1px solid var(--border)',
+          position: 'sticky', top: 56, zIndex: 40
+        }}>
+          {TABS.map(([k, label]) => (
+            <button key={k} onClick={() => setFeedType(k)}
+              style={{
+                flex: 1, padding: '12px 4px', fontSize: 13, fontWeight: 600,
+                color: feedType === k ? '#1a73e8' : 'var(--muted)',
+                borderBottom: feedType === k ? '2px solid #1a73e8' : '2px solid transparent',
+                background: 'none', border: 'none',
+                cursor: 'pointer'
+              }}>
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Compose bar */}
+        <div style={{
+          display: 'flex', gap: 10, padding: '12px 16px',
+          background: 'var(--surface)', borderBottom: '1px solid var(--border)',
+          alignItems: 'center'
+        }}>
+          <img src={av} style={{ width: 38, height: 38, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+            alt="" onError={e => e.target.src = `https://ui-avatars.com/api/?name=U&background=1a73e8&color=fff`} />
+          <button
+            onClick={() => user ? setShowCreateModal(true) : setShowAuth(true)}
+            style={{
+              flex: 1, textAlign: 'left', padding: '10px 16px',
+              background: 'var(--surface2)', border: '1.5px solid var(--border)',
+              borderRadius: 99, fontSize: 14, color: 'var(--muted)',
+              cursor: 'pointer', fontFamily: 'inherit'
+            }}>
+            What's on your mind?
+          </button>
+        </div>
+
+        {/* Feed */}
+        <div style={{ padding: '8px 12px' }}>
+          {loading
+            ? Array.from({ length: 4 }).map((_, i) => <PostSkeleton key={i} />)
+            : posts.length === 0
+              ? (
+                <div style={{ textAlign: 'center', padding: '64px 20px' }}>
+                  <div style={{ width: 72, height: 72, borderRadius: '50%', background: '#e8f0fe', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                    <i className="fas fa-bolt" style={{ fontSize: 28, color: '#1a73e8' }} />
+                  </div>
+                  <p style={{ fontSize: 17, fontWeight: 700, color: 'var(--ink)', marginBottom: 8 }}>Nothing here yet</p>
+                  <p style={{ fontSize: 14, color: 'var(--muted)', marginBottom: 20 }}>Be the first to post on Socialgati!</p>
+                  <button onClick={() => user ? setShowCreateModal(true) : setShowAuth(true)}
+                    style={{ padding: '10px 28px', background: '#1a73e8', color: '#fff', border: 'none', borderRadius: 99, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+                    Create Post
+                  </button>
+                </div>
+              )
+              : posts.map(p => (
+                <PostCard
+                  key={p.id} post={p} id={p.id}
+                  onOpenComments={setOpenCommentPost}
+                  onOpenProfile={setOpenProfileUid}
+                  onAuthRequired={() => setShowAuth(true)}
+                  onMention={handleMentionClick}
+                  onHashtag={tag => navigate(`/hashtag/${tag.toLowerCase()}`)}
+                />
+              ))
+          }
+        </div>
+      </div>
+
+      {/* \u2500\u2500 Desktop layout (Instagram-style 3-col) \u2500\u2500 */}
+      <div className="sg-desktop-shell">
+        {/* Center feed */}
+        <div className="sg-desktop-feed">
+          {/* Tabs */}
+          <div style={{ display: 'flex', background: 'var(--surface)', borderRadius: 14, border: '1px solid var(--border)', marginBottom: 16, overflow: 'hidden' }}>
+            {TABS.map(([k, label]) => (
+              <button key={k} onClick={() => setFeedType(k)}
+                style={{
+                  flex: 1, padding: '12px 4px', fontSize: 14, fontWeight: 600,
+                  color: feedType === k ? '#1a73e8' : 'var(--muted)',
+                  borderBottom: feedType === k ? '2px solid #1a73e8' : '2px solid transparent',
+                  background: 'none', border: 'none', cursor: 'pointer'
+                }}>
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {/* Compose box */}
+          <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 16, marginBottom: 16 }}>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+              <img src={av} style={{ width: 42, height: 42, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+                alt="" onError={e => e.target.src = `https://ui-avatars.com/api/?name=U&background=1a73e8&color=fff`} />
+              <button
+                onClick={() => user ? setShowCreateModal(true) : setShowAuth(true)}
+                style={{
+                  flex: 1, textAlign: 'left', padding: '11px 18px',
+                  background: 'var(--surface2)', border: '1.5px solid var(--border)',
+                  borderRadius: 99, fontSize: 14, color: 'var(--muted)',
+                  cursor: 'pointer', fontFamily: 'inherit'
+                }}>
+                What's on your mind?
+              </button>
+              <button
+                onClick={() => user ? setShowCreateModal(true) : setShowAuth(true)}
+                style={{ padding: '10px 20px', background: '#1a73e8', color: '#fff', border: 'none', borderRadius: 99, fontSize: 14, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>
+                Post
+              </button>
+            </div>
+          </div>
+
+          {/* Posts feed */}
+          {loading
+            ? Array.from({ length: 4 }).map((_, i) => <PostSkeleton key={i} />)
+            : posts.length === 0
+              ? (
+                <div style={{ textAlign: 'center', padding: '64px 20px', background: 'var(--surface)', borderRadius: 16, border: '1px solid var(--border)' }}>
+                  <i className="fas fa-bolt" style={{ fontSize: 36, color: '#1a73e8', marginBottom: 12, display: 'block' }} />
+                  <p style={{ fontSize: 17, fontWeight: 700, color: 'var(--ink)', marginBottom: 8 }}>Nothing here yet</p>
+                  <p style={{ fontSize: 14, color: 'var(--muted)', marginBottom: 20 }}>Be the first to post!</p>
+                  <button onClick={() => user ? setShowCreateModal(true) : setShowAuth(true)}
+                    style={{ padding: '10px 28px', background: '#1a73e8', color: '#fff', border: 'none', borderRadius: 99, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+                    Create Post
+                  </button>
+                </div>
+              )
+              : posts.map(p => (
+                <PostCard
+                  key={p.id} post={p} id={p.id}
+                  onOpenComments={setOpenCommentPost}
+                  onOpenProfile={setOpenProfileUid}
+                  onAuthRequired={() => setShowAuth(true)}
+                  onMention={handleMentionClick}
+                  onHashtag={tag => navigate(`/hashtag/${tag.toLowerCase()}`)}
+                />
+              ))
+          }
+        </div>
+
+        {/* Right panel */}
+        <div className="sg-desktop-right">
+          {/* Sign-in prompt if not logged in */}
+          {!user && (
+            <div className="sg-widget">
+              <p style={{ fontSize: 14, color: 'var(--ink)', fontWeight: 700, marginBottom: 8 }}>Join Socialgati</p>
+              <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 12, lineHeight: 1.5 }}>Post, follow and connect with the community.</p>
+              <button onClick={() => setShowAuth(true)}
+                style={{ width: '100%', padding: '10px', background: '#1a73e8', color: '#fff', border: 'none', borderRadius: 99, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+                Sign In
+              </button>
+            </div>
+          )}
+          {/* Powered by */}
+          <div className="sg-widget" style={{ textAlign: 'center' }}>
+            <img src="https://i.postimg.cc/dLTgRxbL/cropped-circle-image.png" style={{ width: 48, height: 48, borderRadius: '50%', margin: '0 auto 10px' }} alt="" />
+            <p style={{ fontSize: 14, fontWeight: 800, color: 'var(--ink)' }}>NewsTally</p>
+            <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 4 }}>India's social news platform</p>
+            <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+              <button onClick={() => navigate('/news')} style={{ flex: 1, padding: '8px', background: '#1a73e8', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>News</button>
+              <button onClick={() => navigate('/shorts')} style={{ flex: 1, padding: '8px', background: 'var(--surface2)', color: 'var(--ink)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Shorts</button>
+            </div>
+          </div>
+          <p style={{ fontSize: 11, color: 'var(--muted)', padding: '0 4px' }}>
+            &copy; 2025 NewsTally &middot; Socialgati
+          </p>
+        </div>
+      </div>
+
+      {/* \u2500\u2500 Floating + button (mobile only) \u2500\u2500 */}
       <button
         onClick={() => user ? setShowCreateModal(true) : setShowAuth(true)}
         style={{

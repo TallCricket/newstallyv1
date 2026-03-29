@@ -524,68 +524,206 @@ export default function NewsTally() {
 
   return (
     <>
+      {/* \u2500\u2500 Mobile header \u2500\u2500 */}
       <header className="header">
         <div className="logo">
           <img src="https://i.postimg.cc/dLTgRxbL/cropped-circle-image.png" alt="NewsTally"/>
           <span className="logo-text">NewsTally</span>
         </div>
+        <div style={{ display:'flex', gap:4 }}>
+          <button onClick={() => setShowSearch(s => !s)} style={{ width:36, height:36, borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', color:'var(--muted)', fontSize:16, background:'none', border:'none', cursor:'pointer' }}>
+            <i className="fas fa-search"/>
+          </button>
+        </div>
       </header>
 
-      <div className="main-wrapper" style={{ paddingBottom:80 }}>
-        {showSearch && (
-          <div style={{ padding:'10px 16px', background:'var(--surface)', borderBottom:'1px solid var(--border)', position:'sticky', top:56, zIndex:50 }}>
-            <div style={{ position:'relative' }}>
-              <i className="fas fa-search" style={{ position:'absolute', left:12, top:'50%', transform:'translateY(-50%)', color:'var(--muted)', fontSize:14, pointerEvents:'none' }}/>
-              <input autoFocus value={search} onChange={e => setSearch(e.target.value)} placeholder="Search news, topics..."
-                style={{ width:'100%', padding:'10px 36px', background:'var(--surface2)', border:'none', borderRadius:10, fontSize:14, outline:'none', color:'var(--ink)' }}/>
-              {search && <button onClick={() => setSearch('')} style={{ position:'absolute', right:10, top:'50%', transform:'translateY(-50%)', color:'var(--muted)', background:'none', border:'none', cursor:'pointer', padding:4 }}><i className="fas fa-times-circle"/></button>}
-            </div>
+      {/* \u2500\u2500 DESKTOP layout: Google News style \u2500\u2500 */}
+      <div className="nt-desktop-only">
+        {/* Desktop topbar */}
+        <div className="nt-desktop-topbar">
+          <div className="logo" style={{ cursor:'pointer' }} onClick={() => navigate('/news')}>
+            <img src="https://i.postimg.cc/dLTgRxbL/cropped-circle-image.png" alt="NewsTally" style={{ width:36, height:36, borderRadius:'50%' }}/>
+            <span style={{ fontSize:20, fontWeight:800, color:'var(--ink)', marginLeft:8 }}>NewsTally</span>
           </div>
-        )}
-
-        <div className="cat-bar" style={{ position:'sticky', top: showSearch ? 98 : 56, zIndex:49 }}>
-          {cats.map(c => (
-            <button key={c} className={`cat-btn ${cat===c?'active':''}`} onClick={() => setCat(c)}>{c}</button>
-          ))}
+          {/* Search bar in topbar */}
+          <div style={{ flex:1, maxWidth:500, position:'relative' }}>
+            <i className="fas fa-search" style={{ position:'absolute', left:14, top:'50%', transform:'translateY(-50%)', color:'var(--muted)', fontSize:14, pointerEvents:'none' }}/>
+            <input value={search} onChange={e => setSearch(e.target.value)}
+              placeholder="Search news, topics, sources..."
+              style={{ width:'100%', padding:'10px 14px 10px 40px', background:'var(--surface2)', border:'1.5px solid var(--border)', borderRadius:99, fontSize:14, outline:'none', color:'var(--ink)' }}/>
+            {search && <button onClick={() => setSearch('')} style={{ position:'absolute', right:12, top:'50%', transform:'translateY(-50%)', color:'var(--muted)', background:'none', border:'none', cursor:'pointer', padding:4 }}><i className="fas fa-times-circle"/></button>}
+          </div>
+          <div style={{ display:'flex', alignItems:'center', gap:4 }}>
+            {[['/', 'fas fa-house'], ['/news', 'fas fa-newspaper'], ['/shorts', 'fas fa-circle-play'], ['/search', 'fas fa-search'], ['/profile', 'fas fa-user']].map(([path, icon]) => (
+              <button key={path} onClick={() => navigate(path)}
+                style={{ width:40, height:40, borderRadius:10, display:'flex', alignItems:'center', justifyContent:'center', border:'none', background: window.location.pathname===path ? 'rgba(26,115,232,.1)' : 'transparent', color: window.location.pathname===path ? '#1a73e8' : 'var(--muted)', fontSize:16, cursor:'pointer' }}>
+                <i className={icon}/>
+              </button>
+            ))}
+          </div>
         </div>
 
-        {loading ? (
-          <div style={{ background:'var(--bg)' }}>
-            <HeroSkeleton/>
-            <div style={{ padding:'0 16px' }}>{Array.from({length:4}).map((_,i) => <SmallSkeleton key={i}/>)}</div>
+        <div className="nt-desktop-shell" style={{ paddingTop:64 }}>
+          {/* Left sidebar: categories */}
+          <div className="nt-desktop-left">
+            <p style={{ fontSize:11, fontWeight:800, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.05em', padding:'4px 14px 8px' }}>Categories</p>
+            {cats.map(c => (
+              <button key={c} className={`nt-sidebar-cat ${cat===c ? 'active' : ''}`} onClick={() => setCat(c)}>
+                {c}
+              </button>
+            ))}
           </div>
-        ) : error ? (
-          <div style={{ textAlign:'center', padding:'60px 20px' }}>
-            <i className="fas fa-exclamation-circle" style={{ fontSize:36, color:'#ea4335', marginBottom:12, display:'block' }}/>
-            <p style={{ fontWeight:600, marginBottom:8, color:'var(--ink)' }}>Could not load news</p>
-            <p style={{ fontSize:12, color:'var(--muted)', marginBottom:16 }}>{error}</p>
-            <button onClick={loadInitial} style={{ padding:'10px 24px', background:'#1a73e8', color:'#fff', border:'none', borderRadius:8, fontSize:14, fontWeight:600, cursor:'pointer' }}>\u21ba Retry</button>
+
+          {/* Main content */}
+          <div className="nt-desktop-main">
+            {loading ? (
+              <div>
+                <HeroSkeleton/>
+                <div style={{ padding:'0' }}>{Array.from({length:4}).map((_,i) => <SmallSkeleton key={i}/>)}</div>
+              </div>
+            ) : error ? (
+              <div style={{ textAlign:'center', padding:'60px 20px' }}>
+                <i className="fas fa-exclamation-circle" style={{ fontSize:36, color:'#ea4335', marginBottom:12, display:'block' }}/>
+                <p style={{ fontWeight:600, marginBottom:8, color:'var(--ink)' }}>Could not load news</p>
+                <button onClick={loadInitial} style={{ padding:'10px 24px', background:'#1a73e8', color:'#fff', border:'none', borderRadius:8, fontSize:14, fontWeight:600, cursor:'pointer' }}>\u21ba Retry</button>
+              </div>
+            ) : search.trim() ? (
+              <div>
+                <p style={{ fontSize:13, color:'var(--muted)', marginBottom:16, fontWeight:500 }}>{filtered.length} results for "{search}"</p>
+                <div className="nt-main-grid">
+                  {filtered.map(item => <GridCard key={item.id} item={item}/>)}
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Hero story */}
+                {filtered.length > 0 && (
+                  <div style={{ marginBottom:20 }}>
+                    <HeroCard item={filtered[0]} onRepost={setRepostItem}/>
+                  </div>
+                )}
+                {/* 2-col grid for rest */}
+                {filtered.length > 1 && (
+                  <>
+                    <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:12 }}>
+                      <div style={{ width:4, height:20, background:'#1a73e8', borderRadius:2 }}/>
+                      <h2 style={{ fontSize:15, fontWeight:700, color:'var(--ink)' }}>{t('latestUpdates')}</h2>
+                    </div>
+                    <div className="nt-main-grid" style={{ marginBottom:20 }}>
+                      {filtered.slice(1, 9).map(item => <GridCard key={item.id} item={item}/>)}
+                    </div>
+                  </>
+                )}
+                {/* More in 3-col */}
+                {filtered.length > 9 && (
+                  <>
+                    <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:12 }}>
+                      <div style={{ width:4, height:20, background:'#9334e6', borderRadius:2 }}/>
+                      <h2 style={{ fontSize:15, fontWeight:700, color:'var(--ink)' }}>More Stories</h2>
+                    </div>
+                    <div className="nt-main-grid-3">
+                      {filtered.slice(9).map(item => <GridCard key={item.id} item={item}/>)}
+                    </div>
+                  </>
+                )}
+                {/* Load more sentinel */}
+                <div ref={sentinelRef} style={{ height:60, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                  {loadingMore && <i className="fas fa-spinner fa-spin" style={{ color:'var(--muted)', fontSize:20 }}/>}
+                </div>
+              </>
+            )}
           </div>
-        ) : search.trim() ? (
-          /* Search results \u2014 compact list */
-          <div style={{ padding:'8px 16px', background:'var(--bg)' }}>
-            <p style={{ fontSize:12, color:'var(--muted)', padding:'8px 0', fontWeight:500 }}>
-              {filtered.length} results for "{search}"
-            </p>
-            {filtered.length === 0
-              ? <div style={{ textAlign:'center', padding:'40px 20px', color:'var(--muted)' }}><i className="fas fa-search" style={{ fontSize:36, display:'block', marginBottom:12, opacity:.3 }}/><p>No results found</p></div>
-              : filtered.map(item => <CompactCard key={item.id} item={item} onRepost={setRepostItem}/>)
-            }
+
+          {/* Right panel */}
+          <div className="nt-desktop-right-panel">
+            {/* Trending / top articles */}
+            <div className="nt-widget">
+              <div className="nt-widget-title">Trending Now</div>
+              {filtered.slice(0, 6).map((item, idx) => (
+                <div key={item.id} className="nt-trend-item" onClick={() => navigate(`/news/${item.id}`)}>
+                  <span className="nt-trend-num">#{idx + 1}</span>
+                  <span className="nt-trend-text">{item.title}</span>
+                  {item.image && <img src={item.image} className="nt-trend-img" alt="" onError={e => e.target.style.display='none'}/>}
+                </div>
+              ))}
+            </div>
+
+            {/* Switch to Socialgati */}
+            <div className="nt-widget" style={{ textAlign:'center' }}>
+              <i className="fas fa-bolt" style={{ fontSize:24, color:'#1a73e8', marginBottom:8, display:'block' }}/>
+              <p style={{ fontSize:14, fontWeight:800, color:'var(--ink)', marginBottom:4 }}>Socialgati Community</p>
+              <p style={{ fontSize:12, color:'var(--muted)', marginBottom:12, lineHeight:1.5 }}>Discuss the news. Post your thoughts.</p>
+              <button onClick={() => navigate('/')} style={{ width:'100%', padding:'9px', background:'#1a73e8', color:'#fff', border:'none', borderRadius:8, fontSize:13, fontWeight:700, cursor:'pointer' }}>
+                Open Socialgati
+              </button>
+            </div>
+
+            {/* Category quick links */}
+            <div className="nt-widget">
+              <div className="nt-widget-title">Browse Categories</div>
+              <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
+                {cats.filter(c => c !== 'All').map(c => (
+                  <button key={c} onClick={() => setCat(c)}
+                    style={{ padding:'5px 12px', borderRadius:99, background: cat===c ? '#1a73e820' : 'var(--surface2)', color: cat===c ? '#1a73e8' : 'var(--muted)', border: `1px solid ${cat===c ? '#1a73e8' : 'var(--border)'}`, fontSize:12, fontWeight:600, cursor:'pointer' }}>
+                    {c}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
-        ) : (
-          /* Main layout \u2014 same for ALL and every category */
-          <NewsLayout
-            items={filtered}
-            cat={cat}
-            onRepost={setRepostItem}
-            onSeeAll={c => setCat(c)}
-            sentinelRef={sentinelRef}
-            loadingMore={loadingMore}
-            hasMore={currentHasMore}
-            onLoadMore={loadMore}
-            totalLoaded={currentTotal}
-          />
-        )}
+        </div>
+      </div>
+
+      {/* \u2500\u2500 MOBILE layout \u2500\u2500 */}
+      <div className="nt-mobile-only">
+        <div className="main-wrapper" style={{ paddingBottom:80 }}>
+          {showSearch && (
+            <div style={{ padding:'10px 16px', background:'var(--surface)', borderBottom:'1px solid var(--border)', position:'sticky', top:56, zIndex:50 }}>
+              <div style={{ position:'relative' }}>
+                <i className="fas fa-search" style={{ position:'absolute', left:12, top:'50%', transform:'translateY(-50%)', color:'var(--muted)', fontSize:14, pointerEvents:'none' }}/>
+                <input autoFocus value={search} onChange={e => setSearch(e.target.value)} placeholder="Search news, topics..."
+                  style={{ width:'100%', padding:'10px 36px', background:'var(--surface2)', border:'none', borderRadius:10, fontSize:14, outline:'none', color:'var(--ink)' }}/>
+                {search && <button onClick={() => setSearch('')} style={{ position:'absolute', right:10, top:'50%', transform:'translateY(-50%)', color:'var(--muted)', background:'none', border:'none', cursor:'pointer', padding:4 }}><i className="fas fa-times-circle"/></button>}
+              </div>
+            </div>
+          )}
+
+          <div className="cat-bar" style={{ position:'sticky', top: showSearch ? 98 : 56, zIndex:49 }}>
+            {cats.map(c => (
+              <button key={c} className={`cat-btn ${cat===c?'active':''}`} onClick={() => setCat(c)}>{c}</button>
+            ))}
+          </div>
+
+          {loading ? (
+            <div style={{ background:'var(--bg)' }}>
+              <HeroSkeleton/>
+              <div style={{ padding:'0 16px' }}>{Array.from({length:4}).map((_,i) => <SmallSkeleton key={i}/>)}</div>
+            </div>
+          ) : error ? (
+            <div style={{ textAlign:'center', padding:'60px 20px' }}>
+              <i className="fas fa-exclamation-circle" style={{ fontSize:36, color:'#ea4335', marginBottom:12, display:'block' }}/>
+              <p style={{ fontWeight:600, marginBottom:8, color:'var(--ink)' }}>Could not load news</p>
+              <p style={{ fontSize:12, color:'var(--muted)', marginBottom:16 }}>{error}</p>
+              <button onClick={loadInitial} style={{ padding:'10px 24px', background:'#1a73e8', color:'#fff', border:'none', borderRadius:8, fontSize:14, fontWeight:600, cursor:'pointer' }}>\u21ba Retry</button>
+            </div>
+          ) : search.trim() ? (
+            <div style={{ padding:'8px 16px', background:'var(--bg)' }}>
+              <p style={{ fontSize:12, color:'var(--muted)', padding:'8px 0', fontWeight:500 }}>{filtered.length} results for "{search}"</p>
+              {filtered.length === 0
+                ? <div style={{ textAlign:'center', padding:'40px 20px', color:'var(--muted)' }}><i className="fas fa-search" style={{ fontSize:36, display:'block', marginBottom:12, opacity:.3 }}/><p>No results found</p></div>
+                : filtered.map(item => <CompactCard key={item.id} item={item} onRepost={setRepostItem}/>)
+              }
+            </div>
+          ) : (
+            <NewsLayout
+              items={filtered} cat={cat}
+              onRepost={setRepostItem} onSeeAll={c => setCat(c)}
+              sentinelRef={sentinelRef} loadingMore={loadingMore}
+              hasMore={currentHasMore} onLoadMore={loadMore}
+              totalLoaded={currentTotal}
+            />
+          )}
+        </div>
       </div>
 
       <RepostModal item={repostItem} onClose={() => setRepostItem(null)} onConfirm={handleRepost} reposting={reposting}/>

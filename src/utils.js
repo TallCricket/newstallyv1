@@ -69,7 +69,7 @@ export async function sendNotification(toUid, { type, fromName, fromAvatar, from
   } catch(e) { /* silent */ }
 }
 
-// Process text — hashtags and mentions
+// Process text \u2014 hashtags and mentions
 export function processText(text) {
   if (!text) return ''
   return text

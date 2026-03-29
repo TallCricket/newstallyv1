@@ -33,7 +33,7 @@ export default function App() {
       {/* Search */}
       <Route path="/search"                 element={<SearchPage />} />
 
-      {/* Profiles — /profile = own, /u/:username = public */}
+      {/* Profiles \u2014 /profile = own, /u/:username = public */}
       <Route path="/profile"               element={<Profile />} />
       <Route path="/u/:username"           element={<UserProfilePage />} />
 

@@ -127,7 +127,7 @@ function SignIn({ onSwitch, onClose }) {
   )
 }
 
-// \u2500\u2500\u2500 SIGN UP \u2014 3 Steps \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// \u2500\u2500\u2500 SIGN UP {"\u2014"} 3 Steps \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 function SignUp({ onSwitch, onClose }) {
   const [step, setStep] = useState(1)
   const [form, setForm] = useState({ name:'', username:'', email:'', password:'', confirm:'' })
@@ -217,7 +217,7 @@ function SignUp({ onSwitch, onClose }) {
       {/* \u2500\u2500 STEP 1: Name + Username \u2500\u2500 */}
       {step === 1 && (
         <div>
-          <p style={{ fontSize:13, fontWeight:700, color:'#1a73e8', marginBottom:16, textAlign:'center' }}>Step 1 of 3 \u2014 Your identity</p>
+          <p style={{ fontSize:13, fontWeight:700, color:'#1a73e8', marginBottom:16, textAlign:'center' }}>Step 1 of 3 {"\u2014"} Your identity</p>
           <Input label="Full name" value={form.name} onChange={e => setField('name', e.target.value)}
             placeholder="Rahul Sharma" error={errors.name} autoFocus/>
           <Input label="Username" value={form.username} onChange={e => setField('username', e.target.value.toLowerCase().replace(/\s/g,''))}
@@ -237,7 +237,7 @@ function SignUp({ onSwitch, onClose }) {
       {/* \u2500\u2500 STEP 2: Email + Password \u2500\u2500 */}
       {step === 2 && (
         <div>
-          <p style={{ fontSize:13, fontWeight:700, color:'#1a73e8', marginBottom:16, textAlign:'center' }}>Step 2 of 3 \u2014 Secure your account</p>
+          <p style={{ fontSize:13, fontWeight:700, color:'#1a73e8', marginBottom:16, textAlign:'center' }}>Step 2 of 3 {"\u2014"} Secure your account</p>
           <Input label="Email address" type="email" value={form.email} onChange={e => setField('email', e.target.value)}
             placeholder="you@example.com" error={errors.email} autoFocus/>
           <Input label="Password" type="password" value={form.password} onChange={e => setField('password', e.target.value)}
@@ -274,7 +274,7 @@ function SignUp({ onSwitch, onClose }) {
       {/* \u2500\u2500 STEP 3: Agreements \u2500\u2500 */}
       {step === 3 && (
         <div>
-          <p style={{ fontSize:13, fontWeight:700, color:'#1a73e8', marginBottom:16, textAlign:'center' }}>Step 3 of 3 \u2014 Almost done!</p>
+          <p style={{ fontSize:13, fontWeight:700, color:'#1a73e8', marginBottom:16, textAlign:'center' }}>Step 3 of 3 {"\u2014"} Almost done!</p>
 
           <div style={{ background:'#f0f7ff', border:'1px solid #c5d9f8', borderRadius:12, padding:'14px 16px', marginBottom:20 }}>
             <Check checked={checks.terms} onChange={v => setCheck('terms', v)}>

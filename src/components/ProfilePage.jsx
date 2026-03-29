@@ -22,7 +22,7 @@ export default function ProfilePage({ uid, onClose, onOpenComments, onOpenProfil
 
   const isOwn = user && user.uid === uid
 
-  // Fetch user profile \u2014 try by uid directly
+  // Fetch user profile {"\u2014"} try by uid directly
   useEffect(() => {
     if (!uid) return
     setLoading(true)
@@ -48,7 +48,7 @@ export default function ProfilePage({ uid, onClose, onOpenComments, onOpenProfil
         setLoading(false)
       })
 
-    // Load posts \u2014 both text posts and reposts
+    // Load posts {"\u2014"} both text posts and reposts
     getDocs(query(
       collection(db, 'artifacts', APP_ID, 'public', 'data', 'reposts'),
       where('userId', '==', uid),
@@ -145,7 +145,7 @@ export default function ProfilePage({ uid, onClose, onOpenComments, onOpenProfil
                   </button>
                 ) : (
                   <button className={`btn-follow ${following ? 'following' : ''}`} onClick={handleFollow}>
-                    {following ? '\u2713 Following' : 'Follow'}
+                    {following ? '{"\u2713"} Following' : 'Follow'}
                   </button>
                 )}
               </div>

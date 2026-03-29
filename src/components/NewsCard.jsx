@@ -6,7 +6,7 @@ export default function NewsCard({ item, featured = false, onRepost }) {
   const [imgErr, setImgErr] = useState(false)
   const navigate = useNavigate()
 
-  // \u2705 FIX: Navigate to internal NewsOpen page instead of opening external URL
+  // {"\u2705"} FIX: Navigate to internal NewsOpen page instead of opening external URL
   const handleClick = () => {
     navigate(`/news/${item.id}`)
   }

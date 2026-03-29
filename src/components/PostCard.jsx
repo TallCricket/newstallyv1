@@ -122,7 +122,7 @@ function PollContent({ post, id }) {
         )
       })}
       <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 4 }}>
-        {total} vote{total !== 1 ? 's' : ''} \u00b7 {userVoted ? 'Voted' : 'Tap to vote'}
+        {total} vote{total !== 1 ? 's' : ''} {"\u00b7"} {userVoted ? 'Voted' : 'Tap to vote'}
       </div>
     </div>
   )
@@ -179,14 +179,14 @@ export default function PostCard({ post, id, onOpenComments, onOpenProfile, onAu
               {post.username || 'User'}
             </span>
             {post.type === 'repost' && (
-              <span style={{ fontSize: 10, fontWeight: 700, color: '#34a853', background: 'rgba(52,168,83,.12)', padding: '1px 7px', borderRadius: 4 }}>\u21ba Repost</span>
+              <span style={{ fontSize: 10, fontWeight: 700, color: '#34a853', background: 'rgba(52,168,83,.12)', padding: '1px 7px', borderRadius: 4 }}>{"\u21ba"} Repost</span>
             )}
             {post.type === 'poll' && (
               <span style={{ fontSize: 10, fontWeight: 700, color: '#1a73e8', background: 'rgba(26,115,232,.1)', padding: '1px 7px', borderRadius: 4 }}>\u1f4ca Poll</span>
             )}
           </div>
           <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 1 }}>
-            @{post.username || 'user'} \u00b7 {timeAgo(post.timestamp?.toDate?.() || post.timestamp)}
+            @{post.username || 'user'} {"\u00b7"} {timeAgo(post.timestamp?.toDate?.() || post.timestamp)}
           </div>
         </div>
       </div>

@@ -77,22 +77,3 @@ export function processText(text) {
     .replace(/#(\w+)/g, '<span style="color:#1a73e8;font-weight:600">#$1</span>')
     .replace(/@(\w+)/g, '<span style="color:#9334e6;font-weight:600">@$1</span>')
 }
-
-// Slug generator for SEO-friendly news URLs
-export function makeSlug(title) {
-  if (!title) return 'news'
-  return title
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '')
-    .substring(0, 80) || 'news'
-}
-
-// Build SEO-friendly URL: /news/{firestoreId}-{slug}
-// Firestore auto-IDs are always 20 alphanumeric chars (no hyphens)
-// So extracting the ID is: slug.substring(0, 20)
-export function makeNewsUrl(item) {
-  return `/news/${item.id}-${makeSlug(item.title)}`
-}

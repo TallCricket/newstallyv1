@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { timeAgo, catIcon } from '../utils'
+import { timeAgo, catIcon, makeNewsUrl } from '../utils'
 
 export default function NewsCard({ item, featured = false, onRepost }) {
   const [imgErr, setImgErr] = useState(false)
@@ -8,7 +8,7 @@ export default function NewsCard({ item, featured = false, onRepost }) {
 
   // {"\u2705"} FIX: Navigate to internal NewsOpen page instead of opening external URL
   const handleClick = () => {
-    navigate(`/news/${item.id}`)
+    navigate(makeNewsUrl(item))
   }
 
   return (

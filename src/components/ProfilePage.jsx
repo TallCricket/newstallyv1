@@ -86,7 +86,7 @@ export default function ProfilePage({ uid, onClose, onOpenComments, onOpenProfil
         const myName = mySnap?.data()?.displayName || userData?.displayName || user.displayName || 'Someone'
         sendNotification(uid, {
           type: 'follow', fromUid: user.uid, fromName: myName,
-          fromAvatar: user.photoURL || '', message: 'ne aapko follow kiya \u1f389', postId: ''
+          fromAvatar: user.photoURL || '', message: 'ne aapko follow kiya \u{1F389}', postId: ''
         })
       }
     } catch(e) {

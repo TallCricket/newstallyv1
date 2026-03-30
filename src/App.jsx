@@ -21,7 +21,7 @@ export default function App() {
 
       {/* News */}
       <Route path="/news"                   element={<NewsTally />} />
-      <Route path="/news/:id"               element={<NewsOpen />} />
+      <Route path="/news/:slug"               element={<NewsOpen />} />
       <Route path="/news/category/:cat"     element={<CategoryPage />} />
 
       {/* Shorts */}

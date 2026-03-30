@@ -3,10 +3,9 @@ import {
   collection, getDocs, query, limit, orderBy, startAfter,
   addDoc, updateDoc, arrayUnion, increment as fbIncrement,
   serverTimestamp, where, getDoc, doc, onSnapshot
-} from 'firebase/firestore'
-import { db, APP_ID } from '../firebase/config'
+} from 'firebase/firestore'import { db, APP_ID } from '../firebase/config'
 import { useAuth } from '../context/AuthContext'
-import { showToast, timeAgo, catIcon } from '../utils'
+import { showToast, timeAgo, catIcon, makeNewsUrl } from '../utils'
 import BottomNav from '../components/BottomNav'
 import AuthModal from '../components/AuthModal'
 import { useNavigate } from 'react-router-dom'
@@ -78,7 +77,7 @@ function HeroCard({ item, onRepost }) {
   const { text: desc } = useTranslate(item.description || '')
   return (
     <div style={{ margin:'12px 16px', borderRadius:16, overflow:'hidden', background:'var(--surface)', boxShadow:'var(--shadow-md)', cursor:'pointer' }}
-      onClick={() => navigate(`/news/${item.id}`)}>
+      onClick={() => navigate(makeNewsUrl(item))}>
       {item.image && !imgErr ? (
         <div style={{ position:'relative', height:220, overflow:'hidden', background:'var(--surface2)' }}>
           <img src={item.image} alt={item.title} loading="eager" style={{ width:'100%', height:'100%', objectFit:'cover' }} onError={() => setImgErr(true)}/>
@@ -103,7 +102,7 @@ function HeroCard({ item, onRepost }) {
           <p style={{ fontSize:14, color:'var(--muted)', lineHeight:1.6, marginBottom:12, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{desc}</p>
         )}
         <div style={{ display:'flex', gap:8 }} onClick={e => e.stopPropagation()}>
-          <button onClick={() => navigate(`/news/${item.id}`)}
+          <button onClick={() => navigate(makeNewsUrl(item))}
             style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:6, padding:'9px 0', background:'#1a73e8', color:'#fff', borderRadius:8, fontSize:13, fontWeight:700, border:'none', cursor:'pointer' }}>
             <i className="fas fa-newspaper" style={{ fontSize:11 }}/> {t('readFull')}
           </button>
@@ -125,7 +124,7 @@ function CompactCard({ item, onRepost }) {
   const { text: title } = useTranslate(item.title)
   return (
     <div style={{ display:'flex', gap:12, padding:'12px 0', borderBottom:'1px solid var(--border2)', cursor:'pointer' }}
-      onClick={() => navigate(`/news/${item.id}`)}>
+      onClick={() => navigate(makeNewsUrl(item))}>
       <div style={{ flex:1, minWidth:0 }}>
         <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:5 }}>
           <span style={{ width:7, height:7, borderRadius:'50%', background:accent, flexShrink:0 }}/>
@@ -158,7 +157,7 @@ function GridCard({ item }) {
   const { text: title } = useTranslate(item.title)
   return (
     <div style={{ background:'var(--surface)', borderRadius:12, overflow:'hidden', border:'1px solid var(--border)', boxShadow:'var(--shadow-sm)', cursor:'pointer' }}
-      onClick={() => navigate(`/news/${item.id}`)}>
+      onClick={() => navigate(makeNewsUrl(item))}>
       {item.image && !imgErr ? (
         <div style={{ height:110, overflow:'hidden', background:'var(--surface2)', position:'relative' }}>
           <img src={item.image} alt="" loading="lazy" onError={() => setImgErr(true)} style={{ width:'100%', height:'100%', objectFit:'cover' }}/>
@@ -200,7 +199,7 @@ function CategorySection({ title, items, accent, onRepost, onSeeAll }) {
         </button>
       </div>
       <div style={{ margin:'0 16px', borderRadius:12, overflow:'hidden', background:'var(--surface)', border:'1px solid var(--border)', boxShadow:'var(--shadow-sm)', cursor:'pointer', marginBottom:1 }}
-        onClick={() => navigate(`/news/${main.id}`)}>
+        onClick={() => navigate(makeNewsUrl(main))}>
         {main.image && (
           <div style={{ height:160, overflow:'hidden', background:'var(--surface2)', position:'relative' }}>
             <img src={main.image} alt="" loading="lazy" style={{ width:'100%', height:'100%', objectFit:'cover' }} onError={e => e.target.style.display='none'}/>
@@ -221,7 +220,7 @@ function CategorySection({ title, items, accent, onRepost, onSeeAll }) {
       <div style={{ margin:'0 16px', background:'var(--surface)', border:'1px solid var(--border)', borderTop:'none', borderRadius:'0 0 12px 12px', padding:'0 14px' }}>
         {rest.slice(0,3).map((item, i) => (
           <div key={item.id} style={{ display:'flex', gap:10, padding:'10px 0', borderBottom: i < 2 ? '1px solid var(--border2)' : 'none', cursor:'pointer' }}
-            onClick={() => navigate(`/news/${item.id}`)}>
+            onClick={() => navigate(makeNewsUrl(item))}>
             <div style={{ flex:1, minWidth:0 }}>
               <p style={{ fontSize:13, fontWeight:600, color:'var(--ink)', lineHeight:1.4, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{item.title}</p>
               <p style={{ fontSize:11, color:'var(--muted)', marginTop:3 }}>{item.source} {"\u00b7"} {timeAgo(item.date || item.pubDate)}</p>
@@ -369,21 +368,16 @@ export default function NewsTally() {
 
   const [allNews, setAllNews]         = useState([])
   const lastDocRef                    = useRef(null)
-  const orderFieldRef                 = useRef(null)
   const [hasMore, setHasMore]         = useState(true)
   const liveUnsubRef                  = useRef(null)
-
-  const [catItems, setCatItems]       = useState([])
-  const catLastDocRef                 = useRef(null)
-  const [catHasMore, setCatHasMore]   = useState(true)
 
   const [filtered, setFiltered]       = useState([])
   const [loading, setLoading]         = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError]             = useState('')
 
-  const [cat, setCat]                 = useState('All')
-  const [cats, setCats]               = useState(DEFAULT_CATS) // loaded from Firestore config
+  const cat  = 'All'   // NewsTally always shows All; categories navigate to CategoryPage
+  const [cats, setCats]               = useState(DEFAULT_CATS)
   const [search, setSearch]           = useState('')
   const [showSearch, setShowSearch]   = useState(false)
   const [showAuth, setShowAuth]       = useState(false)
@@ -394,87 +388,26 @@ export default function NewsTally() {
   // Load category order from Firestore config
   useEffect(() => {
     getDoc(doc(db, 'config', 'rankings')).then(snap => {
-      if (snap.exists() && Array.isArray(snap.data().categoryOrder)) {
-        const order = snap.data().categoryOrder
-        setCats(['All', ...order])
-      }
+      if (snap.exists() && Array.isArray(snap.data().categoryOrder))
+        setCats(['All', ...snap.data().categoryOrder])
     }).catch(() => {})
   }, [])
 
-  // KEY FIX: No orderBy in Firestore query -> returns ALL sources (not just DD News)
-  // Sort is done client-side so all news from all platforms appears latest-first
-  const fetchBatch = useCallback(async (isFirst = false) => {
-    // Try with orderBy first (requires Firestore index), fallback without
-    const makeQuery = (withOrder) => {
-      const base = collection(db, 'news')
-      if (isFirst) {
-        return withOrder
-          ? query(base, orderBy('timestamp', 'desc'), limit(PAGE_SIZE * 2))
-          : query(base, limit(PAGE_SIZE * 2))
-      }
-      if (!lastDocRef.current) return null
-      return withOrder
-        ? query(base, orderBy('timestamp', 'desc'), startAfter(lastDocRef.current), limit(PAGE_SIZE * 2))
-        : query(base, startAfter(lastDocRef.current), limit(PAGE_SIZE * 2))
-    }
-    let snap
-    try {
-      const q = makeQuery(true)
-      if (!q) return []
-      snap = await getDocs(q)
-    } catch {
-      // Fallback: no orderBy (index may not exist)
-      const q = makeQuery(false)
-      if (!q) return []
-      snap = await getDocs(q)
-    }
-    if (snap.empty) { setHasMore(false); return [] }
-    if (snap.docs.length < PAGE_SIZE) setHasMore(false)
-    lastDocRef.current = snap.docs[snap.docs.length - 1]
-    return snap.docs.map(d => ({ id:d.id, ...d.data() })).filter(n => n.title)
-  }, [])
-
-  const fetchCategoryBatch = useCallback(async (category, isFirst = false) => {
-    const make = (withOrder) => {
-      const base = [where('category', '==', category)]
-      if (!isFirst && catLastDocRef.current) base.push(startAfter(catLastDocRef.current))
-      if (withOrder) base.splice(1, 0, orderBy('timestamp', 'desc'))
-      base.push(limit(PAGE_SIZE * 2))
-      return query(collection(db, 'news'), ...base)
-    }
-    let snap
-    try {
-      snap = await getDocs(make(true))
-    } catch {
-      snap = await getDocs(make(false))
-    }
-    if (snap.empty) { setCatHasMore(false); return [] }
-    if (snap.docs.length < PAGE_SIZE) setCatHasMore(false)
-    catLastDocRef.current = snap.docs[snap.docs.length - 1]
-    return snap.docs.map(d => ({ id:d.id, ...d.data() })).filter(n => n.title)
-  }, [])
-
+  // Live listener — new articles appear instantly
   const loadInitial = useCallback(() => {
-    // Cancel any previous listener
     if (liveUnsubRef.current) { liveUnsubRef.current(); liveUnsubRef.current = null }
     setLoading(true); setError(''); setHasMore(true); lastDocRef.current = null
 
-    // Try real-time listener with orderBy, fallback to one-time fetch
     const liveQ = query(collection(db, 'news'), orderBy('timestamp', 'desc'), limit(PAGE_SIZE * 2))
     liveUnsubRef.current = onSnapshot(liveQ,
       (snap) => {
         if (snap.empty) {
-          // Try fallback without orderBy (index may not exist yet)
           getDocs(query(collection(db, 'news'), limit(PAGE_SIZE * 2)))
             .then(fbSnap => {
               const items = fbSnap.docs.map(d => ({ id:d.id, ...d.data() })).filter(n => n.title)
-              if (items.length) {
-                lastDocRef.current = fbSnap.docs[fbSnap.docs.length - 1]
-                setAllNews(sortByDate(items))
-                setError('')
-              } else {
-                setError('No news articles found. Please check back later.')
-              }
+              lastDocRef.current = fbSnap.docs[fbSnap.docs.length - 1] || null
+              if (items.length) { setAllNews(sortByDate(items)); setError('') }
+              else setError('No news articles found. Please check back later.')
               setLoading(false)
             })
             .catch(e => { setError(e.message); setLoading(false) })
@@ -488,17 +421,12 @@ export default function NewsTally() {
         setLoading(false)
       },
       (err) => {
-        // Listener error — fallback to one-time fetch without orderBy
         getDocs(query(collection(db, 'news'), limit(PAGE_SIZE * 2)))
           .then(fbSnap => {
             const items = fbSnap.docs.map(d => ({ id:d.id, ...d.data() })).filter(n => n.title)
-            if (items.length) {
-              lastDocRef.current = fbSnap.docs[fbSnap.docs.length - 1]
-              setAllNews(sortByDate(items))
-              setError('')
-            } else {
-              setError(err.message || 'No news articles found.')
-            }
+            lastDocRef.current = fbSnap.docs[fbSnap.docs.length - 1] || null
+            if (items.length) { setAllNews(sortByDate(items)); setError('') }
+            else setError(err.message || 'No news articles found.')
             setLoading(false)
           })
           .catch(() => { setError(err.message); setLoading(false) })
@@ -506,71 +434,50 @@ export default function NewsTally() {
     )
   }, []) // eslint-disable-line
 
-  const loadCategoryInitial = useCallback(async (category) => {
-    setLoading(true); setError(''); setCatItems([]); setCatHasMore(true); catLastDocRef.current = null
-    try { setCatItems(sortByDate(await fetchCategoryBatch(category, true))) }
-    catch(e) { setError(e.message) }
-    finally { setLoading(false) }
-  }, [fetchCategoryBatch])
-
-  const loadMoreAll = useCallback(async () => {
-    if (loadingMore || !hasMore) return
+  // Load more (pagination on scroll)
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !hasMore || !lastDocRef.current || search.trim()) return
     setLoadingMore(true)
     try {
-      const items = await fetchBatch(false)
+      let snap
+      try {
+        snap = await getDocs(query(collection(db, 'news'), orderBy('timestamp', 'desc'), startAfter(lastDocRef.current), limit(PAGE_SIZE * 2)))
+      } catch {
+        snap = await getDocs(query(collection(db, 'news'), startAfter(lastDocRef.current), limit(PAGE_SIZE * 2)))
+      }
+      if (snap.empty) { setHasMore(false); return }
+      if (snap.docs.length < PAGE_SIZE) setHasMore(false)
+      lastDocRef.current = snap.docs[snap.docs.length - 1]
+      const items = snap.docs.map(d => ({ id:d.id, ...d.data() })).filter(n => n.title)
       if (items.length) setAllNews(prev => {
         const ids = new Set(prev.map(n => n.id))
         return sortByDate([...prev, ...items.filter(n => !ids.has(n.id))])
       })
     } catch(e) { console.error(e) }
     finally { setLoadingMore(false) }
-  }, [loadingMore, hasMore, fetchBatch])
-
-  const loadMoreCat = useCallback(async () => {
-    if (loadingMore || !catHasMore || cat === 'All') return
-    setLoadingMore(true)
-    try {
-      const items = await fetchCategoryBatch(cat, false)
-      if (items.length) setCatItems(prev => {
-        const ids = new Set(prev.map(n => n.id))
-        return sortByDate([...prev, ...items.filter(n => !ids.has(n.id))])
-      })
-    } catch(e) { console.error(e) }
-    finally { setLoadingMore(false) }
-  }, [loadingMore, catHasMore, cat, fetchCategoryBatch])
-
-  const loadMore = useCallback(() => {
-    if (search.trim()) return
-    return cat === 'All' ? loadMoreAll() : loadMoreCat()
-  }, [cat, search, loadMoreAll, loadMoreCat])
+  }, [loadingMore, hasMore, search])
 
   useEffect(() => {
     loadInitial()
     return () => { if (liveUnsubRef.current) { liveUnsubRef.current(); liveUnsubRef.current = null } }
   }, [loadInitial])
-  useEffect(() => {
-    if (cat !== 'All') loadCategoryInitial(cat)
-    window.scrollTo({ top:0, behavior:'smooth' })
-  }, [cat]) // eslint-disable-line
 
+  // Filter by search
   useEffect(() => {
-    let base = cat !== 'All' ? catItems : allNews
-    if (search.trim()) {
-      const q = search.toLowerCase()
-      base = base.filter(n => n.title?.toLowerCase().includes(q) || n.description?.toLowerCase().includes(q))
-    }
-    setFiltered(base)
-  }, [cat, search, allNews, catItems])
+    if (!search.trim()) { setFiltered(allNews); return }
+    const q = search.toLowerCase()
+    setFiltered(allNews.filter(n => n.title?.toLowerCase().includes(q) || n.description?.toLowerCase().includes(q)))
+  }, [search, allNews])
 
   useEffect(() => {
     const sentinel = sentinelRef.current
     if (!sentinel) return
-    const observer = new IntersectionObserver(
+    const obs = new IntersectionObserver(
       entries => { if (entries[0].isIntersecting) loadMore() },
       { threshold:0.1, rootMargin:'300px' }
     )
-    observer.observe(sentinel)
-    return () => observer.disconnect()
+    obs.observe(sentinel)
+    return () => obs.disconnect()
   }, [loadMore])
 
   const handleRepost = async (item) => {
@@ -585,18 +492,19 @@ export default function NewsTally() {
       const existing = await getDocs(query(collection(db,'artifacts',APP_ID,'public','data','reposts'), where('newsId','==',String(item.id||item.title)), where('type','==','repost'), limit(1)))
       if (!existing.empty) {
         await updateDoc(existing.docs[0].ref, { repostCount:fbIncrement(1), repostedBy:arrayUnion(user.uid), repostedUsers:arrayUnion(myInfo) })
-        showToast('{"\u2705"} You reposted this news!')
+        showToast('✅ You reposted this news!')
       } else {
         await addDoc(collection(db,'artifacts',APP_ID,'public','data','reposts'), { userId:user.uid, username:myInfo.username, userAvatar:myInfo.avatar, image:item.image||'', headline:item.title, newsUrl:item.url||'', newsSource:item.source||'', newsCategory:item.category||'', newsId:String(item.id||item.title), likes:[], commentsCount:0, repostCount:1, repostedBy:[user.uid], repostedUsers:[myInfo], timestamp:serverTimestamp(), type:'repost' })
-        showToast('{"\u2705"} Reposted to Socialgati!')
+        showToast('✅ Reposted to Socialgati!')
       }
       setRepostItem(null)
     } catch(e) { console.error(e); showToast('Repost failed') }
     finally { setReposting(false) }
   }
 
-  const currentHasMore  = cat === 'All' ? hasMore : catHasMore
-  const currentTotal    = cat === 'All' ? allNews.length : catItems.length
+  const currentHasMore = hasMore
+  const currentTotal   = allNews.length
+
 
   return (
     <>
@@ -644,7 +552,8 @@ export default function NewsTally() {
           <div className="nt-desktop-left">
             <p style={{ fontSize:11, fontWeight:800, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.05em', padding:'4px 14px 8px' }}>Categories</p>
             {cats.map(c => (
-              <button key={c} className={`nt-sidebar-cat ${cat===c ? 'active' : ''}`} onClick={() => setCat(c)}>
+              <button key={c} className={`nt-sidebar-cat ${cat===c ? 'active' : ''}`}
+                onClick={() => c === 'All' ? navigate('/news') : navigate(`/news/category/${c.toLowerCase()}`)}>
                 {c}
               </button>
             ))}
@@ -716,7 +625,7 @@ export default function NewsTally() {
             <div className="nt-widget">
               <div className="nt-widget-title">Trending Now</div>
               {filtered.slice(0, 6).map((item, idx) => (
-                <div key={item.id} className="nt-trend-item" onClick={() => navigate(`/news/${item.id}`)}>
+                <div key={item.id} className="nt-trend-item" onClick={() => navigate(makeNewsUrl(item))}>
                   <span className="nt-trend-num">#{idx + 1}</span>
                   <span className="nt-trend-text">{item.title}</span>
                   {item.image && <img src={item.image} className="nt-trend-img" alt="" onError={e => e.target.style.display='none'}/>}
@@ -739,8 +648,8 @@ export default function NewsTally() {
               <div className="nt-widget-title">Browse Categories</div>
               <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
                 {cats.filter(c => c !== 'All').map(c => (
-                  <button key={c} onClick={() => setCat(c)}
-                    style={{ padding:'5px 12px', borderRadius:99, background: cat===c ? '#1a73e820' : 'var(--surface2)', color: cat===c ? '#1a73e8' : 'var(--muted)', border: `1px solid ${cat===c ? '#1a73e8' : 'var(--border)'}`, fontSize:12, fontWeight:600, cursor:'pointer' }}>
+                  <button key={c} onClick={() => navigate(`/news/category/${c.toLowerCase()}`)}
+                    style={{ padding:'5px 12px', borderRadius:99, background:'var(--surface2)', color:'var(--muted)', border:'1px solid var(--border)', fontSize:12, fontWeight:600, cursor:'pointer' }}>
                     {c}
                   </button>
                 ))}
@@ -766,7 +675,10 @@ export default function NewsTally() {
 
           <div className="cat-bar" style={{ position:'sticky', top: showSearch ? 98 : 56, zIndex:49 }}>
             {cats.map(c => (
-              <button key={c} className={`cat-btn ${cat===c?'active':''}`} onClick={() => setCat(c)}>{c}</button>
+              <button key={c} className={`cat-btn ${cat===c?'active':''}`}
+                onClick={() => c === 'All' ? navigate('/news') : navigate(`/news/category/${c.toLowerCase()}`)}>
+                {c}
+              </button>
             ))}
           </div>
 
@@ -793,7 +705,7 @@ export default function NewsTally() {
           ) : (
             <NewsLayout
               items={filtered} cat={cat}
-              onRepost={setRepostItem} onSeeAll={c => setCat(c)}
+              onRepost={setRepostItem} onSeeAll={c => c === 'All' ? navigate('/news') : navigate(`/news/category/${c.toLowerCase()}`)}
               sentinelRef={sentinelRef} loadingMore={loadingMore}
               hasMore={currentHasMore} onLoadMore={loadMore}
               totalLoaded={currentTotal}

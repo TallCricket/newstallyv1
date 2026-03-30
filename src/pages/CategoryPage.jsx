@@ -5,13 +5,13 @@
  * Categories are dynamic: whatever is in Firestore shows up.
  */
 import { useEffect, useState, useCallback, useRef } from 'react'
-import { collection, getDocs, query, limit, where, orderBy, startAfter, getDoc, doc, addDoc, updateDoc, arrayUnion, increment as fbIncrement, serverTimestamp } from 'firebase/firestore'
+import { collection, getDocs, query, limit, where, orderBy, startAfter, getDoc, doc, addDoc, updateDoc, arrayUnion, increment as fbIncrement, serverTimestamp, onSnapshot } from 'firebase/firestore'
 import { db, APP_ID } from '../firebase/config'
 import { useAuth } from '../context/AuthContext'
-import { showToast, timeAgo, catIcon } from '../utils'
+import { showToast, timeAgo, catIcon, makeNewsUrl } from '../utils'
 import BottomNav from '../components/BottomNav'
 import AuthModal from '../components/AuthModal'
-import { useNavigate, useParams, Link } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from '../context/TranslationContext'
 import { useTranslate } from '../hooks/useTranslate'
 
@@ -65,7 +65,7 @@ function HeroCard({ item, onRepost }) {
   const { text: desc } = useTranslate(item.description || '')
   return (
     <div style={{ margin:'12px 16px', borderRadius:16, overflow:'hidden', background:'var(--surface)', boxShadow:'var(--shadow-md)', cursor:'pointer' }}
-      onClick={() => navigate(`/news/${item.id}`)}>
+      onClick={() => navigate(makeNewsUrl(item))}>
       {item.image && !imgErr ? (
         <div style={{ position:'relative', height:200, overflow:'hidden', background:'var(--surface2)' }}>
           <img src={item.image} alt={item.title} loading="eager" style={{ width:'100%', height:'100%', objectFit:'cover' }} onError={() => setImgErr(true)}/>
@@ -88,7 +88,7 @@ function HeroCard({ item, onRepost }) {
       <div style={{ padding:'12px 16px' }}>
         {item.description && <p style={{ fontSize:13, color:'var(--muted)', lineHeight:1.55, marginBottom:10, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{desc}</p>}
         <div style={{ display:'flex', gap:8 }} onClick={e => e.stopPropagation()}>
-          <button onClick={() => navigate(`/news/${item.id}`)}
+          <button onClick={() => navigate(makeNewsUrl(item))}
             style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:6, padding:'9px 0', background:'#1a73e8', color:'#fff', borderRadius:8, fontSize:13, fontWeight:700, border:'none', cursor:'pointer' }}>
             <i className="fas fa-newspaper" style={{ fontSize:11 }}/> {t('readFull')}
           </button>
@@ -110,7 +110,7 @@ function CompactCard({ item, onRepost }) {
   const { text: title } = useTranslate(item.title)
   return (
     <div style={{ display:'flex', gap:12, padding:'12px 0', borderBottom:'1px solid var(--border2)', cursor:'pointer' }}
-      onClick={() => navigate(`/news/${item.id}`)}>
+      onClick={() => navigate(makeNewsUrl(item))}>
       <div style={{ flex:1, minWidth:0 }}>
         <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:4 }}>
           <span style={{ fontSize:10, fontWeight:700, color:ac, textTransform:'uppercase' }}>{item.category}</span>
@@ -140,7 +140,7 @@ function GridCard({ item }) {
   const { text: title } = useTranslate(item.title)
   return (
     <div style={{ background:'var(--surface)', borderRadius:12, overflow:'hidden', border:'1px solid var(--border)', boxShadow:'var(--shadow-sm)', cursor:'pointer' }}
-      onClick={() => navigate(`/news/${item.id}`)}>
+      onClick={() => navigate(makeNewsUrl(item))}>
       {item.image && !imgErr ? (
         <div style={{ height:100, overflow:'hidden', background:'var(--surface2)', position:'relative' }}>
           <img src={item.image} alt="" loading="lazy" onError={() => setImgErr(true)} style={{ width:'100%', height:'100%', objectFit:'cover' }}/>
@@ -182,33 +182,9 @@ export default function CategoryPage() {
   const [repostItem, setRepostItem] = useState(null)
   const [reposting, setReposting]   = useState(false)
   const [showAuth, setShowAuth]     = useState(false)
-  const lastDocRef = useRef(null)
+  const lastDocRef  = useRef(null)
   const sentinelRef = useRef(null)
-
-  // -- Fetch: NO source filter, sorted by fetchedAt/pubDate desc --
-  // KEY FIX: fetch ALL news without source filter, large batch, sort in JS
-  const fetchItems = useCallback(async (isFirst = false) => {
-    const makeQ = (withOrder) => {
-      const filters = cat === 'All' ? [] : [where('category', '==', cat)]
-      const parts = [...filters]
-      if (withOrder) parts.push(orderBy('timestamp', 'desc'))
-      if (!isFirst && lastDocRef.current) parts.push(startAfter(lastDocRef.current))
-      parts.push(limit(PAGE_SIZE * 2))
-      return query(collection(db, 'news'), ...parts)
-    }
-    let snap
-    try {
-      snap = await getDocs(makeQ(true))
-    } catch {
-      // Fallback without orderBy (no composite index needed)
-      const q = makeQ(false)
-      snap = await getDocs(q)
-    }
-    if (snap.empty) { setHasMore(false); return [] }
-    if (snap.docs.length < PAGE_SIZE) setHasMore(false)
-    lastDocRef.current = snap.docs[snap.docs.length - 1]
-    return snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(n => n.title)
-  }, [cat])
+  const liveUnsubRef = useRef(null)
 
   // -- Fetch all distinct categories for the sidebar --
   const fetchCategories = useCallback(async () => {
@@ -219,31 +195,83 @@ export default function CategoryPage() {
     } catch { setAllCategories(['All','National','World','Business','Technology','Health','Education','Sports','General']) }
   }, [])
 
-  const loadInitial = useCallback(async () => {
+  const loadInitial = useCallback(() => {
+    if (liveUnsubRef.current) { liveUnsubRef.current(); liveUnsubRef.current = null }
     setLoading(true); setError(''); setHasMore(true); lastDocRef.current = null
-    try {
-      const data = await fetchItems(true)
-      setItems(sortByDate(data))
-    } catch(e) { setError(e.message) }
-    finally { setLoading(false) }
-  }, [fetchItems])
+
+    const baseQ = cat === 'All'
+      ? query(collection(db, 'news'), orderBy('timestamp', 'desc'), limit(PAGE_SIZE * 2))
+      : query(collection(db, 'news'), where('category', '==', cat), orderBy('timestamp', 'desc'), limit(PAGE_SIZE * 2))
+
+    liveUnsubRef.current = onSnapshot(baseQ,
+      (snap) => {
+        if (snap.empty) {
+          // Fallback: no orderBy (index may not exist)
+          const fallQ = cat === 'All'
+            ? query(collection(db, 'news'), limit(PAGE_SIZE * 2))
+            : query(collection(db, 'news'), where('category', '==', cat), limit(PAGE_SIZE * 2))
+          getDocs(fallQ).then(fbSnap => {
+            const data = fbSnap.docs.map(d => ({ id:d.id, ...d.data() })).filter(n => n.title)
+            lastDocRef.current = fbSnap.docs[fbSnap.docs.length - 1] || null
+            setItems(sortByDate(data))
+            setHasMore(data.length >= PAGE_SIZE)
+            setLoading(false)
+          }).catch(e => { setError(e.message); setLoading(false) })
+          return
+        }
+        const data = snap.docs.map(d => ({ id:d.id, ...d.data() })).filter(n => n.title)
+        lastDocRef.current = snap.docs[snap.docs.length - 1]
+        if (snap.docs.length < PAGE_SIZE) setHasMore(false)
+        setItems(sortByDate(data))
+        setError('')
+        setLoading(false)
+      },
+      () => {
+        // Listener failed — one-time fetch fallback
+        const fallQ = cat === 'All'
+          ? query(collection(db, 'news'), limit(PAGE_SIZE * 2))
+          : query(collection(db, 'news'), where('category', '==', cat), limit(PAGE_SIZE * 2))
+        getDocs(fallQ).then(fbSnap => {
+          const data = fbSnap.docs.map(d => ({ id:d.id, ...d.data() })).filter(n => n.title)
+          lastDocRef.current = fbSnap.docs[fbSnap.docs.length - 1] || null
+          setItems(sortByDate(data))
+          setHasMore(data.length >= PAGE_SIZE)
+          setLoading(false)
+        }).catch(e => { setError(e.message); setLoading(false) })
+      }
+    )
+  }, [cat])
 
   const loadMore = useCallback(async () => {
-    if (loadingMore || !hasMore) return
+    if (loadingMore || !hasMore || !lastDocRef.current) return
     setLoadingMore(true)
     try {
-      const data = await fetchItems(false)
-      if (data.length) {
-        setItems(prev => {
-          const ids = new Set(prev.map(n => n.id))
-          return sortByDate([...prev, ...data.filter(n => !ids.has(n.id))])
-        })
+      const makeQ = (withOrder) => {
+        const parts = cat === 'All' ? [] : [where('category', '==', cat)]
+        if (withOrder) parts.push(orderBy('timestamp', 'desc'))
+        parts.push(startAfter(lastDocRef.current))
+        parts.push(limit(PAGE_SIZE * 2))
+        return query(collection(db, 'news'), ...parts)
       }
+      let snap
+      try { snap = await getDocs(makeQ(true)) }
+      catch { snap = await getDocs(makeQ(false)) }
+      if (snap.empty) { setHasMore(false); return }
+      if (snap.docs.length < PAGE_SIZE) setHasMore(false)
+      lastDocRef.current = snap.docs[snap.docs.length - 1]
+      const data = snap.docs.map(d => ({ id:d.id, ...d.data() })).filter(n => n.title)
+      if (data.length) setItems(prev => {
+        const ids = new Set(prev.map(n => n.id))
+        return sortByDate([...prev, ...data.filter(n => !ids.has(n.id))])
+      })
     } catch(e) { console.error(e) }
     finally { setLoadingMore(false) }
-  }, [loadingMore, hasMore, fetchItems])
+  }, [loadingMore, hasMore, cat])
 
-  useEffect(() => { loadInitial() }, [loadInitial])
+  useEffect(() => {
+    loadInitial()
+    return () => { if (liveUnsubRef.current) { liveUnsubRef.current(); liveUnsubRef.current = null } }
+  }, [loadInitial])
   useEffect(() => { fetchCategories() }, [fetchCategories])
 
   useEffect(() => {
@@ -298,15 +326,12 @@ export default function CategoryPage() {
         {/* -- Category scroll bar -- */}
         <div className="cat-bar" style={{ position:'sticky', top:56, zIndex:49 }}>
           {allCategories.map(c => (
-            <Link key={c}
-              to={`/news/category/${c.toLowerCase()}`}
-              style={{ textDecoration:'none' }}
-              replace>
-              <button className={`cat-btn ${cat === c ? 'active' : ''}`}
-                style={{ background: cat === c ? ac : undefined, borderColor: cat === c ? ac : undefined }}>
-                {c}
-              </button>
-            </Link>
+            <button key={c}
+              className={`cat-btn ${cat === c ? 'active' : ''}`}
+              style={{ background: cat === c ? accent(c) : undefined, borderColor: cat === c ? accent(c) : undefined }}
+              onClick={() => c === 'All' ? navigate('/news/category/all') : navigate(`/news/category/${c.toLowerCase()}`)}>
+              {c}
+            </button>
           ))}
         </div>
 

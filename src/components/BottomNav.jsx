@@ -26,10 +26,10 @@ export default function BottomNav({ darkMode = false }) {
 
   // M3 Navigation Bar items
   const items = [
-    { path: '/',       icon: is('/')       ? 'fas fa-house'          : 'fa-regular fa-house',       label: t('home')    },
-    { path: '/news',   icon: is('/news')   ? 'fas fa-newspaper'      : 'fa-regular fa-newspaper',   label: t('news')    },
-    { path: '/search', icon: is('/search') ? 'fas fa-magnifying-glass': 'fas fa-magnifying-glass',   label: t('search')  },
-    { path: '/profile',icon: is('/profile')? 'fas fa-user'           : 'fa-regular fa-user',        label: t('profile') },
+    { path: '/',       icon: 'fas fa-house',            label: t('home')    },
+    { path: '/news',   icon: 'fas fa-newspaper',        label: t('news')    },
+    { path: '/search', icon: 'fas fa-magnifying-glass', label: t('search')  },
+    { path: '/profile',icon: 'fas fa-user',             label: t('profile') },
   ]
 
   // nav colors

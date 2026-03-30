@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
-import { timeAgo, showToast, sendNotification, makeSlug } from '../utils'
+import { timeAgo, showToast, sendNotification } from '../utils'
 import { doc, updateDoc, arrayUnion, arrayRemove, getDoc } from 'firebase/firestore'
 import { db, APP_ID } from '../firebase/config'
 import RichText from './RichText'
@@ -196,7 +196,7 @@ export default function PostCard({ post, id, onOpenComments, onOpenProfile, onAu
 
       {post.type === 'repost' && (
         <RepostCard post={post} onClick={() => {
-          if (post.newsId) navigate(`/news/${post.newsId}-${makeSlug(post.headline || post.newsSource || 'news')}`)
+          if (post.newsId) navigate(`/news/${post.newsId}`)
           else if (post.newsUrl) window.open(post.newsUrl, '_blank', 'noopener')
         }} />
       )}

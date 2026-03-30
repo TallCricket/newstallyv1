@@ -6,7 +6,7 @@ import { doc, updateDoc, arrayUnion, arrayRemove, getDoc } from 'firebase/firest
 import { db, APP_ID } from '../firebase/config'
 import RichText from './RichText'
 
-// \u2500\u2500 News Repost Embed Card \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// -- News Repost Embed Card -----------------------------------------
 function RepostCard({ post, onClick }) {
   const [imgErr, setImgErr] = useState(false)
   return (
@@ -85,7 +85,7 @@ function RepostCard({ post, onClick }) {
   )
 }
 
-// \u2500\u2500 Poll \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// -- Poll ----------------------------------------------------------
 function PollContent({ post, id }) {
   const { user } = useAuth()
   const opts = post.pollOptions || []
@@ -128,7 +128,7 @@ function PollContent({ post, id }) {
   )
 }
 
-// \u2500\u2500 Main PostCard \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// -- Main PostCard -------------------------------------------------
 export default function PostCard({ post, id, onOpenComments, onOpenProfile, onAuthRequired, onMention, onHashtag }) {
   const { user, userData } = useAuth()
   const navigate = useNavigate()

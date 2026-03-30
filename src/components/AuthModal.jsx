@@ -4,7 +4,7 @@ import { doc, setDoc, serverTimestamp } from 'firebase/firestore'
 import { auth, db } from '../firebase/config'
 import { showToast } from '../utils'
 
-// \u2500\u2500\u2500 Step indicator \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// --- Step indicator -----------------------------------------------
 function Steps({ current, total }) {
   return (
     <div style={{ display:'flex', gap:6, justifyContent:'center', marginBottom:24 }}>
@@ -19,7 +19,7 @@ function Steps({ current, total }) {
   )
 }
 
-// \u2500\u2500\u2500 Input \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// --- Input --------------------------------------------------------
 function Input({ label, type='text', value, onChange, placeholder, error, autoFocus }) {
   const [show, setShow] = useState(false)
   const isPass = type === 'password'
@@ -50,7 +50,7 @@ function Input({ label, type='text', value, onChange, placeholder, error, autoFo
   )
 }
 
-// \u2500\u2500\u2500 Checkbox \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// --- Checkbox -----------------------------------------------------
 function Check({ checked, onChange, children }) {
   return (
     <label style={{ display:'flex', alignItems:'flex-start', gap:10, cursor:'pointer', marginBottom:12 }}>
@@ -65,7 +65,7 @@ function Check({ checked, onChange, children }) {
   )
 }
 
-// \u2500\u2500\u2500 SIGN IN \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// --- SIGN IN ------------------------------------------------------
 function SignIn({ onSwitch, onClose }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -127,7 +127,7 @@ function SignIn({ onSwitch, onClose }) {
   )
 }
 
-// \u2500\u2500\u2500 SIGN UP {"\u2014"} 3 Steps \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// --- SIGN UP {"\u2014"} 3 Steps --------------------------------------------
 function SignUp({ onSwitch, onClose }) {
   const [step, setStep] = useState(1)
   const [form, setForm] = useState({ name:'', username:'', email:'', password:'', confirm:'' })
@@ -214,7 +214,7 @@ function SignUp({ onSwitch, onClose }) {
 
       <Steps current={step} total={3}/>
 
-      {/* \u2500\u2500 STEP 1: Name + Username \u2500\u2500 */}
+      {/* -- STEP 1: Name + Username -- */}
       {step === 1 && (
         <div>
           <p style={{ fontSize:13, fontWeight:700, color:'#1a73e8', marginBottom:16, textAlign:'center' }}>Step 1 of 3 {"\u2014"} Your identity</p>
@@ -229,12 +229,12 @@ function SignUp({ onSwitch, onClose }) {
           )}
           <button onClick={handleNext}
             style={{ width:'100%', padding:14, background:'linear-gradient(135deg,#1a73e8,#1557b0)', color:'#fff', border:'none', borderRadius:12, fontSize:15, fontWeight:700, cursor:'pointer' }}>
-            Continue \u2192
+            Continue ->
           </button>
         </div>
       )}
 
-      {/* \u2500\u2500 STEP 2: Email + Password \u2500\u2500 */}
+      {/* -- STEP 2: Email + Password -- */}
       {step === 2 && (
         <div>
           <p style={{ fontSize:13, fontWeight:700, color:'#1a73e8', marginBottom:16, textAlign:'center' }}>Step 2 of 3 {"\u2014"} Secure your account</p>
@@ -265,13 +265,13 @@ function SignUp({ onSwitch, onClose }) {
             </button>
             <button onClick={handleNext}
               style={{ flex:2, padding:14, background:'linear-gradient(135deg,#1a73e8,#1557b0)', color:'#fff', border:'none', borderRadius:12, fontSize:15, fontWeight:700, cursor:'pointer' }}>
-              Continue \u2192
+              Continue ->
             </button>
           </div>
         </div>
       )}
 
-      {/* \u2500\u2500 STEP 3: Agreements \u2500\u2500 */}
+      {/* -- STEP 3: Agreements -- */}
       {step === 3 && (
         <div>
           <p style={{ fontSize:13, fontWeight:700, color:'#1a73e8', marginBottom:16, textAlign:'center' }}>Step 3 of 3 {"\u2014"} Almost done!</p>
@@ -325,7 +325,7 @@ function SignUp({ onSwitch, onClose }) {
   )
 }
 
-// \u2500\u2500\u2500 MAIN EXPORT \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// --- MAIN EXPORT --------------------------------------------------
 export default function AuthModal({ onClose }) {
   const [mode, setMode] = useState('signin')
 

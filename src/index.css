@@ -790,6 +790,9 @@ input, textarea { font-family: inherit; }
 /* =====================================================================
    DESKTOP RESPONSIVE \u2014 M3 Navigation Rail (\u2265900px)
    ===================================================================== */
+/* Hidden by default on mobile */
+.desktop-sidebar { display: none; }
+
 @media (min-width: 900px) {
   body { padding-bottom: 0; }
   .bottom-nav { display: none !important; }

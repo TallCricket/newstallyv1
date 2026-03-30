@@ -85,7 +85,7 @@ function SignIn({ onSwitch, onClose }) {
     setLoading(true)
     try {
       await signInWithEmailAndPassword(auth, email.trim(), password)
-      showToast('Welcome back! \u1f44b')
+      showToast('Welcome back! 👋')
       onClose()
     } catch(e) {
       const msgs = {
@@ -190,7 +190,7 @@ function SignUp({ onSwitch, onClose }) {
         followers: [],
         following: [],
       })
-      showToast('Account created! Welcome to Socialgati \u1f389')
+      showToast('Account created! Welcome to Socialgati 🎉')
       onClose()
     } catch(e) {
       const msgs = {
@@ -295,8 +295,8 @@ function SignUp({ onSwitch, onClose }) {
           {/* Summary */}
           <div style={{ background:'#f8f9fa', borderRadius:10, padding:'12px 14px', marginBottom:20, fontSize:13, color:'#606060', lineHeight:1.7 }}>
             <p><strong>Creating account for:</strong></p>
-            <p>\u1f464 {form.name} <span style={{ color:'#9aa0a6' }}>@{form.username}</span></p>
-            <p>\u1f4e7 {form.email}</p>
+            <p>👤 {form.name} <span style={{ color:'#9aa0a6' }}>@{form.username}</span></p>
+            <p>📧 {form.email}</p>
           </div>
 
           <div style={{ display:'flex', gap:10 }}>
@@ -311,7 +311,7 @@ function SignUp({ onSwitch, onClose }) {
                 color:'#fff', border:'none', borderRadius:12, fontSize:15, fontWeight:700,
                 cursor: (checks.terms && checks.privacy && checks.age && !loading) ? 'pointer' : 'not-allowed',
                 display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
-              {loading ? <><i className="fas fa-spinner fa-spin"/> Creating...</> : '\u1f389 Create Account'}
+              {loading ? <><i className="fas fa-spinner fa-spin"/> Creating...</> : '🎉 Create Account'}
             </button>
           </div>
         </div>

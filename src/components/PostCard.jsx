@@ -182,7 +182,7 @@ export default function PostCard({ post, id, onOpenComments, onOpenProfile, onAu
               <span style={{ fontSize: 10, fontWeight: 700, color: '#34a853', background: 'rgba(52,168,83,.12)', padding: '1px 7px', borderRadius: 4 }}>{"\u21ba"} Repost</span>
             )}
             {post.type === 'poll' && (
-              <span style={{ fontSize: 10, fontWeight: 700, color: '#1a73e8', background: 'rgba(26,115,232,.1)', padding: '1px 7px', borderRadius: 4 }}>\u1f4ca Poll</span>
+              <span style={{ fontSize: 10, fontWeight: 700, color: '#1a73e8', background: 'rgba(26,115,232,.1)', padding: '1px 7px', borderRadius: 4 }}>📊 Poll</span>
             )}
           </div>
           <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 1 }}>

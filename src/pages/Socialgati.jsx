@@ -237,7 +237,7 @@ export default function Socialgati() {
     } catch { showToast('Could not open profile') }
   }
 
-  const TABS = [['all', 'For You'], ['trending', '\u1f525 Trending'], ['following', 'Following']]
+  const TABS = [['all', 'For You'], ['trending', '🔥 Trending'], ['following', 'Following']]
 
   return (
     <>

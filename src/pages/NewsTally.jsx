@@ -457,7 +457,7 @@ export default function NewsTally() {
     setLoading(true); setError(''); setHasMore(true); lastDocRef.current = null
     try {
       const items = await fetchBatch(true)
-      if (!items.length) { setError('no_news'); return }
+      if (!items.length) { setError('No news articles found. Please check back later.'); return }
       setAllNews(sortByDate(items))
     } catch(e) { setError(e.message) }
     finally { setLoading(false) }

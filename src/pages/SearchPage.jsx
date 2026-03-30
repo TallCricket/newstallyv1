@@ -40,7 +40,7 @@ export default function SearchPage() {
   const debounceRef = useRef(null)
   const inputRef    = useRef(null)
 
-  // \u2500\u2500 Main search function \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  // -- Main search function --------------------------------------
   const search = useCallback(async (val) => {
     const v = val.trim()
     if (!v) { setResults(null); setLoading(false); return }
@@ -148,7 +148,7 @@ export default function SearchPage() {
 
   return (
     <>
-      {/* \u2500\u2500 Header \u2500\u2500 */}
+      {/* -- Header -- */}
       <div style={{
         position: 'fixed', top: 0, left: 0, right: 0,
         background: 'var(--header-bg)', backdropFilter: 'blur(20px)',
@@ -204,7 +204,7 @@ export default function SearchPage() {
         )}
       </div>
 
-      {/* \u2500\u2500 Body \u2500\u2500 */}
+      {/* -- Body -- */}
       <div style={{ paddingTop: topOffset, paddingBottom: 72, maxWidth: 600, margin: '0 auto', background: 'var(--bg)', minHeight: '100dvh' }}>
 
         {/* Empty state {"\u2014"} trending tags */}

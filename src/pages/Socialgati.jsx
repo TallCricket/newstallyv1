@@ -15,7 +15,7 @@ import AuthModal from '../components/AuthModal'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import DesktopNav from '../components/DesktopNav'
 
-// \u2500\u2500 Skeleton \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// -- Skeleton ------------------------------------------------------
 function PostSkeleton() {
   return (
     <div style={{ background:'var(--surface)', borderRadius:12, padding:16, marginBottom:8, border:'1px solid var(--border)' }}>
@@ -32,7 +32,7 @@ function PostSkeleton() {
   )
 }
 
-// \u2500\u2500 MentionInput {"\u2014"} textarea with @ autocomplete \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// -- MentionInput {"\u2014"} textarea with @ autocomplete -------------------
 function MentionInput({ value, onChange, placeholder }) {
   const [suggestions, setSuggestions] = useState([])
   const [mentionQuery, setMentionQuery] = useState(null)
@@ -124,15 +124,15 @@ function MentionInput({ value, onChange, placeholder }) {
   )
 }
 
-// \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+// ===================================================================
 // MAIN PAGE
-// \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+// ===================================================================
 export default function Socialgati() {
   const { user, userData } = useAuth()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
 
-  // \u2500\u2500 Deep-link: /?post=ID opens that post directly \u2500\u2500
+  // -- Deep-link: /?post=ID opens that post directly --
   useEffect(() => {
     const postId = searchParams.get('post')
     if (postId) setOpenCommentPost(postId)
@@ -157,7 +157,7 @@ export default function Socialgati() {
   const av = user?.photoURL
     || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData?.displayName || 'U')}&background=1a73e8&color=fff`
 
-  // \u2500\u2500 Real-time feed \u2500\u2500
+  // -- Real-time feed --
   const loadFeed = useCallback(() => {
     if (unsubRef.current) { unsubRef.current(); unsubRef.current = null }
     setLoading(true)
@@ -179,7 +179,7 @@ export default function Socialgati() {
     return () => { if (unsubRef.current) unsubRef.current() }
   }, [loadFeed])
 
-  // \u2500\u2500 Submit post \u2500\u2500
+  // -- Submit post --
   const submitPost = async () => {
     if (!user) return setShowAuth(true)
     const t = postText.trim()
@@ -208,7 +208,7 @@ export default function Socialgati() {
     finally { setPosting(false) }
   }
 
-  // \u2500\u2500 Quick search (inline dropdown) \u2500\u2500
+  // -- Quick search (inline dropdown) --
   const handleSearch = async val => {
     setSearchVal(val)
     if (!val.trim()) { setSearchResults(null); return }
@@ -224,7 +224,7 @@ export default function Socialgati() {
     } catch { setSearchResults(null) }
   }
 
-  // \u2500\u2500 Open profile by @username \u2500\u2500
+  // -- Open profile by @username --
   const handleMentionClick = async (username) => {
     try {
       const snap = await getDocs(query(
@@ -241,7 +241,7 @@ export default function Socialgati() {
 
   return (
     <>
-      {/* \u2500\u2500 Header \u2500\u2500 */}
+      {/* -- Header -- */}
       <header style={{
         position: 'fixed', top: 0, left: 0, right: 0, height: 56,
         background: 'var(--header-bg)', backdropFilter: 'blur(20px)',
@@ -273,7 +273,7 @@ export default function Socialgati() {
 
       <div style={{ paddingTop: 56, paddingBottom: 72, background: 'var(--bg)', minHeight: '100dvh' }}>
 
-        {/* \u2500\u2500 Feed Tabs \u2500\u2500 */}
+        {/* -- Feed Tabs -- */}
         <div style={{
           display: 'flex', background: 'var(--surface)',
           borderBottom: '1px solid var(--border)',
@@ -294,7 +294,7 @@ export default function Socialgati() {
           ))}
         </div>
 
-        {/* \u2500\u2500 Compose bar \u2500\u2500 */}
+        {/* -- Compose bar -- */}
         <div style={{
           display: 'flex', gap: 10, padding: '12px 16px',
           background: 'var(--surface)', borderBottom: '1px solid var(--border)',
@@ -314,7 +314,7 @@ export default function Socialgati() {
           </button>
         </div>
 
-        {/* \u2500\u2500 Feed \u2500\u2500 */}
+        {/* -- Feed -- */}
         <div style={{ padding: '8px 12px' }}>
           {loading
             ? Array.from({ length: 4 }).map((_, i) => <PostSkeleton key={i} />)
@@ -346,7 +346,7 @@ export default function Socialgati() {
         </div>
       </div>
 
-      {/* \u2500\u2500 Floating + button \u2500\u2500 */}
+      {/* -- Floating + button -- */}
       <button
         onClick={() => user ? setShowCreateModal(true) : setShowAuth(true)}
         style={{
@@ -359,7 +359,7 @@ export default function Socialgati() {
         <i className="fas fa-plus" />
       </button>
 
-      {/* \u2500\u2500 Create Post Modal \u2500\u2500 */}
+      {/* -- Create Post Modal -- */}
       {showCreateModal && (
         <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setShowCreateModal(false)}>
           <div className="modal">
@@ -422,10 +422,10 @@ export default function Socialgati() {
   )
 }  return (
     <>
-      {/* \u2500\u2500 Desktop Sidebar (hidden on mobile via CSS) \u2500\u2500 */}
+      {/* -- Desktop Sidebar (hidden on mobile via CSS) -- */}
       <DesktopNav onNewPost={() => user ? setShowCreateModal(true) : setShowAuth(true)} />
 
-      {/* \u2500\u2500 Mobile Header (hidden on desktop via CSS) \u2500\u2500 */}
+      {/* -- Mobile Header (hidden on desktop via CSS) -- */}
       <header className="sg-desktop-header-hidden" style={{
         position: 'fixed', top: 0, left: 0, right: 0, height: 56,
         background: 'var(--header-bg)', backdropFilter: 'blur(20px)',
@@ -455,7 +455,7 @@ export default function Socialgati() {
         </div>
       </header>
 
-      {/* \u2500\u2500 Mobile layout wrapper \u2500\u2500 */}
+      {/* -- Mobile layout wrapper -- */}
       <div className="sg-mobile-only" style={{ paddingTop: 56, paddingBottom: 72, background: 'var(--bg)', minHeight: '100dvh' }}>
 
         {/* Feed Tabs */}
@@ -530,7 +530,7 @@ export default function Socialgati() {
         </div>
       </div>
 
-      {/* \u2500\u2500 Desktop layout (Instagram-style 3-col) \u2500\u2500 */}
+      {/* -- Desktop layout (Instagram-style 3-col) -- */}
       <div className="sg-desktop-shell">
         {/* Center feed */}
         <div className="sg-desktop-feed">
@@ -629,7 +629,7 @@ export default function Socialgati() {
         </div>
       </div>
 
-      {/* \u2500\u2500 Floating + button (mobile only) \u2500\u2500 */}
+      {/* -- Floating + button (mobile only) -- */}
       <button
         onClick={() => user ? setShowCreateModal(true) : setShowAuth(true)}
         style={{
@@ -642,7 +642,7 @@ export default function Socialgati() {
         <i className="fas fa-plus" />
       </button>
 
-      {/* \u2500\u2500 Create Post Modal \u2500\u2500 */}
+      {/* -- Create Post Modal -- */}
       {showCreateModal && (
         <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setShowCreateModal(false)}>
           <div className="modal">

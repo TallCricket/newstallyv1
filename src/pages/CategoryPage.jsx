@@ -1,7 +1,7 @@
 /**
  * CategoryPage {"\u2014"} /news/category/:cat
  * Shows news for a specific category (or "all") with the exact same
- * Hero \u2192 Latest Updates \u2192 Grid \u2192 Sections layout as the home feed.
+ * Hero -> Latest Updates -> Grid -> Sections layout as the home feed.
  * Categories are dynamic: whatever is in Firestore shows up.
  */
 import { useEffect, useState, useCallback, useRef } from 'react'
@@ -31,9 +31,17 @@ function getItemDate(n) {
   const t = new Date(raw).getTime()
   return isNaN(t) ? 0 : t
 }
-const sortByDate = items => [...items].sort((a, b) => getItemDate(b) - getItemDate(a))
+function getItemDateCat(n) {
+  const ts = n.timestamp || n.pubDate || n.fetchedAt || n.savedAt || n.date
+  if (!ts) return 0
+  if (ts?.toDate) return ts.toDate().getTime()
+  if (ts?.seconds) return ts.seconds * 1000
+  const t = new Date(ts).getTime()
+  return isNaN(t) ? 0 : t
+}
+const sortByDate = items => [...items].sort((a, b) => getItemDateCat(b) - getItemDateCat(a))
 
-// \u2500\u2500\u2500 Skeletons \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// --- Skeletons --------------------------------------------------
 function HeroSkeleton() {
   return (
     <div style={{ margin:'16px', borderRadius:16, overflow:'hidden', background:'var(--surface)', border:'1px solid var(--border)' }}>
@@ -47,7 +55,7 @@ function HeroSkeleton() {
   )
 }
 
-// \u2500\u2500\u2500 Shared card components \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// --- Shared card components --------------------------------------
 function HeroCard({ item, onRepost }) {
   const navigate = useNavigate()
   const { t } = useTranslation()
@@ -160,7 +168,7 @@ export default function CategoryPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
 
-  // Normalise: "all" \u2192 'All', "sports" \u2192 "Sports"
+  // Normalise: "all" -> 'All', "sports" -> "Sports"
   const cat = catParam === 'all'
     ? 'All'
     : catParam.charAt(0).toUpperCase() + catParam.slice(1).toLowerCase()
@@ -177,33 +185,32 @@ export default function CategoryPage() {
   const lastDocRef = useRef(null)
   const sentinelRef = useRef(null)
 
-  // \u2500\u2500 Fetch: NO source filter, sorted by fetchedAt/pubDate desc \u2500\u2500
+  // -- Fetch: NO source filter, sorted by fetchedAt/pubDate desc --
   // KEY FIX: fetch ALL news without source filter, large batch, sort in JS
   const fetchItems = useCallback(async (isFirst = false) => {
-    let q
-    if (cat === 'All') {
-      // Fetch large batch, no orderBy (avoids missing-field issue), sort in JS
-      q = isFirst
-        ? query(collection(db, 'news'), limit(PAGE_SIZE * 2))
-        : lastDocRef.current
-          ? query(collection(db, 'news'), startAfter(lastDocRef.current), limit(PAGE_SIZE * 2))
-          : null
-    } else {
-      q = isFirst
-        ? query(collection(db, 'news'), where('category', '==', cat), limit(PAGE_SIZE * 2))
-        : lastDocRef.current
-          ? query(collection(db, 'news'), where('category', '==', cat), startAfter(lastDocRef.current), limit(PAGE_SIZE * 2))
-          : null
+    const makeQ = (withOrder) => {
+      const filters = cat === 'All' ? [] : [where('category', '==', cat)]
+      const parts = [...filters]
+      if (withOrder) parts.push(orderBy('timestamp', 'desc'))
+      if (!isFirst && lastDocRef.current) parts.push(startAfter(lastDocRef.current))
+      parts.push(limit(PAGE_SIZE * 2))
+      return query(collection(db, 'news'), ...parts)
     }
-    if (!q) return []
-    const snap = await getDocs(q)
+    let snap
+    try {
+      snap = await getDocs(makeQ(true))
+    } catch {
+      // Fallback without orderBy (no composite index needed)
+      const q = makeQ(false)
+      snap = await getDocs(q)
+    }
     if (snap.empty) { setHasMore(false); return [] }
     if (snap.docs.length < PAGE_SIZE) setHasMore(false)
     lastDocRef.current = snap.docs[snap.docs.length - 1]
     return snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(n => n.title)
   }, [cat])
 
-  // \u2500\u2500 Fetch all distinct categories for the sidebar \u2500\u2500
+  // -- Fetch all distinct categories for the sidebar --
   const fetchCategories = useCallback(async () => {
     try {
       const snap = await getDocs(query(collection(db, 'news'), limit(200)))
@@ -247,7 +254,7 @@ export default function CategoryPage() {
     return () => obs.disconnect()
   }, [loadMore])
 
-  // \u2500\u2500 Repost \u2500\u2500
+  // -- Repost --
   const handleRepost = async (item) => {
     if (!user) return setShowAuth(true)
     setReposting(true)
@@ -288,7 +295,7 @@ export default function CategoryPage() {
 
       <div className="main-wrapper" style={{ paddingBottom:80 }}>
 
-        {/* \u2500\u2500 Category scroll bar \u2500\u2500 */}
+        {/* -- Category scroll bar -- */}
         <div className="cat-bar" style={{ position:'sticky', top:56, zIndex:49 }}>
           {allCategories.map(c => (
             <Link key={c}
@@ -303,7 +310,7 @@ export default function CategoryPage() {
           ))}
         </div>
 
-        {/* \u2500\u2500 Category header \u2500\u2500 */}
+        {/* -- Category header -- */}
         {cat !== 'All' && (
           <div style={{ padding:'12px 16px 4px', display:'flex', alignItems:'center', gap:8 }}>
             <div style={{ width:4, height:22, background:ac, borderRadius:2 }}/>
@@ -312,7 +319,7 @@ export default function CategoryPage() {
           </div>
         )}
 
-        {/* \u2500\u2500 Content \u2500\u2500 */}
+        {/* -- Content -- */}
         {loading ? (
           <div>
             <HeroSkeleton/>

@@ -18,7 +18,7 @@ const CAT_COLORS = {
   Sports:'#ff6d00', General:'#546e7a', Entertainment:'#ad1457'
 }
 
-// \u2500\u2500 LocalStorage helpers \u2500\u2500
+// -- LocalStorage helpers --
 function getSavedIds() { try { return JSON.parse(localStorage.getItem('nt_saved_news') || '[]') } catch { return [] } }
 function setSavedIds(ids) { localStorage.setItem('nt_saved_news', JSON.stringify(ids)) }
 function saveToHistory(item) {
@@ -31,7 +31,7 @@ function saveToHistory(item) {
   } catch {}
 }
 
-// \u2500\u2500 Repost bottom-sheet modal \u2500\u2500
+// -- Repost bottom-sheet modal --
 function RepostModal({ item, onClose, onConfirm, reposting }) {
   if (!item) return null
   const accent = CAT_COLORS[item.category] || '#1a73e8'
@@ -69,7 +69,7 @@ function RepostModal({ item, onClose, onConfirm, reposting }) {
   )
 }
 
-// \u2500\u2500 Related card \u2500\u2500
+// -- Related card --
 function RelatedCard({ item, onNavigate }) {
   const [imgErr, setImgErr] = useState(false)
   const accent = CAT_COLORS[item.category] || '#1a73e8'
@@ -91,9 +91,9 @@ function RelatedCard({ item, onNavigate }) {
   )
 }
 
-// \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+// ===================================================================
 // MAIN PAGE
-// \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+// ===================================================================
 export default function NewsOpen() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -156,7 +156,7 @@ export default function NewsOpen() {
     window.scrollTo(0, 0)
   }, [id])
 
-  // \u2500\u2500 AUTO-TRANSLATE when article loads or language changes \u2500\u2500
+  // -- AUTO-TRANSLATE when article loads or language changes --
   useEffect(() => {
     setShowOriginal(false) // always show translated version by default
     if (!item || lang === 'en') {
@@ -266,14 +266,14 @@ export default function NewsOpen() {
 
   return (
     <>
-      {/* \u2500\u2500 Reading progress bar \u2500\u2500 */}
+      {/* -- Reading progress bar -- */}
       <div style={{ position:'fixed', top:0, left:0, right:0, height:3, background:'var(--border)', zIndex:201 }}>
         <div style={{ height:'100%', width:`${readPct}%`, background:`linear-gradient(90deg,${accent},#9334e6)`, transition:'width .1s', borderRadius:2 }}/>
       </div>
 
       <div style={{ maxWidth:720, margin:'0 auto', minHeight:'100dvh', background:'var(--surface)', paddingBottom:80 }}>
 
-        {/* \u2500\u2500 Sticky header \u2500\u2500 */}
+        {/* -- Sticky header -- */}
         <div style={{ padding:'12px 16px', display:'flex', alignItems:'center', gap:10, borderBottom:'1px solid var(--border)', position:'sticky', top:0, background:'var(--header-bg)', backdropFilter:'blur(20px)', zIndex:100 }}>
           <button onClick={() => navigate(-1)} className="page-back-btn"><i className="fas fa-arrow-left"/></button>
           <div style={{ display:'flex', alignItems:'center', gap:8, flex:1, overflow:'hidden', cursor:'pointer' }} onClick={() => navigate('/news')}>
@@ -293,7 +293,7 @@ export default function NewsOpen() {
           </div>
         </div>
 
-        {/* \u2500\u2500 Hero image \u2500\u2500 */}
+        {/* -- Hero image -- */}
         {item.image && (
           <div style={{ width:'100%', aspectRatio:'16/9', overflow:'hidden', background:'var(--surface2)' }}>
             <img src={item.image} alt={item.title} style={{ width:'100%', height:'100%', objectFit:'cover' }}
@@ -303,7 +303,7 @@ export default function NewsOpen() {
 
         <div style={{ padding:'20px 16px 0' }}>
 
-          {/* \u2500\u2500 Category + read time \u2500\u2500 */}
+          {/* -- Category + read time -- */}
           <div style={{ display:'flex', alignItems:'center', gap:10, flexWrap:'wrap', marginBottom:14 }}>
             <span style={{ background:`${accent}20`, color:accent, fontSize:11, fontWeight:700, padding:'4px 12px', borderRadius:99, textTransform:'uppercase', letterSpacing:'.07em', display:'flex', alignItems:'center', gap:5 }}>
               <i className={catIcon(item.category)} style={{ fontSize:10 }}/> {item.category || 'News'}
@@ -313,7 +313,7 @@ export default function NewsOpen() {
             </span>
           </div>
 
-          {/* \u2500\u2500 Title \u2500\u2500 */}
+          {/* -- Title -- */}
           {translating && lang !== 'en' && (
             <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:10, padding:'8px 12px', background:'rgba(147,52,230,.06)', borderRadius:8, border:'1px solid rgba(147,52,230,.15)' }}>
               <i className="fas fa-spinner fa-spin" style={{ color:'#9334e6', fontSize:12 }}/>
@@ -324,7 +324,7 @@ export default function NewsOpen() {
             {(!showOriginal && translated?.title) ? translated.title : item.title}
           </h1>
 
-          {/* \u2500\u2500 Source bar \u2500\u2500 */}
+          {/* -- Source bar -- */}
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 14px', background:'var(--surface2)', borderRadius:10, borderLeft:`3px solid ${accent}`, marginBottom:20, gap:10, flexWrap:'wrap' }}>
             <div>
               <div style={{ fontSize:13, fontWeight:700, color:'var(--ink)' }}>{item.source || 'NewsTally'}</div>
@@ -356,7 +356,7 @@ export default function NewsOpen() {
             </div>
           </div>
 
-          {/* \u2500\u2500 Share panel \u2500\u2500 */}
+          {/* -- Share panel -- */}
           {showShare && (
             <div style={{ display:'flex', gap:8, flexWrap:'wrap', paddingBottom:16, marginBottom:4, borderBottom:'1px solid var(--border)' }}>
               <button onClick={shareWA} style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 16px', borderRadius:99, background:'#25d366', color:'#fff', fontSize:13, fontWeight:600, border:'none', cursor:'pointer' }}>
@@ -374,7 +374,7 @@ export default function NewsOpen() {
             </div>
           )}
 
-          {/* \u2500\u2500 Article body \u2500\u2500 */}
+          {/* -- Article body -- */}
           {(item.description) ? (
             <div ref={articleRef} style={{ fontSize:16, lineHeight:1.85, color:'var(--ink2)', marginBottom:24 }}>
               {translated && !showOriginal && (
@@ -394,7 +394,7 @@ export default function NewsOpen() {
             </div>
           )}
 
-                    {/* \u2500\u2500 Read full + repost buttons \u2500\u2500 */}
+                    {/* -- Read full + repost buttons -- */}
           <div style={{ display:'flex', gap:10, marginBottom:20 }}>
             {item.url && item.url !== '#' && (
               <a href={item.url} target="_blank" rel="noopener noreferrer"
@@ -408,7 +408,7 @@ export default function NewsOpen() {
             </button>
           </div>
 
-          {/* \u2500\u2500 Tags \u2500\u2500 */}
+          {/* -- Tags -- */}
           <div style={{ display:'flex', flexWrap:'wrap', gap:8, marginBottom:20, alignItems:'center', paddingTop:12, borderTop:'1px solid var(--border)' }}>
             {item.category && (
               <span style={{ fontSize:12, fontWeight:600, color:accent, background:`${accent}18`, padding:'4px 12px', borderRadius:99 }}>
@@ -429,7 +429,7 @@ export default function NewsOpen() {
           </div>
         </div>
 
-        {/* \u2500\u2500 Related articles \u2500\u2500 */}
+        {/* -- Related articles -- */}
         {related.length > 0 && (
           <div style={{ padding:'0 16px 20px' }}>
             <h2 style={{ fontSize:16, fontWeight:700, color:'var(--ink)', marginBottom:14, display:'flex', alignItems:'center', gap:8 }}>

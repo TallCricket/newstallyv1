@@ -23,22 +23,26 @@ const CAT_COLORS = {
 }
 
 function getItemDate(n) {
-  const raw = n.pubDate || n.fetchedAt || n.savedAt || n.date || ''
-  if (!raw) return 0
-  const t = new Date(raw).getTime()
+  // Handle Firestore Timestamps, ISO strings, and fallbacks
+  const ts = n.timestamp || n.pubDate || n.fetchedAt || n.savedAt || n.date
+  if (!ts) return 0
+  if (ts?.toDate) return ts.toDate().getTime()  // Firestore Timestamp
+  if (ts?.seconds) return ts.seconds * 1000     // Firestore Timestamp (serialized)
+  const t = new Date(ts).getTime()
   return isNaN(t) ? 0 : t
 }
 function sortByDate(items) {
   return [...items].sort((a, b) => {
-    // ranked items (rank set by manager) sort by rank ascending first
-    const aRank = a.rank != null ? a.rank : 9999
-    const bRank = b.rank != null ? b.rank : 9999
-    if (aRank !== bRank) return aRank - bRank
+    // Only respect rank if BOTH have a rank (manager-ranked articles)
+    const aRank = (a.rank != null && a.rank < 9999) ? a.rank : null
+    const bRank = (b.rank != null && b.rank < 9999) ? b.rank : null
+    if (aRank !== null && bRank !== null) return aRank - bRank
+    // Otherwise latest date first
     return getItemDate(b) - getItemDate(a)
   })
 }
 
-// \u2500\u2500\u2500 Skeletons \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// --- Skeletons ----------------------------------------------------
 function HeroSkeleton() {
   return (
     <div style={{ margin:'16px', borderRadius:16, overflow:'hidden', background:'var(--surface)', border:'1px solid var(--border)' }}>
@@ -64,7 +68,7 @@ function SmallSkeleton() {
   )
 }
 
-// \u2500\u2500\u2500 Hero Card \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// --- Hero Card ----------------------------------------------------
 function HeroCard({ item, onRepost }) {
   const navigate = useNavigate()
   const { t } = useTranslation()
@@ -230,7 +234,7 @@ function CategorySection({ title, items, accent, onRepost, onSeeAll }) {
   )
 }
 
-// \u2500\u2500\u2500 Home/Category layout {"\u2014"} same for ALL and every specific category \u2500\u2500
+// --- Home/Category layout {"\u2014"} same for ALL and every specific category --
 function NewsLayout({ items, cat, onRepost, onSeeAll, sentinelRef, loadingMore, hasMore, onLoadMore, totalLoaded }) {
   const { t } = useTranslation()
   const groupByCategory = (arr) => {
@@ -329,7 +333,7 @@ function NewsLayout({ items, cat, onRepost, onSeeAll, sentinelRef, loadingMore, 
   )
 }
 
-// \u2500\u2500\u2500 Repost Modal \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// --- Repost Modal -------------------------------------------------
 function RepostModal({ item, onClose, onConfirm, reposting }) {
   if (!item) return null
   const accent = CAT_COLORS[item.category] || '#1a73e8'
@@ -357,7 +361,7 @@ function RepostModal({ item, onClose, onConfirm, reposting }) {
   )
 }
 
-// \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+// ===================================================================
 export default function NewsTally() {
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -396,16 +400,33 @@ export default function NewsTally() {
     }).catch(() => {})
   }, [])
 
-  // KEY FIX: No orderBy in Firestore query \u2192 returns ALL sources (not just DD News)
+  // KEY FIX: No orderBy in Firestore query -> returns ALL sources (not just DD News)
   // Sort is done client-side so all news from all platforms appears latest-first
   const fetchBatch = useCallback(async (isFirst = false) => {
-    let q = isFirst
-      ? query(collection(db,'news'), limit(PAGE_SIZE * 2))
-      : lastDocRef.current
-        ? query(collection(db,'news'), startAfter(lastDocRef.current), limit(PAGE_SIZE * 2))
-        : null
-    if (!q) return []
-    const snap = await getDocs(q)
+    // Try with orderBy first (requires Firestore index), fallback without
+    const makeQuery = (withOrder) => {
+      const base = collection(db, 'news')
+      if (isFirst) {
+        return withOrder
+          ? query(base, orderBy('timestamp', 'desc'), limit(PAGE_SIZE * 2))
+          : query(base, limit(PAGE_SIZE * 2))
+      }
+      if (!lastDocRef.current) return null
+      return withOrder
+        ? query(base, orderBy('timestamp', 'desc'), startAfter(lastDocRef.current), limit(PAGE_SIZE * 2))
+        : query(base, startAfter(lastDocRef.current), limit(PAGE_SIZE * 2))
+    }
+    let snap
+    try {
+      const q = makeQuery(true)
+      if (!q) return []
+      snap = await getDocs(q)
+    } catch {
+      // Fallback: no orderBy (index may not exist)
+      const q = makeQuery(false)
+      if (!q) return []
+      snap = await getDocs(q)
+    }
     if (snap.empty) { setHasMore(false); return [] }
     if (snap.docs.length < PAGE_SIZE) setHasMore(false)
     lastDocRef.current = snap.docs[snap.docs.length - 1]
@@ -413,10 +434,19 @@ export default function NewsTally() {
   }, [])
 
   const fetchCategoryBatch = useCallback(async (category, isFirst = false) => {
-    const constraints = [where('category','==',category)]
-    if (!isFirst && catLastDocRef.current) constraints.push(startAfter(catLastDocRef.current))
-    constraints.push(limit(PAGE_SIZE * 2))
-    const snap = await getDocs(query(collection(db,'news'), ...constraints))
+    const make = (withOrder) => {
+      const base = [where('category', '==', category)]
+      if (!isFirst && catLastDocRef.current) base.push(startAfter(catLastDocRef.current))
+      if (withOrder) base.splice(1, 0, orderBy('timestamp', 'desc'))
+      base.push(limit(PAGE_SIZE * 2))
+      return query(collection(db, 'news'), ...base)
+    }
+    let snap
+    try {
+      snap = await getDocs(make(true))
+    } catch {
+      snap = await getDocs(make(false))
+    }
     if (snap.empty) { setCatHasMore(false); return [] }
     if (snap.docs.length < PAGE_SIZE) setCatHasMore(false)
     catLastDocRef.current = snap.docs[snap.docs.length - 1]
@@ -524,7 +554,7 @@ export default function NewsTally() {
 
   return (
     <>
-      {/* \u2500\u2500 Mobile header \u2500\u2500 */}
+      {/* -- Mobile header -- */}
       <header className="header">
         <div className="logo">
           <img src="https://i.postimg.cc/dLTgRxbL/cropped-circle-image.png" alt="NewsTally"/>
@@ -537,7 +567,7 @@ export default function NewsTally() {
         </div>
       </header>
 
-      {/* \u2500\u2500 DESKTOP layout: Google News style \u2500\u2500 */}
+      {/* -- DESKTOP layout: Google News style -- */}
       <div className="nt-desktop-only">
         {/* Desktop topbar */}
         <div className="nt-desktop-topbar">
@@ -674,7 +704,7 @@ export default function NewsTally() {
         </div>
       </div>
 
-      {/* \u2500\u2500 MOBILE layout \u2500\u2500 */}
+      {/* -- MOBILE layout -- */}
       <div className="nt-mobile-only">
         <div className="main-wrapper" style={{ paddingBottom:80 }}>
           {showSearch && (

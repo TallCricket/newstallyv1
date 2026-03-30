@@ -17,7 +17,7 @@ import ProfilePage from '../components/ProfilePage'
 import { useTranslation, INDIAN_LANGS } from '../context/TranslationContext'
 
 
-// \u2500\u2500 Followers/Following Modal \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// -- Followers/Following Modal --------------------------------------
 function FollowListModal({ title, uids, onClose, onOpenProfile }) {
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
@@ -83,7 +83,7 @@ const SETTINGS_LINKS = [
   { icon:'fas fa-envelope',       label:'Contact Us',       url:'/contact', color:'#9334e6' },
 ]
 
-// \u2500\u2500 Profile Post Card \u2500\u2500
+// -- Profile Post Card --
 function ProfilePostCard({ post, onClick, onNavigateNews }) {
   const [imgErr, setImgErr] = useState(false)
   const isRepost = post.type === 'repost'
@@ -129,7 +129,7 @@ function ProfilePostCard({ post, onClick, onNavigateNews }) {
   )
 }
 
-// \u2500\u2500 Saved Article Card \u2500\u2500
+// -- Saved Article Card --
 function SavedCard({ item, onOpen }) {
   const [imgErr, setImgErr] = useState(false)
   const CAT_COLORS = { National:'#e53935', World:'#1a73e8', Business:'#34a853', Technology:'#9334e6', Health:'#f4a261', Education:'#0077b6', Sports:'#ff6d00', General:'#546e7a' }
@@ -155,7 +155,7 @@ function SavedCard({ item, onOpen }) {
   )
 }
 
-// \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+// ==========================================================
 export default function Profile() {
   const { user } = useAuth()
   const { dark, toggle: toggleDark } = useTheme()
@@ -513,7 +513,7 @@ export default function Profile() {
               )
             )}
 
-            {/* 2\ufe0f\u20e3 Saved articles from localStorage \u2192 Firestore */}
+            {/* 2\ufe0f\u20e3 Saved articles from localStorage -> Firestore */}
             {tab==='saved' && (
               savedArticles.length===0 ? (
                 <div style={{ textAlign:'center', padding:'60px 20px', color:'var(--muted)' }}>

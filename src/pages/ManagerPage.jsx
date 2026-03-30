@@ -90,7 +90,7 @@ export default function ManagerPage() {
   const [loadingRecent, setLoadingRecent] = useState(false)
   const [activeTab, setActiveTab]     = useState('add')  // 'add' | 'recent' | 'ranking'
 
-  // \u2500\u2500 Ranking state \u2500\u2500
+  // -- Ranking state --
   const [rankCat, setRankCat]             = useState('National')
   const [rankItems, setRankItems]         = useState([])
   const [rankLoading, setRankLoading]     = useState(false)
@@ -98,7 +98,7 @@ export default function ManagerPage() {
   const [catOrder, setCatOrder]           = useState([...CAT_OPTIONS])
   const [catOrderSaving, setCatOrderSaving] = useState(false)
 
-  // \u2500\u2500 ALL HOOKS MUST BE BEFORE EARLY RETURNS \u2500\u2500
+  // -- ALL HOOKS MUST BE BEFORE EARLY RETURNS --
   // Load saved category order from Firestore on mount
   useEffect(() => {
     if (!user || user.email !== MANAGER_EMAIL) return
@@ -108,7 +108,7 @@ export default function ManagerPage() {
     }).catch(() => {})
   }, [user])
 
-  // \u2500\u2500 Block non-manager users (after all hooks) \u2500\u2500
+  // -- Block non-manager users (after all hooks) --
   if (!user) return <LoginScreen />
   if (user.email !== MANAGER_EMAIL) {
     return (
@@ -124,7 +124,7 @@ export default function ManagerPage() {
     )
   }
 
-  // \u2500\u2500 Helpers \u2500\u2500
+  // -- Helpers --
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }))
 
   const handleSubmit = async e => {
@@ -176,7 +176,7 @@ export default function ManagerPage() {
     } catch(e) { showToast('Delete failed: ' + e.message) }
   }
 
-  // \u2500\u2500 Ranking helpers \u2500\u2500
+  // -- Ranking helpers --
   const loadRankItems = async (cat) => {
     setRankLoading(true)
     try {
@@ -282,7 +282,7 @@ export default function ManagerPage() {
         ))}
       </div>
 
-      {/* \u2500\u2500 ADD NEWS TAB \u2500\u2500 */}
+      {/* -- ADD NEWS TAB -- */}
       {activeTab === 'add' && (
         <div style={{ maxWidth:640, margin:'0 auto', padding:'20px 16px 80px' }}>
           <form onSubmit={handleSubmit}>
@@ -374,7 +374,7 @@ export default function ManagerPage() {
         </div>
       )}
 
-      {/* \u2500\u2500 RECENT NEWS TAB \u2500\u2500 */}
+      {/* -- RECENT NEWS TAB -- */}
       {activeTab === 'recent' && (
         <div style={{ maxWidth:640, margin:'0 auto', padding:'12px 16px 80px' }}>
           {loadingRecent ? (
@@ -407,7 +407,7 @@ export default function ManagerPage() {
         </div>
       )}
 
-      {/* \u2500\u2500 RANKING TAB \u2500\u2500 */}
+      {/* -- RANKING TAB -- */}
       {activeTab === 'ranking' && (
         <div style={{ maxWidth:640, margin:'0 auto', padding:'16px 16px 80px' }}>
 

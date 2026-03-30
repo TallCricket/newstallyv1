@@ -33,7 +33,7 @@ function getItemDate(n) {
 }
 function sortByDate(items) { return [...items].sort((a,b) => getItemDate(b) - getItemDate(a)) }
 
-// \u2500\u2500 Repost Modal \u2500\u2500
+// -- Repost Modal --
 function RepostModal({ item, onClose, onConfirm, reposting }) {
   const accent = CAT_COLORS[item?.category] || '#1a73e8'
   if (!item) return null
@@ -71,7 +71,7 @@ function RepostModal({ item, onClose, onConfirm, reposting }) {
   )
 }
 
-// \u2500\u2500 Short Card \u2500\u2500
+// -- Short Card --
 function ShortCard({ item, height, idx, curIdx, onRepost }) {
   const [imgErr, setImgErr] = useState(false)
   const accent = CAT_COLORS[item.category] || '#1a73e8'
@@ -149,7 +149,7 @@ function ShortCard({ item, height, idx, curIdx, onRepost }) {
   )
 }
 
-// \u2500\u2500 Main \u2500\u2500
+// -- Main --
 export default function Shorts() {
   const { user } = useAuth()
 
@@ -177,7 +177,7 @@ export default function Shorts() {
   const isDragging     = useRef(false)
   const getH = () => window.innerHeight
 
-  // \u2500\u2500 Detect order field \u2500\u2500
+  // -- Detect order field --
   const detectOrderField = useCallback(async () => {
     for (const field of ['pubDate', 'fetchedAt', 'savedAt']) {
       try {
@@ -303,7 +303,7 @@ export default function Shorts() {
     setTimeout(() => { if (el) el.style.transition = '' }, 360)
   }, [curIdx])
 
-  // \u2500\u2500 Smart Repost \u2500\u2500
+  // -- Smart Repost --
   const handleRepost = useCallback(async (item) => {
     if (!user) { setRepostItem(null); setShowAuth(true); return }
     setReposting(true)

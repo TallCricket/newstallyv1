@@ -210,7 +210,7 @@ export default function SearchPage() {
         {/* Empty state {"\u2014"} trending tags */}
         {!q.trim() && (
           <div style={{ padding: '20px 16px' }}>
-            <h2 style={{ fontSize: 16, fontWeight: 800, color: 'var(--ink)', marginBottom: 16 }}>\u1f525 Trending on Socialgati</h2>
+            <h2 style={{ fontSize: 16, fontWeight: 800, color: 'var(--ink)', marginBottom: 16 }}>🔥 Trending on Socialgati</h2>
             <div style={{ display: 'flex', flexDirection: 'column', background: 'var(--surface)', borderRadius: 14, overflow: 'hidden', border: '1px solid var(--border)' }}>
               {TRENDING_TAGS.map((tag, i) => (
                 <div key={tag} onClick={() => navigate(`/hashtag/${tag.toLowerCase()}`)}

@@ -105,7 +105,7 @@ function ProfilePostCard({ post, onClick, onNavigateNews }) {
         <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:6 }}>
           {isRepost
             ? <span style={{ fontSize:9, fontWeight:800, textTransform:'uppercase', color:'#34a853', background:'#e6f4ea', padding:'2px 7px', borderRadius:4 }}>{"\u21ba"} Repost</span>
-            : <span style={{ fontSize:9, fontWeight:800, textTransform:'uppercase', color:'#1a73e8', background:'#e8f0fe', padding:'2px 7px', borderRadius:4 }}>\u1f4ac Post</span>
+            : <span style={{ fontSize:9, fontWeight:800, textTransform:'uppercase', color:'#1a73e8', background:'#e8f0fe', padding:'2px 7px', borderRadius:4 }}>💬 Post</span>
           }
           {post.newsCategory && (
             <span style={{ fontSize:9, fontWeight:700, color:'#9334e6', background:'#f3e8ff', padding:'2px 7px', borderRadius:4 }}>{post.newsCategory}</span>
@@ -484,7 +484,6 @@ export default function Profile() {
                     color: tab===t.id ? 'var(--ink)' : 'var(--muted)',
                     borderBottom: tab===t.id ? '2.5px solid var(--ink)' : '2.5px solid transparent',
                     background:'none', border:'none',
-                    borderBottom: tab===t.id ? '2.5px solid var(--ink)' : '2.5px solid transparent',
                     cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:6 }}>
                   <i className={t.icon} style={{ fontSize:13 }}/> {t.label}
                   {t.id==='posts' && posts.length>0 && <span style={{ background:'var(--surface2)', color:'var(--muted)', fontSize:10, fontWeight:700, padding:'1px 7px', borderRadius:99 }}>{posts.length}</span>}
@@ -599,7 +598,7 @@ export default function Profile() {
                     <div style={{ display:'flex', gap:8 }}>
                       {[{code:'en', label:'English'}, {code:'hi', label:'\u0939\u093f\u0928\u094d\u0926\u0940'}].map(l => (
                         <button key={l.code}
-                          onClick={() => setLang(l.code === 'en' ? 'en' : (lang === 'en' ? 'hi' : lang))}
+                          onClick={() => setLang(l.code)}
                           style={{ flex:1, padding:'9px 0', borderRadius:10,
                             border:`2px solid ${uiLang===l.code ? '#1a73e8' : 'var(--border)'}`,
                             background: uiLang===l.code ? 'rgba(26,115,232,.08)' : 'var(--surface2)',

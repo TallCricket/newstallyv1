@@ -30,8 +30,8 @@ export function About() {
       <h2 style={h2}>Our Mission</h2>
       <p style={prose}>To make news accessible, engaging, and community-driven for every Indian. We believe news is better when it's discussed, shared, and given context by real people.</p>
       <h2 style={h2}>Contact Us</h2>
-      <p style={prose}>\u1f4e7 newstallyofficial@gmail.com</p>
-      <p style={prose}>\u1f310 newstally.online | socialgati.online</p>
+      <p style={prose}>📧 newstallyofficial@gmail.com</p>
+      <p style={prose}>🌐 newstally.online | socialgati.online</p>
       <div style={{ display:'flex', gap:16, marginTop:20 }}>
         {[['fab fa-instagram','https://instagram.com/newstallyofficial'],['fab fa-youtube','https://youtube.com/@newstallyofficial'],['fab fa-x-twitter','https://twitter.com/newstallyofficial']].map(([icon,url])=>(
           <a key={url} href={url} target="_blank" rel="noopener" style={{ width:44, height:44, background:'#f1f3f4', borderRadius:12, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, color:'#202124' }}>

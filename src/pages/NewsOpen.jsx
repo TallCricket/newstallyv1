@@ -61,7 +61,7 @@ function RepostModal({ item, onClose, onConfirm, reposting }) {
           </button>
           <button onClick={() => onConfirm(item)} disabled={reposting}
             style={{ flex:2, padding:'13px 0', background:'linear-gradient(135deg,#1a73e8,#1557b0)', border:'none', borderRadius:12, color:'#fff', fontSize:14, fontWeight:700, cursor: reposting ? 'not-allowed' : 'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8, opacity: reposting ? .7 : 1 }}>
-            {reposting ? <><i className="fas fa-spinner fa-spin"/> Posting...</> : <><i className="fas fa-retweet"/>{t('repost')}</>}
+            {reposting ? <><i className="fas fa-spinner fa-spin"/> Posting...</> : <><i className="fas fa-retweet"/> Repost</>}
           </button>
         </div>
       </div>
@@ -183,20 +183,20 @@ export default function NewsOpen() {
   const toggleSave = () => {
     const ids = getSavedIds()
     if (saved) { setSavedIds(ids.filter(i => i !== id)); setSaved(false); showToast('Removed from saved') }
-    else { setSavedIds([id, ...ids]); setSaved(true); showToast('\u1f516 Saved!') }
+    else { setSavedIds([id, ...ids]); setSaved(true); showToast('🔖 Saved!') }
   }
 
   // Share helpers
   const shareUrl = () => `${window.location.origin}/news/${id}`
-  const shareWA  = () => item && window.open(`https://wa.me/?text=${encodeURIComponent(`\u1f4f0 *${item.title}*\n\n${(item.description||'').substring(0,120)}...\n\n\u1f517 ${shareUrl()}\n\n\u1f4f2 *NewsTally*`)}`, '_blank')
-  const shareTW  = () => item && window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent('\u1f4f0 '+item.title)}&url=${encodeURIComponent(shareUrl())}&via=newstallyofficial`, '_blank')
-  const shareTG  = () => item && window.open(`https://t.me/share/url?url=${encodeURIComponent(shareUrl())}&text=${encodeURIComponent(`\u1f4f0 ${item.title}\n\n${(item.description||'').substring(0,100)}...`)}`, '_blank')
+  const shareWA  = () => item && window.open(`https://wa.me/?text=${encodeURIComponent(`📰 *${item.title}*\n\n${(item.description||'').substring(0,120)}...\n\n🔗 ${shareUrl()}\n\n📲 *NewsTally*`)}`, '_blank')
+  const shareTW  = () => item && window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent('📰 '+item.title)}&url=${encodeURIComponent(shareUrl())}&via=newstallyofficial`, '_blank')
+  const shareTG  = () => item && window.open(`https://t.me/share/url?url=${encodeURIComponent(shareUrl())}&text=${encodeURIComponent(`📰 ${item.title}\n\n${(item.description||'').substring(0,100)}...`)}`, '_blank')
   const shareCopy = () => {
-    navigator.clipboard?.writeText(shareUrl()).then(() => showToast('\u1f517 Link copied!')).catch(() => {
+    navigator.clipboard?.writeText(shareUrl()).then(() => showToast('🔗 Link copied!')).catch(() => {
       const ta = document.createElement('textarea')
       ta.value = shareUrl(); ta.style.cssText = 'position:fixed;opacity:0'
       document.body.appendChild(ta); ta.select(); document.execCommand('copy')
-      document.body.removeChild(ta); showToast('\u1f517 Link copied!')
+      document.body.removeChild(ta); showToast('🔗 Link copied!')
     })
   }
   const handleNativeShare = () => {

@@ -151,6 +151,18 @@ export default function Socialgati() {
   const [searchVal, setSearchVal]             = useState('')
   const [showSearch, setShowSearch]           = useState(false)
   const [searchResults, setSearchResults]     = useState(null)
+  const [unread, setUnread]                   = useState(0)
+
+  // -- Unread notifications count for header bell --
+  useEffect(() => {
+    if (!user) { setUnread(0); return }
+    const q = query(
+      collection(db, 'users', user.uid, 'notifications'),
+      where('read', '==', false), limit(99)
+    )
+    const unsub = onSnapshot(q, snap => setUnread(snap.size), () => {})
+    return unsub
+  }, [user])
 
   const unsubRef = useRef(null)
 
@@ -262,8 +274,20 @@ export default function Socialgati() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
           <button onClick={() => user ? navigate('/alerts') : setShowAuth(true)}
-            style={{ width: 36, height: 36, borderRadius: 8, border: 'none', background: 'transparent', color: 'var(--muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>
+            style={{ width: 36, height: 36, borderRadius: 8, border: 'none', background: 'transparent', color: 'var(--muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, position: 'relative' }}>
             <i className="fas fa-bell" />
+            {unread > 0 && (
+              <span style={{
+                position: 'absolute', top: 4, right: 4,
+                width: 16, height: 16, borderRadius: '50%',
+                background: '#e53935', color: '#fff',
+                fontSize: 9, fontWeight: 800,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                border: '1.5px solid var(--header-bg)', lineHeight: 1
+              }}>
+                {unread > 9 ? '9+' : unread}
+              </span>
+            )}
           </button>
           {!user && (
             <button onClick={() => setShowAuth(true)}
@@ -452,7 +476,7 @@ export default function Socialgati() {
       <button
         onClick={() => user ? setShowCreateModal(true) : setShowAuth(true)}
         style={{
-          position: 'fixed', bottom: 72, right: 16, width: 50, height: 50,
+          position: 'fixed', bottom: 92, right: 16, width: 50, height: 50,
           borderRadius: '50%', background: '#1a73e8', color: '#fff', border: 'none',
           cursor: 'pointer', fontSize: 18, display: 'flex', alignItems: 'center',
           justifyContent: 'center', zIndex: 90,

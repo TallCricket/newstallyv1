@@ -1,26 +1,12 @@
 import { useNavigate, useLocation } from 'react-router-dom'
-import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useTranslation } from '../context/TranslationContext'
-import { collection, query, where, limit, onSnapshot } from 'firebase/firestore'
-import { db } from '../firebase/config'
 
 export default function BottomNav({ darkMode = false }) {
   const navigate   = useNavigate()
   const { pathname } = useLocation()
   const { user }   = useAuth()
   const { t }      = useTranslation()
-  const [unread, setUnread] = useState(0)
-
-  useEffect(() => {
-    if (!user) { setUnread(0); return }
-    const q = query(
-      collection(db, 'users', user.uid, 'notifications'),
-      where('read', '==', false), limit(99)
-    )
-    const unsub = onSnapshot(q, snap => setUnread(snap.size), () => {})
-    return unsub
-  }, [user])
 
   const is = (p) => pathname === p
 
@@ -83,9 +69,9 @@ export default function BottomNav({ darkMode = false }) {
         <span>{items[2].label}</span>
       </button>
 
-      {/* Profile + notification dot */}
+      {/* Profile */}
       <button
-        className={`nav-btn nav-btn-notif ${is('/profile') ? 'active' : ''} ${unread > 0 ? 'active-notif' : ''}`}
+        className={`nav-btn ${is('/profile') ? 'active' : ''}`}
         style={textColor ? { color: textColor(is('/profile')) } : {}}
         onClick={() => navigate('/profile')}>
         <span className="nav-indicator"/>
@@ -100,11 +86,6 @@ export default function BottomNav({ darkMode = false }) {
           : <i className={items[3].icon} style={{ position:'relative', zIndex:1 }}/>
         }
         <span style={{ position:'relative', zIndex:1 }}>{items[3].label}</span>
-        {unread > 0 && (
-          <span className="notify-badge" style={{ display:'flex' }}>
-            {unread > 9 ? '9+' : unread}
-          </span>
-        )}
       </button>
     </nav>
   )

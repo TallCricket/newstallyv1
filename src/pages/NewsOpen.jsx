@@ -6,7 +6,7 @@ import {
 } from 'firebase/firestore'
 import { db, APP_ID } from '../firebase/config'
 import { useAuth } from '../context/AuthContext'
-import { timeAgo, catIcon, showToast, makeNewsUrl } from '../utils'
+import { timeAgo, catIcon, showToast } from '../utils'
 import BottomNav from '../components/BottomNav'
 import AuthModal from '../components/AuthModal'
 import { useTranslation } from '../context/TranslationContext'
@@ -95,11 +95,7 @@ function RelatedCard({ item, onNavigate }) {
 // MAIN PAGE
 // ===================================================================
 export default function NewsOpen() {
-  const { slug } = useParams()
-  // Firestore auto-IDs = 20 alphanumeric chars with no hyphens
-  // URL format: /news/{firestoreId}-{title-slug}
-  // Extract ID = everything before the first hyphen that follows 20 alphanum chars
-  const id = slug ? slug.substring(0, 20) : ''
+  const { id } = useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
   const { lang, translate, getLangName, t } = useTranslation()
@@ -441,7 +437,7 @@ export default function NewsOpen() {
               More like this
             </h2>
             <div style={{ display:'flex', flexDirection:'column', gap:0 }}>
-              {related.map(r => <RelatedCard key={r.id} item={r} onNavigate={() => navigate(makeNewsUrl(r))}/>)}
+              {related.map(r => <RelatedCard key={r.id} item={r} onNavigate={() => navigate(`/news/${r.id}`)}/>)}
             </div>
           </div>
         )}

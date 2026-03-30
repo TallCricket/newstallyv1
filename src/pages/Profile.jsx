@@ -8,7 +8,7 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { db, auth, storage, APP_ID } from '../firebase/config'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
-import { formatCount, showToast, timeAgo, makeNewsUrl, makeSlug } from '../utils'
+import { formatCount, showToast, timeAgo } from '../utils'
 import BottomNav from '../components/BottomNav'
 import AuthModal from '../components/AuthModal'
 import { useNavigate } from 'react-router-dom'
@@ -88,7 +88,7 @@ function ProfilePostCard({ post, onClick, onNavigateNews }) {
   const [imgErr, setImgErr] = useState(false)
   const isRepost = post.type === 'repost'
   const handleClick = () => {
-    if (isRepost && post.newsId) onNavigateNews(post.newsId, post.headline || '')
+    if (isRepost && post.newsId) onNavigateNews(post.newsId)
     else onClick(post.id)
   }
   return (
@@ -135,7 +135,7 @@ function SavedCard({ item, onOpen }) {
   const CAT_COLORS = { National:'#e53935', World:'#1a73e8', Business:'#34a853', Technology:'#9334e6', Health:'#f4a261', Education:'#0077b6', Sports:'#ff6d00', General:'#546e7a' }
   const accent = CAT_COLORS[item.category] || '#1a73e8'
   return (
-    <div onClick={() => onOpen()}
+    <div onClick={() => onOpen(item.id)}
       style={{ display:'flex', gap:12, padding:'12px 0', borderBottom:'1px solid var(--border2)', cursor:'pointer' }}>
       <div style={{ flex:1, minWidth:0 }}>
         <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:4 }}>
@@ -508,7 +508,7 @@ export default function Profile() {
                 </div>
               ) : (
                 <div style={{ padding:'12px 16px', display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
-                  {posts.map(p => <ProfilePostCard key={p.id} post={p} onClick={id => setOpenCommentPost(id)} onNavigateNews={(id, headline) => navigate(`/news/${id}-${makeSlug(headline)}`)}/>)}
+                  {posts.map(p => <ProfilePostCard key={p.id} post={p} onClick={id => setOpenCommentPost(id)} onNavigateNews={id => navigate(`/news/${id}`)}/>)}
                 </div>
               )
             )}
@@ -531,7 +531,7 @@ export default function Profile() {
                     {savedArticles.length} saved article{savedArticles.length!==1?'s':''}
                   </p>
                   {savedArticles.map(item => (
-                    <SavedCard key={item.id} item={item} onOpen={() => navigate(makeNewsUrl(item))}/>
+                    <SavedCard key={item.id} item={item} onOpen={id => navigate(`/news/${id}`)}/>
                   ))}
                 </div>
               )

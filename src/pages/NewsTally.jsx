@@ -14,6 +14,7 @@ import { useTranslation } from '../context/TranslationContext'
 import { useTranslate } from '../hooks/useTranslate'
 
 const DEFAULT_CATS = ['All','National','World','Business','Technology','Health','Education','Sports','General']
+const PAGE_SIZE = 20
 
 const CAT_COLORS = {
   National:'#e53935', World:'#1a73e8', Business:'#34a853',
@@ -632,7 +633,7 @@ export default function NewsTally() {
               <div style={{ textAlign:'center', padding:'60px 20px' }}>
                 <i className="fas fa-exclamation-circle" style={{ fontSize:36, color:'#ea4335', marginBottom:12, display:'block' }}/>
                 <p style={{ fontWeight:600, marginBottom:8, color:'var(--ink)' }}>Could not load news</p>
-                <button onClick={loadInitial} style={{ padding:'10px 24px', background:'#1a73e8', color:'#fff', border:'none', borderRadius:8, fontSize:14, fontWeight:600, cursor:'pointer' }}>{"\u21ba"} Retry</button>
+                <button onClick={() => loadInitial(true)} style={{ padding:'10px 24px', background:'#1a73e8', color:'#fff', border:'none', borderRadius:8, fontSize:14, fontWeight:600, cursor:'pointer' }}>{"\u21ba"} Retry</button>
               </div>
             ) : search.trim() ? (
               <div>
@@ -751,7 +752,7 @@ export default function NewsTally() {
               <i className="fas fa-exclamation-circle" style={{ fontSize:36, color:'#ea4335', marginBottom:12, display:'block' }}/>
               <p style={{ fontWeight:600, marginBottom:8, color:'var(--ink)' }}>Could not load news</p>
               <p style={{ fontSize:12, color:'var(--muted)', marginBottom:16 }}>{error}</p>
-              <button onClick={loadInitial} style={{ padding:'10px 24px', background:'#1a73e8', color:'#fff', border:'none', borderRadius:8, fontSize:14, fontWeight:600, cursor:'pointer' }}>{"\u21ba"} Retry</button>
+              <button onClick={() => loadInitial(true)} style={{ padding:'10px 24px', background:'#1a73e8', color:'#fff', border:'none', borderRadius:8, fontSize:14, fontWeight:600, cursor:'pointer' }}>{"\u21ba"} Retry</button>
             </div>
           ) : search.trim() ? (
             <div style={{ padding:'8px 16px', background:'var(--bg)' }}>

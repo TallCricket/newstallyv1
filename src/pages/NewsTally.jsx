@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import {
   collection, getDocs, query, limit, orderBy, startAfter,
   addDoc, updateDoc, arrayUnion, increment as fbIncrement,
-  serverTimestamp, where, getDoc, doc
+  serverTimestamp, where, getDoc, doc, onSnapshot
 } from 'firebase/firestore'
 import { db, APP_ID } from '../firebase/config'
 import { useAuth } from '../context/AuthContext'
@@ -370,7 +370,8 @@ export default function NewsTally() {
   const [allNews, setAllNews]         = useState([])
   const lastDocRef                    = useRef(null)
   const orderFieldRef                 = useRef(null)
-  const [hasMore, setHasMore]         = useState(false)
+  const [hasMore, setHasMore]         = useState(true)
+  const liveUnsubRef                  = useRef(null)
 
   const [catItems, setCatItems]       = useState([])
   const catLastDocRef                 = useRef(null)
@@ -453,42 +454,56 @@ export default function NewsTally() {
     return snap.docs.map(d => ({ id:d.id, ...d.data() })).filter(n => n.title)
   }, [])
 
-  const loadInitial = useCallback(async () => {
+  const loadInitial = useCallback(() => {
+    // Cancel any previous listener
     if (liveUnsubRef.current) { liveUnsubRef.current(); liveUnsubRef.current = null }
-    setLoading(true); setError(''); setHasMore(false); lastDocRef.current = null
+    setLoading(true); setError(''); setHasMore(true); lastDocRef.current = null
 
-    // Fetch ALL docs — try with orderBy first, fallback without (index may not exist)
-    const fetchAll = async () => {
-      try {
-        const snap = await getDocs(query(collection(db, 'news'), orderBy('timestamp', 'desc'), limit(500)))
-        return snap.docs
-      } catch {
-        try {
-          const snap = await getDocs(query(collection(db, 'news'), limit(500)))
-          return snap.docs
-        } catch {
-          // last resort: no filters
-          const snap = await getDocs(collection(db, 'news'))
-          return snap.docs
+    // Try real-time listener with orderBy, fallback to one-time fetch
+    const liveQ = query(collection(db, 'news'), orderBy('timestamp', 'desc'), limit(PAGE_SIZE * 2))
+    liveUnsubRef.current = onSnapshot(liveQ,
+      (snap) => {
+        if (snap.empty) {
+          // Try fallback without orderBy (index may not exist yet)
+          getDocs(query(collection(db, 'news'), limit(PAGE_SIZE * 2)))
+            .then(fbSnap => {
+              const items = fbSnap.docs.map(d => ({ id:d.id, ...d.data() })).filter(n => n.title)
+              if (items.length) {
+                lastDocRef.current = fbSnap.docs[fbSnap.docs.length - 1]
+                setAllNews(sortByDate(items))
+                setError('')
+              } else {
+                setError('No news articles found. Please check back later.')
+              }
+              setLoading(false)
+            })
+            .catch(e => { setError(e.message); setLoading(false) })
+          return
         }
-      }
-    }
-
-    try {
-      const docs = await fetchAll()
-      if (!docs.length) {
-        setError('No news articles found. Please check back later.')
+        const items = snap.docs.map(d => ({ id:d.id, ...d.data() })).filter(n => n.title)
+        lastDocRef.current = snap.docs[snap.docs.length - 1]
+        if (snap.docs.length < PAGE_SIZE) setHasMore(false)
+        setAllNews(sortByDate(items))
+        setError('')
         setLoading(false)
-        return
+      },
+      (err) => {
+        // Listener error — fallback to one-time fetch without orderBy
+        getDocs(query(collection(db, 'news'), limit(PAGE_SIZE * 2)))
+          .then(fbSnap => {
+            const items = fbSnap.docs.map(d => ({ id:d.id, ...d.data() })).filter(n => n.title)
+            if (items.length) {
+              lastDocRef.current = fbSnap.docs[fbSnap.docs.length - 1]
+              setAllNews(sortByDate(items))
+              setError('')
+            } else {
+              setError(err.message || 'No news articles found.')
+            }
+            setLoading(false)
+          })
+          .catch(() => { setError(err.message); setLoading(false) })
       }
-      const items = docs.map(d => ({ id: d.id, ...d.data() })).filter(n => n.title)
-      setAllNews(sortByDate(items))
-      setError('')
-    } catch (e) {
-      setError(e.message || 'Failed to load news.')
-    } finally {
-      setLoading(false)
-    }
+    )
   }, []) // eslint-disable-line
 
   const loadCategoryInitial = useCallback(async (category) => {
@@ -531,6 +546,7 @@ export default function NewsTally() {
 
   useEffect(() => {
     loadInitial()
+    return () => { if (liveUnsubRef.current) { liveUnsubRef.current(); liveUnsubRef.current = null } }
   }, [loadInitial])
   useEffect(() => {
     if (cat !== 'All') loadCategoryInitial(cat)

@@ -2,6 +2,7 @@ import { Routes, Route } from 'react-router-dom'
 import Socialgati            from './pages/Socialgati'
 import NewsTally             from './pages/NewsTally'
 import Shorts                from './pages/Shorts'
+import LiveNews              from './pages/LiveNews'
 import NewsOpen              from './pages/NewsOpen'
 import CategoryPage          from './pages/CategoryPage'
 import NotificationsFullPage from './pages/NotificationsFullPage'
@@ -26,6 +27,9 @@ export default function App() {
 
       {/* Shorts */}
       <Route path="/shorts"                 element={<Shorts />} />
+
+      {/* Live News */}
+      <Route path="/live"                   element={<LiveNews />} />
 
       {/* Alerts */}
       <Route path="/alerts"                 element={<NotificationsFullPage />} />

@@ -23,13 +23,19 @@ const CAT_COLORS = {
 }
 
 function getItemDate(n) {
-  // Handle Firestore Timestamps, ISO strings, and fallbacks
-  const ts = n.timestamp || n.pubDate || n.fetchedAt || n.savedAt || n.date
-  if (!ts) return 0
-  if (ts?.toDate) return ts.toDate().getTime()  // Firestore Timestamp
-  if (ts?.seconds) return ts.seconds * 1000     // Firestore Timestamp (serialized)
-  const t = new Date(ts).getTime()
-  return isNaN(t) ? 0 : t
+  // Try all possible date fields in priority order
+  const candidates = [n.timestamp, n.pubDate, n.date, n.fetchedAt, n.savedAt]
+  for (const ts of candidates) {
+    if (!ts) continue
+    // Firestore Timestamp object with toDate()
+    if (ts?.toDate) return ts.toDate().getTime()
+    // Firestore Timestamp serialized {seconds, nanoseconds}
+    if (ts?.seconds) return ts.seconds * 1000
+    // ISO string or any parseable date string
+    const t = new Date(ts).getTime()
+    if (!isNaN(t) && t > 0) return t
+  }
+  return 0
 }
 function sortByDate(items) {
   return [...items].sort((a, b) => {
@@ -37,7 +43,7 @@ function sortByDate(items) {
     const aRank = (a.rank != null && a.rank < 9999) ? a.rank : null
     const bRank = (b.rank != null && b.rank < 9999) ? b.rank : null
     if (aRank !== null && bRank !== null) return aRank - bRank
-    // Otherwise latest date first
+    // Latest date first
     return getItemDate(b) - getItemDate(a)
   })
 }

@@ -33,229 +33,277 @@ function getItemDate(n) {
 }
 function sortByDate(items) { return [...items].sort((a,b) => getItemDate(b) - getItemDate(a)) }
 
-// ── Share Card (hidden, used for html2canvas capture) ─────────────
-function ShareCardHidden({ item, cardRef }) {
-  const accent = CAT_COLORS[item?.category] || '#1a73e8'
-  if (!item) return null
-  return (
-    <div ref={cardRef} style={{
-      position: 'fixed', left: '-9999px', top: 0,
-      width: 360, background: '#fff', borderRadius: 20,
-      overflow: 'hidden', fontFamily: "'Google Sans', Roboto, sans-serif",
-      boxShadow: '0 8px 40px rgba(0,0,0,.25)'
-    }}>
-      {/* Image */}
-      <div style={{ position: 'relative', width: '100%', height: 220, background: '#eee', overflow: 'hidden' }}>
-        {item.image
-          ? <img src={item.image} alt="" crossOrigin="anonymous"
-              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}/>
-          : <div style={{ width: '100%', height: '100%', background: `linear-gradient(135deg,${accent}33,${accent}66)`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <i className={catIcon(item.category)} style={{ fontSize: 48, color: accent, opacity: .5 }}/>
-            </div>
+// ── Share Card — drawn on Canvas directly (no CORS issues) ────────
+async function buildShareCanvas(item) {
+  const W = 720, H = 960
+  const canvas = document.createElement('canvas')
+  canvas.width = W; canvas.height = H
+  const ctx = canvas.getContext('2d')
+  const accent = CAT_COLORS[item.category] || '#1a73e8'
+
+  // Background
+  ctx.fillStyle = '#ffffff'
+  ctx.fillRect(0, 0, W, H)
+
+  // Try loading image
+  const IMG_H = 440
+  let imgLoaded = false
+  if (item.image) {
+    try {
+      await new Promise((resolve) => {
+        const img = new Image()
+        img.crossOrigin = 'anonymous'
+        img.onload = () => {
+          // Draw image cover-fit
+          const ar = img.naturalWidth / img.naturalHeight
+          let sw = W, sh = W / ar
+          if (sh < IMG_H) { sh = IMG_H; sw = IMG_H * ar }
+          const sx = (W - sw) / 2, sy = (IMG_H - sh) / 2
+          ctx.drawImage(img, sx, sy, sw, sh)
+          imgLoaded = true
+          resolve()
         }
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top,rgba(0,0,0,.6) 0%,transparent 60%)' }}/>
-        {/* Category badge */}
-        <span style={{
-          position: 'absolute', top: 14, left: 14,
-          background: accent, color: '#fff', fontSize: 11, fontWeight: 800,
-          letterSpacing: '.06em', textTransform: 'uppercase',
-          padding: '5px 12px', borderRadius: 99
-        }}>{item.category}</span>
-      </div>
-      {/* Body */}
-      <div style={{ padding: '18px 20px 16px' }}>
-        <div style={{ fontSize: 17, fontWeight: 800, color: '#202124', lineHeight: 1.45, marginBottom: 10,
-          display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-          {item.title}
-        </div>
-        {item.description && (
-          <div style={{ fontSize: 13, color: '#5f6368', lineHeight: 1.6,
-            display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-            {item.description}
-          </div>
-        )}
-      </div>
-      {/* Footer */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '10px 20px 14px', borderTop: '1px solid #f0f0f0' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <img src="https://i.postimg.cc/dLTgRxbL/cropped-circle-image.png" crossOrigin="anonymous"
-            style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }} alt=""/>
-          <div>
-            <div style={{ fontSize: 10, color: '#9aa0a6', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.04em' }}>READ MORE AT</div>
-            <div style={{ fontSize: 14, fontWeight: 800, color: '#202124' }}>NewsTally</div>
-          </div>
-        </div>
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: 10, color: '#9aa0a6', fontWeight: 600 }}>Source</div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#1a73e8' }}>{item.source}</div>
-        </div>
-      </div>
-      {/* Blue stripe */}
-      <div style={{ height: 5, background: `linear-gradient(90deg,#1a73e8,${accent})` }}/>
-    </div>
-  )
+        img.onerror = resolve
+        // Try with proxy to bypass CORS
+        img.src = `https://images.weserv.nl/?url=${encodeURIComponent(item.image)}&w=720&h=440&fit=cover&output=jpg`
+        setTimeout(resolve, 3000)
+      })
+    } catch {}
+  }
+
+  if (!imgLoaded) {
+    // Gradient fallback
+    const grad = ctx.createLinearGradient(0, 0, W, IMG_H)
+    grad.addColorStop(0, accent + '44')
+    grad.addColorStop(1, accent + '88')
+    ctx.fillStyle = grad
+    ctx.fillRect(0, 0, W, IMG_H)
+    // Icon fallback text
+    ctx.fillStyle = accent + '55'
+    ctx.font = 'bold 80px serif'
+    ctx.textAlign = 'center'
+    ctx.fillText('📰', W/2, IMG_H/2 + 30)
+  }
+
+  // Gradient overlay on image
+  const ov = ctx.createLinearGradient(0, IMG_H * 0.3, 0, IMG_H)
+  ov.addColorStop(0, 'rgba(0,0,0,0)')
+  ov.addColorStop(1, 'rgba(0,0,0,0.55)')
+  ctx.fillStyle = ov
+  ctx.fillRect(0, 0, W, IMG_H)
+
+  // Category pill
+  ctx.fillStyle = accent
+  const pill = { x:28, y:28, w:0, h:44, r:22 }
+  const catText = (item.category || 'NEWS').toUpperCase()
+  ctx.font = 'bold 22px "Google Sans", sans-serif'
+  pill.w = ctx.measureText(catText).width + 48
+  ctx.beginPath()
+  ctx.moveTo(pill.x + pill.r, pill.y)
+  ctx.lineTo(pill.x + pill.w - pill.r, pill.y)
+  ctx.quadraticCurveTo(pill.x+pill.w, pill.y, pill.x+pill.w, pill.y+pill.r)
+  ctx.lineTo(pill.x+pill.w, pill.y+pill.h-pill.r)
+  ctx.quadraticCurveTo(pill.x+pill.w, pill.y+pill.h, pill.x+pill.w-pill.r, pill.y+pill.h)
+  ctx.lineTo(pill.x+pill.r, pill.y+pill.h)
+  ctx.quadraticCurveTo(pill.x, pill.y+pill.h, pill.x, pill.y+pill.h-pill.r)
+  ctx.lineTo(pill.x, pill.y+pill.r)
+  ctx.quadraticCurveTo(pill.x, pill.y, pill.x+pill.r, pill.y)
+  ctx.closePath()
+  ctx.fill()
+  ctx.fillStyle = '#fff'
+  ctx.textAlign = 'center'
+  ctx.fillText(catText, pill.x + pill.w/2, pill.y + 30)
+
+  // Title
+  const titleY = IMG_H + 36
+  ctx.fillStyle = '#202124'
+  ctx.font = 'bold 34px "Google Sans", sans-serif'
+  ctx.textAlign = 'left'
+  const words = (item.title || '').split(' ')
+  let line = '', lineY = titleY
+  for (const word of words) {
+    const test = line + word + ' '
+    if (ctx.measureText(test).width > W - 60 && line) {
+      ctx.fillText(line.trim(), 28, lineY)
+      line = word + ' '; lineY += 44
+      if (lineY > titleY + 132) { ctx.fillText(line.trim() + '...', 28, lineY); break }
+    } else { line = test }
+  }
+  if (lineY <= titleY + 132) ctx.fillText(line.trim(), 28, lineY)
+
+  // Description
+  if (item.description) {
+    const descY = lineY + 48
+    ctx.fillStyle = '#5f6368'
+    ctx.font = '26px "Google Sans", sans-serif'
+    const dwords = item.description.split(' ')
+    let dl = '', dy = descY
+    for (const w of dwords) {
+      const t = dl + w + ' '
+      if (ctx.measureText(t).width > W - 60 && dl) {
+        ctx.fillText(dl.trim(), 28, dy); dl = w + ' '; dy += 36
+        if (dy > descY + 108) { ctx.fillText(dl.trim() + '...', 28, dy); break }
+      } else dl = t
+    }
+    if (dy <= descY + 108) ctx.fillText(dl.trim(), 28, dy)
+  }
+
+  // Footer divider
+  ctx.strokeStyle = '#f0f0f0'; ctx.lineWidth = 2
+  ctx.beginPath(); ctx.moveTo(0, H-110); ctx.lineTo(W, H-110); ctx.stroke()
+
+  // Try loading logo
+  await new Promise((resolve) => {
+    const logo = new Image()
+    logo.crossOrigin = 'anonymous'
+    logo.onload = () => {
+      ctx.save()
+      ctx.beginPath()
+      ctx.arc(48, H-60, 32, 0, Math.PI*2)
+      ctx.clip()
+      ctx.drawImage(logo, 16, H-92, 64, 64)
+      ctx.restore()
+      resolve()
+    }
+    logo.onerror = resolve
+    logo.src = 'https://i.postimg.cc/dLTgRxbL/cropped-circle-image.png'
+    setTimeout(resolve, 2000)
+  })
+
+  ctx.fillStyle = '#9aa0a6'; ctx.font = '20px sans-serif'
+  ctx.textAlign = 'left'
+  ctx.fillText('READ MORE AT', 96, H-72)
+  ctx.fillStyle = '#202124'; ctx.font = 'bold 28px "Google Sans", sans-serif'
+  ctx.fillText('NewsTally', 96, H-38)
+
+  ctx.fillStyle = '#9aa0a6'; ctx.font = '20px sans-serif'
+  ctx.textAlign = 'right'
+  ctx.fillText('Source', W-28, H-72)
+  ctx.fillStyle = accent; ctx.font = 'bold 26px "Google Sans", sans-serif'
+  ctx.fillText(item.source || 'NewsTally', W-28, H-38)
+
+  // Bottom gradient stripe
+  const stripe = ctx.createLinearGradient(0, 0, W, 0)
+  stripe.addColorStop(0, '#1a73e8'); stripe.addColorStop(1, accent)
+  ctx.fillStyle = stripe; ctx.fillRect(0, H-8, W, 8)
+
+  return canvas
 }
 
 // ── Share Modal ───────────────────────────────────────────────────
 function ShareModal({ item, onClose }) {
-  const cardRef   = useRef(null)
   const [saving, setSaving] = useState(false)
-  const accent    = CAT_COLORS[item?.category] || '#1a73e8'
+  const [previewUrl, setPreviewUrl] = useState(null)
+  const accent = CAT_COLORS[item?.category] || '#1a73e8'
+
+  // Build canvas preview on mount
+  useEffect(() => {
+    if (!item) return
+    let cancelled = false
+    buildShareCanvas(item).then(canvas => {
+      if (!cancelled) setPreviewUrl(canvas.toDataURL('image/jpeg', 0.92))
+    }).catch(() => {})
+    return () => { cancelled = true }
+  }, [item])
+
   if (!item) return null
 
-  const shareUrl  = item.url && item.url !== '#' ? item.url : `https://newstally.online`
-  const shareText = `📰 ${item.title}\n\n${(item.description || '').substring(0, 100)}...\n\n🔗 ${shareUrl}\n\n📲 NewsTally`
-
-  const openUrl = (url) => window.open(url, '_blank', 'noopener')
+  const shareUrl  = item.url && item.url !== '#' ? item.url : 'https://newstally.online'
+  const shareText = `📰 ${item.title}\n\n${(item.description||'').substring(0,100)}...\n\n🔗 ${shareUrl}\n\n📲 NewsTally`
+  const openUrl   = (url) => window.open(url, '_blank', 'noopener')
 
   const actions = [
-    {
-      label: 'WhatsApp', icon: 'fab fa-whatsapp', bg: '#25d366',
-      fn: () => openUrl(`https://wa.me/?text=${encodeURIComponent(shareText)}`)
-    },
-    {
-      label: 'Twitter', icon: 'fab fa-x-twitter', bg: '#000',
-      fn: () => openUrl(`https://twitter.com/intent/tweet?text=${encodeURIComponent('📰 '+item.title)}&url=${encodeURIComponent(shareUrl)}`)
-    },
-    {
-      label: 'Telegram', icon: 'fab fa-telegram', bg: '#0088cc',
-      fn: () => openUrl(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent('📰 '+item.title)}`)
-    },
-    {
-      label: 'Facebook', icon: 'fab fa-facebook', bg: '#1877f2',
-      fn: () => openUrl(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`)
-    },
-    {
-      label: 'Instagram', icon: 'fab fa-instagram', bg: 'linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)',
-      fn: () => { navigator.clipboard?.writeText(shareUrl); showToast('Link copied! Paste in Instagram bio.') }
-    },
-    {
-      label: 'More', icon: 'fas fa-share-nodes', bg: '#34a853',
+    { label:'WhatsApp',  icon:'fab fa-whatsapp',    bg:'#25d366',
+      fn: () => openUrl(`https://wa.me/?text=${encodeURIComponent(shareText)}`) },
+    { label:'Twitter',   icon:'fab fa-x-twitter',   bg:'#000',
+      fn: () => openUrl(`https://twitter.com/intent/tweet?text=${encodeURIComponent('📰 '+item.title)}&url=${encodeURIComponent(shareUrl)}`) },
+    { label:'Telegram',  icon:'fab fa-telegram',    bg:'#0088cc',
+      fn: () => openUrl(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent('📰 '+item.title)}`) },
+    { label:'Facebook',  icon:'fab fa-facebook',    bg:'#1877f2',
+      fn: () => openUrl(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`) },
+    { label:'Instagram', icon:'fab fa-instagram',   bg:'linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)',
+      fn: () => { navigator.clipboard?.writeText(shareUrl); showToast('Link copied! Paste in Instagram.') } },
+    { label:'More',      icon:'fas fa-share-nodes', bg:'#34a853',
       fn: () => {
-        if (navigator.share) navigator.share({ title: item.title, text: item.description, url: shareUrl })
+        if (navigator.share) navigator.share({ title: item.title, url: shareUrl })
         else { navigator.clipboard?.writeText(shareUrl); showToast('🔗 Link copied!') }
       }
     },
-    {
-      label: 'Copy Link', icon: 'fas fa-link', bg: '#5f6368',
-      fn: () => { navigator.clipboard?.writeText(shareUrl); showToast('🔗 Link copied!') }
-    },
+    { label:'Copy Link', icon:'fas fa-link',        bg:'#5f6368',
+      fn: () => { navigator.clipboard?.writeText(shareUrl); showToast('🔗 Link copied!') } },
   ]
 
   const saveCard = async () => {
-    const el = cardRef.current
-    if (!el || !window.html2canvas) { showToast('Saving not supported on this device'); return }
     setSaving(true)
     try {
-      const canvas = await window.html2canvas(el, {
-        useCORS: true, allowTaint: true, scale: 2,
-        backgroundColor: '#ffffff', logging: false
-      })
+      const canvas = await buildShareCanvas(item)
       const link = document.createElement('a')
-      link.download = `newstally-${item.id || Date.now()}.png`
-      link.href = canvas.toDataURL('image/png', 0.95)
+      link.download = `newstally-${item.id || Date.now()}.jpg`
+      link.href = canvas.toDataURL('image/jpeg', 0.92)
       link.click()
       showToast('✅ Card saved!')
     } catch {
-      showToast('Could not save card. Try screenshot instead.')
+      showToast('Could not save. Try screenshot.')
     }
     setSaving(false)
   }
 
   return (
-    <>
-      {/* Hidden card for capture */}
-      <ShareCardHidden item={item} cardRef={cardRef}/>
+    <div onClick={e => e.target === e.currentTarget && onClose()}
+      style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.8)', backdropFilter:'blur(8px)',
+        zIndex:600, display:'flex', alignItems:'flex-end', justifyContent:'center' }}>
+      <div style={{ width:'100%', maxWidth:480, background:'#13131f',
+        borderRadius:'24px 24px 0 0', paddingBottom:'calc(20px + env(safe-area-inset-bottom,0px))',
+        border:'1px solid rgba(255,255,255,.08)', animation:'slideUp .28s cubic-bezier(.4,0,.2,1)' }}>
+        <style>{`@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}`}</style>
 
-      {/* Modal overlay */}
-      <div onClick={e => e.target === e.currentTarget && onClose()}
-        style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.8)', backdropFilter:'blur(8px)',
-          zIndex:600, display:'flex', alignItems:'flex-end', justifyContent:'center' }}>
-        <div style={{ width:'100%', maxWidth:480, background:'#13131f',
-          borderRadius:'24px 24px 0 0', paddingBottom:'calc(20px + env(safe-area-inset-bottom,0px))',
-          border:'1px solid rgba(255,255,255,.08)', animation:'slideUp .28s cubic-bezier(.4,0,.2,1)' }}>
-          <style>{`@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}`}</style>
+        {/* Handle */}
+        <div style={{ width:40, height:4, background:'rgba(255,255,255,.2)', borderRadius:99, margin:'14px auto 0' }}/>
 
-          {/* Handle */}
-          <div style={{ width:40, height:4, background:'rgba(255,255,255,.2)', borderRadius:99, margin:'14px auto 0' }}/>
-
-          {/* Card preview */}
-          <div style={{ margin:'16px 16px 0', borderRadius:16, overflow:'hidden', background:'#fff',
-            boxShadow:'0 8px 32px rgba(0,0,0,.4)' }}>
-            {/* Image preview */}
-            <div style={{ position:'relative', width:'100%', height:180, overflow:'hidden', background:'#1a1a2e' }}>
-              {item.image
-                ? <img src={item.image} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }}
-                    onError={e => e.target.style.display='none'}/>
-                : <div style={{ width:'100%', height:'100%', background:`linear-gradient(135deg,${accent}33,${accent}55)`,
-                    display:'flex', alignItems:'center', justifyContent:'center' }}>
-                    <i className={catIcon(item.category)} style={{ fontSize:40, color:accent, opacity:.5 }}/>
-                  </div>
-              }
-              <div style={{ position:'absolute', inset:0, background:'linear-gradient(to top,rgba(0,0,0,.5) 0%,transparent 50%)' }}/>
-              <span style={{ position:'absolute', top:10, left:10, background:accent, color:'#fff',
-                fontSize:10, fontWeight:800, letterSpacing:'.07em', textTransform:'uppercase',
-                padding:'4px 10px', borderRadius:99 }}>{item.category}</span>
-            </div>
-            {/* Title */}
-            <div style={{ padding:'12px 14px 10px', background:'#fff' }}>
-              <div style={{ fontSize:14, fontWeight:800, color:'#202124', lineHeight:1.4,
-                display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>
-                {item.title}
+        {/* Card preview — shows canvas output */}
+        <div style={{ margin:'16px 16px 0', borderRadius:16, overflow:'hidden', background:'#1a1a2e',
+          minHeight:180, display:'flex', alignItems:'center', justifyContent:'center' }}>
+          {previewUrl
+            ? <img src={previewUrl} alt="Share card" style={{ width:'100%', display:'block', borderRadius:16 }}/>
+            : <div style={{ padding:40, textAlign:'center', color:'rgba(255,255,255,.3)' }}>
+                <i className="fas fa-spinner fa-spin" style={{ fontSize:24 }}/>
               </div>
-            </div>
-            {/* Footer */}
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between',
-              padding:'8px 14px 10px', borderTop:'1px solid #f0f0f0', background:'#fff' }}>
-              <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                <img src="https://i.postimg.cc/dLTgRxbL/cropped-circle-image.png"
-                  style={{ width:24, height:24, borderRadius:'50%' }} alt=""/>
-                <span style={{ fontSize:13, fontWeight:800, color:'#202124' }}>NewsTally</span>
+          }
+        </div>
+
+        {/* Share buttons grid */}
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:0, padding:'20px 16px 0' }}>
+          {actions.map(a => (
+            <button key={a.label} onClick={() => { a.fn(); onClose() }}
+              style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:8,
+                padding:'12px 4px', background:'transparent', border:'none', cursor:'pointer' }}>
+              <div style={{ width:52, height:52, borderRadius:'50%', background:a.bg,
+                display:'flex', alignItems:'center', justifyContent:'center',
+                boxShadow:'0 2px 12px rgba(0,0,0,.3)' }}>
+                <i className={a.icon} style={{ color:'#fff', fontSize:20 }}/>
               </div>
-              <span style={{ fontSize:12, fontWeight:600, color:accent }}>{item.source}</span>
-            </div>
-            <div style={{ height:4, background:`linear-gradient(90deg,#1a73e8,${accent})` }}/>
-          </div>
-
-          {/* Share buttons grid */}
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:0, padding:'20px 16px 0' }}>
-            {actions.map(a => (
-              <button key={a.label} onClick={() => { a.fn(); onClose() }}
-                style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:8,
-                  padding:'12px 4px', background:'transparent', border:'none', cursor:'pointer' }}>
-                <div style={{ width:52, height:52, borderRadius:'50%', background:a.bg,
-                  display:'flex', alignItems:'center', justifyContent:'center',
-                  boxShadow:'0 2px 12px rgba(0,0,0,.3)' }}>
-                  <i className={a.icon} style={{ color:'#fff', fontSize:20 }}/>
-                </div>
-                <span style={{ fontSize:11, color:'rgba(255,255,255,.7)', fontWeight:600, textAlign:'center' }}>{a.label}</span>
-              </button>
-            ))}
-          </div>
-
-          {/* Save Card + Close */}
-          <div style={{ display:'flex', gap:10, padding:'16px 16px 0' }}>
-            <button onClick={saveCard} disabled={saving}
-              style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:8,
-                padding:'14px 0', background:'rgba(255,255,255,.08)', border:'1px solid rgba(255,255,255,.12)',
-                borderRadius:14, color:'#fff', fontSize:14, fontWeight:700, cursor:'pointer' }}>
-              {saving
-                ? <><i className="fas fa-spinner fa-spin"/> Saving...</>
-                : <><i className="fas fa-image"/> Save Card</>
-              }
+              <span style={{ fontSize:11, color:'rgba(255,255,255,.7)', fontWeight:600, textAlign:'center' }}>{a.label}</span>
             </button>
-            <button onClick={onClose}
-              style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:8,
-                padding:'14px 0', background:'rgba(255,255,255,.05)', border:'1px solid rgba(255,255,255,.08)',
-                borderRadius:14, color:'rgba(255,255,255,.6)', fontSize:14, fontWeight:600, cursor:'pointer' }}>
-              <i className="fas fa-times"/> Close
-            </button>
-          </div>
+          ))}
+        </div>
+
+        {/* Save Card + Close */}
+        <div style={{ display:'flex', gap:10, padding:'16px 16px 0' }}>
+          <button onClick={saveCard} disabled={saving}
+            style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:8,
+              padding:'14px 0', background:'rgba(255,255,255,.08)', border:'1px solid rgba(255,255,255,.12)',
+              borderRadius:14, color:'#fff', fontSize:14, fontWeight:700, cursor:'pointer' }}>
+            {saving ? <><i className="fas fa-spinner fa-spin"/> Saving...</> : <><i className="fas fa-image"/> Save Card</>}
+          </button>
+          <button onClick={onClose}
+            style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:8,
+              padding:'14px 0', background:'rgba(255,255,255,.05)', border:'1px solid rgba(255,255,255,.08)',
+              borderRadius:14, color:'rgba(255,255,255,.6)', fontSize:14, fontWeight:600, cursor:'pointer' }}>
+            <i className="fas fa-times"/> Close
+          </button>
         </div>
       </div>
-    </>
+    </div>
   )
 }
 
@@ -352,31 +400,46 @@ function ShortCard({ item, height, idx, curIdx, onRepost, onShare }) {
         )}
       </div>
 
-      {/* Footer actions — now 3 buttons */}
-      <div style={{ padding:'10px 16px 16px', flexShrink:0, display:'flex', alignItems:'center', gap:8,
-        borderTop:'1px solid rgba(255,255,255,.06)', background:'linear-gradient(to top,rgba(9,9,15,1) 60%,transparent)' }}>
+      {/* LEFT side floating action buttons */}
+      <div style={{ position:'absolute', left:14, bottom:80, display:'flex', flexDirection:'column', gap:14, zIndex:10 }}>
         {/* Repost */}
         <button onClick={e => { e.stopPropagation(); onRepost(item) }}
-          style={{ display:'flex', alignItems:'center', gap:6, padding:'10px 14px',
-            background:'rgba(255,255,255,.08)', border:'1px solid rgba(255,255,255,.12)',
-            borderRadius:12, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', flexShrink:0 }}>
-          <i className="fas fa-retweet" style={{ fontSize:13, color:'#34a853' }}/> Repost
+          style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:5,
+            background:'none', border:'none', cursor:'pointer', padding:0 }}>
+          <div style={{ width:46, height:46, borderRadius:'50%',
+            background:'rgba(255,255,255,.12)', border:'1px solid rgba(255,255,255,.2)',
+            backdropFilter:'blur(8px)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+            <i className="fas fa-retweet" style={{ fontSize:18, color:'#34a853' }}/>
+          </div>
+          <span style={{ fontSize:10, color:'rgba(255,255,255,.6)', fontWeight:700, letterSpacing:'.02em' }}>Repost</span>
         </button>
         {/* Share */}
         <button onClick={e => { e.stopPropagation(); onShare(item) }}
-          style={{ display:'flex', alignItems:'center', gap:6, padding:'10px 14px',
-            background:'rgba(255,255,255,.08)', border:'1px solid rgba(255,255,255,.12)',
-            borderRadius:12, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', flexShrink:0 }}>
-          <i className="fas fa-share-nodes" style={{ fontSize:13, color:'#1a73e8' }}/> Share
+          style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:5,
+            background:'none', border:'none', cursor:'pointer', padding:0 }}>
+          <div style={{ width:46, height:46, borderRadius:'50%',
+            background:'rgba(255,255,255,.12)', border:'1px solid rgba(255,255,255,.2)',
+            backdropFilter:'blur(8px)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+            <i className="fas fa-share-nodes" style={{ fontSize:17, color:'#1a73e8' }}/>
+          </div>
+          <span style={{ fontSize:10, color:'rgba(255,255,255,.6)', fontWeight:700, letterSpacing:'.02em' }}>Share</span>
         </button>
-        {/* Read Full */}
-        {item.url && (
+      </div>
+
+      {/* Bottom: Read Full Story only */}
+      <div style={{ padding:'10px 16px 16px', flexShrink:0,
+        borderTop:'1px solid rgba(255,255,255,.06)',
+        background:'linear-gradient(to top,rgba(9,9,15,1) 60%,transparent)' }}>
+        {item.url ? (
           <a href={item.url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
-            style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:7,
-              padding:'10px 0', background:'linear-gradient(135deg,#1a73e8,#1557b0)', borderRadius:12,
-              color:'#fff', fontSize:13, fontWeight:700, textDecoration:'none', boxShadow:'0 4px 16px rgba(26,115,232,.35)' }}>
-            Read <i className="fas fa-arrow-up-right-from-square" style={{ fontSize:10 }}/>
+            style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8,
+              padding:'13px 0', background:'linear-gradient(135deg,#1a73e8,#1557b0)', borderRadius:14,
+              color:'#fff', fontSize:14, fontWeight:700, textDecoration:'none',
+              boxShadow:'0 4px 16px rgba(26,115,232,.35)' }}>
+            Read Full Story <i className="fas fa-arrow-up-right-from-square" style={{ fontSize:11 }}/>
           </a>
+        ) : (
+          <div style={{ height:46 }}/>
         )}
       </div>
     </div>

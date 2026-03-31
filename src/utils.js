@@ -4,13 +4,17 @@ import { db } from './firebase/config'
 // Time ago
 export function timeAgo(dateStr) {
   if (!dateStr) return ''
-  const diff = (Date.now() - new Date(dateStr).getTime()) / 1000
+  let ms
+  if (dateStr?.toDate) ms = dateStr.toDate().getTime()        // Firestore Timestamp
+  else if (dateStr?.seconds) ms = dateStr.seconds * 1000      // Serialized Timestamp
+  else ms = new Date(dateStr).getTime()
+  const diff = (Date.now() - ms) / 1000
   if (isNaN(diff) || diff < 0) return ''
   if (diff < 60) return 'Just now'
   if (diff < 3600) return Math.floor(diff / 60) + 'm ago'
   if (diff < 86400) return Math.floor(diff / 3600) + 'h ago'
   if (diff < 604800) return Math.floor(diff / 86400) + 'd ago'
-  return new Date(dateStr).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
+  return new Date(ms).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
 }
 
 // Format count

@@ -223,7 +223,7 @@ function LiveCard({ item, onRepost, onShare, isNew }) {
         </span>
         <span style={{fontSize:11,color:'var(--muted)',fontWeight:500}}>{item.source}</span>
         <span style={{fontSize:11,color:'var(--muted2)',marginLeft:'auto',flexShrink:0}}>
-          {timeAgo(item.date || item.pubDate || item.savedAt)}
+          {timeAgo(item.savedAt || item.timestamp || item.pubDate || item.fetchedAt || item.date || '')}
         </span>
         {isNew && (
           <span style={{fontSize:9,fontWeight:800,color:'#e53935',background:'#fde8e8',padding:'2px 7px',borderRadius:99,letterSpacing:'.05em',display:'flex',alignItems:'center',gap:4}}>
@@ -320,75 +320,104 @@ export default function LiveNews() {
   const { user } = useAuth()
   const navigate = useNavigate()
 
-  const [items, setItems]           = useState([])
-  const [newIds, setNewIds]         = useState(new Set())
-  const [loading, setLoading]       = useState(true)
-  const [newCount, setNewCount]     = useState(0)
-  const [showNew, setShowNew]       = useState(false)
-  const [cat, setCat]               = useState('All')
-  const [cats, setCats]             = useState(['All'])
-  const [repostItem, setRepostItem] = useState(null)
-  const [reposting, setReposting]   = useState(false)
-  const [shareItem, setShareItem]   = useState(null)
-  const [showAuth, setShowAuth]     = useState(false)
-  const [search, setSearch]         = useState('')
-  const [showSearch, setShowSearch] = useState(false)
+  const [items, setItems]               = useState([])
+  const [liveUpdates, setLiveUpdates]   = useState([]) // injected live cards
+  const [newIds, setNewIds]             = useState(new Set())
+  const [loading, setLoading]           = useState(true)
+  const [newCount, setNewCount]         = useState(0)
+  const [showNew, setShowNew]           = useState(false)
+  const [cat, setCat]                   = useState('All')
+  const [cats, setCats]                 = useState(['All'])
+  const [repostItem, setRepostItem]     = useState(null)
+  const [reposting, setReposting]       = useState(false)
+  const [shareItem, setShareItem]       = useState(null)
+  const [showAuth, setShowAuth]         = useState(false)
+  const [search, setSearch]             = useState('')
+  const [showSearch, setShowSearch]     = useState(false)
 
-  const firstLoadRef = useRef(true)
-  const topRef       = useRef(null)
-  const itemIdsRef   = useRef(new Set())
+  const firstLoadRef  = useRef(true)
+  const topRef        = useRef(null)
+  const itemIdsRef    = useRef(new Set())
+
+  // ── Normalize & sort items latest-first ──────────────────────
+  const getMs = n => {
+    const candidates = [n.savedAt, n.timestamp, n.pubDate, n.fetchedAt, n.date]
+    for (const ts of candidates) {
+      if (!ts) continue
+      if (ts?.toDate) return ts.toDate().getTime()
+      if (ts?.seconds) return ts.seconds * 1000
+      const t = new Date(ts).getTime()
+      if (!isNaN(t) && t > 0) return t
+    }
+    return 0
+  }
+  const sortLatest = arr => [...arr].sort((a,b) => getMs(b) - getMs(a))
 
   // ── Real-time listener ────────────────────────────────────────
   useEffect(() => {
-    const q = query(collection(db, 'news'), orderBy('savedAt', 'desc'), limit(100))
-    const fallbackQ = query(collection(db, 'news'), orderBy('timestamp', 'desc'), limit(100))
+    const makeQ = field => query(collection(db, 'news'), orderBy(field, 'desc'), limit(150))
 
     let unsub = null
-
     const attach = (q) => {
       unsub = onSnapshot(q, snap => {
-        const incoming = snap.docs.map(d => ({ id:d.id, ...d.data() })).filter(n => n.title)
+        const incoming = snap.docs
+          .map(d => ({ id:d.id, ...d.data() }))
+          .filter(n => n.title)
+
+        // Always sort client-side — latest first regardless of Firestore order
+        const sorted = sortLatest(incoming)
 
         if (firstLoadRef.current) {
-          // First load — show all
-          incoming.forEach(n => itemIdsRef.current.add(n.id))
-          setItems(incoming)
-          // Build categories
-          const allCats = [...new Set(incoming.map(n=>n.category).filter(Boolean))]
+          sorted.forEach(n => itemIdsRef.current.add(n.id))
+          setItems(sorted)
+          const allCats = [...new Set(sorted.map(n=>n.category).filter(Boolean))]
           const cricket = allCats.filter(c=>c.toLowerCase()==='cricket')
           const others  = allCats.filter(c=>c.toLowerCase()!=='cricket').sort()
-          setCats(['All','🔴 Live', ...cricket, ...others])
+          setCats(['All', '🔴 Live', ...cricket, ...others])
           setLoading(false)
           firstLoadRef.current = false
         } else {
-          // Subsequent updates — detect new items
-          const freshIds = new Set()
-          incoming.forEach(n => {
-            if (!itemIdsRef.current.has(n.id)) freshIds.add(n.id)
-          })
-          if (freshIds.size > 0) {
-            setNewCount(c => c + freshIds.size)
+          // Detect brand-new items
+          const freshItems = sorted.filter(n => !itemIdsRef.current.has(n.id))
+          if (freshItems.length > 0) {
+            setNewCount(c => c + freshItems.length)
             setShowNew(true)
-            freshIds.forEach(id => itemIdsRef.current.add(id))
+            setNewIds(prev => {
+              const next = new Set(prev)
+              freshItems.forEach(n => next.add(n.id))
+              return next
+            })
+            // Inject as live-update cards at the top
+            setLiveUpdates(prev => [...freshItems, ...prev].slice(0, 10))
+            freshItems.forEach(n => itemIdsRef.current.add(n.id))
           }
-          setItems(incoming)
+          setItems(sorted)
         }
       }, () => {
-        // Fallback to timestamp
         if (unsub) unsub()
-        attach(fallbackQ)
+        // Fallback: try timestamp, then no-order
+        const fb = query(collection(db,'news'), orderBy('timestamp','desc'), limit(150))
+        unsub = onSnapshot(fb, snap => {
+          const sorted = sortLatest(snap.docs.map(d=>({id:d.id,...d.data()})).filter(n=>n.title))
+          if (firstLoadRef.current) {
+            sorted.forEach(n => itemIdsRef.current.add(n.id))
+            setItems(sorted); setLoading(false); firstLoadRef.current = false
+          } else setItems(sorted)
+        }, () => setLoading(false))
       })
     }
 
-    attach(q)
+    // Try savedAt first (most reliable for "scraped at" time)
+    try { attach(makeQ('savedAt')) } catch { attach(makeQ('timestamp')) }
     return () => unsub && unsub()
-  }, [])
+  }, []) // eslint-disable-line
 
   const scrollToTop = () => {
     topRef.current?.scrollIntoView({ behavior:'smooth' })
     setShowNew(false)
     setNewCount(0)
     setNewIds(new Set())
+    setLiveUpdates([])
   }
 
   // ── Handle repost ─────────────────────────────────────────────
@@ -427,15 +456,28 @@ export default function LiveNews() {
     finally { setReposting(false) }
   }, [user])
 
-  // ── Filter ────────────────────────────────────────────────────
-  const displayed = items.filter(n => {
-    if (cat === '🔴 Live') return true
-    if (cat !== 'All' && n.category !== cat) return false
+  // ── Build display list: inject live cards every 3 regular posts ──
+  const baseList = items.filter(n => {
+    if (cat !== 'All' && cat !== '🔴 Live' && n.category !== cat) return false
     if (search.trim()) {
       const q = search.toLowerCase()
       return n.title?.toLowerCase().includes(q) || n.description?.toLowerCase().includes(q)
     }
     return true
+  })
+
+  // Inject liveUpdates cards into the feed every 3 posts
+  const displayed = []
+  const liveQueue = [...liveUpdates] // copy so we can splice
+  baseList.forEach((item, idx) => {
+    displayed.push({ ...item, _type: 'news' })
+    // After every 3rd news item, inject 1 live update card if available
+    if ((idx + 1) % 3 === 0 && liveQueue.length > 0) {
+      const lu = liveQueue.shift()
+      if (!baseList.find(n => n.id === lu.id)) {
+        displayed.push({ ...lu, _type: 'live_inject' })
+      }
+    }
   })
 
   return (
@@ -541,10 +583,27 @@ export default function LiveNews() {
               </div>
             )
             : displayed.map(item => (
-              <LiveCard key={item.id} item={item}
-                isNew={newIds.has(item.id)}
-                onRepost={()=>setRepostItem(item)}
-                onShare={()=>setShareItem(item)}/>
+              item._type === 'live_inject'
+                ? (
+                  // ── Injected live update card ──
+                  <div key={`live-${item.id}`} style={{marginBottom:8,animation:'lnSlideIn .35s ease'}}>
+                    {/* Live label */}
+                    <div style={{display:'flex',alignItems:'center',gap:8,padding:'6px 12px',background:'linear-gradient(90deg,#e5393508,transparent)'}}>
+                      <span style={{width:7,height:7,borderRadius:'50%',background:'#e53935',animation:'livePulse 1s infinite',display:'inline-block'}}/>
+                      <span style={{fontSize:10,fontWeight:800,color:'#e53935',textTransform:'uppercase',letterSpacing:'.07em'}}>🔴 Live Update</span>
+                      <span style={{fontSize:10,color:'var(--muted)',marginLeft:'auto'}}>{timeAgo(getMs(item) ? new Date(getMs(item)).toISOString() : '')}</span>
+                    </div>
+                    <LiveCard item={item} isNew={true}
+                      onRepost={()=>setRepostItem(item)}
+                      onShare={()=>setShareItem(item)}/>
+                  </div>
+                )
+                : (
+                  <LiveCard key={item.id} item={item}
+                    isNew={newIds.has(item.id)}
+                    onRepost={()=>setRepostItem(item)}
+                    onShare={()=>setShareItem(item)}/>
+                )
             ))
         }
       </div>

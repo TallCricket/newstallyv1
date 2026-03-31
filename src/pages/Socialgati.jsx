@@ -166,9 +166,10 @@ function HamburgerDrawer({ open, onClose, feedType, setFeedType, user, onSignIn 
           <p style={{ fontSize:10, fontWeight:800, color:'var(--muted)', textTransform:'uppercase',
             letterSpacing:'.06em', padding:'4px 20px 8px' }}>Navigate</p>
           {[
-            { icon:'fas fa-newspaper',   label:'News',   path:'/news'   },
-            { icon:'fas fa-circle-play', label:'Shorts', path:'/shorts' },
-            { icon:'fas fa-bell',        label:'Alerts', path:'/alerts' },
+            { icon:'fas fa-newspaper',   label:'News',       path:'/news'   },
+            { icon:'fas fa-circle-play', label:'Shorts',     path:'/shorts' },
+            { icon:'fas fa-tower-broadcast', label:'Live News', path:'/live' },
+            { icon:'fas fa-bell',        label:'Alerts',     path:'/alerts' },
           ].map(item => (
             <button key={item.path} onClick={() => { navigate(item.path); onClose() }}
               style={{ width:'100%', display:'flex', alignItems:'center', gap:14,
@@ -368,7 +369,13 @@ export default function Socialgati() {
         user={user} onSignIn={() => setShowAuth(true)} />
 
       {/* Mobile feed */}
-      <div className="sg-mobile-only" style={{ paddingTop:56, paddingBottom:80, background:'var(--bg)', minHeight:'100dvh' }}>
+      <div className="sg-mobile-only" style={{ paddingTop:56, paddingBottom:80, background:'var(--bg)', minHeight:'100dvh' }}
+        onTouchStart={e => { window._sgSwipeX = e.touches[0].clientX; window._sgSwipeY = e.touches[0].clientY }}
+        onTouchEnd={e => {
+          const dx = e.changedTouches[0].clientX - (window._sgSwipeX || 0)
+          const dy = Math.abs(e.changedTouches[0].clientY - (window._sgSwipeY || 0))
+          if (dx > 80 && dy < 60) navigate('/live')
+        }}>
         <div style={{ padding:'8px 12px' }}>
           {loading
             ? Array.from({length:4}).map((_,i) => <PostSkeleton key={i}/>)

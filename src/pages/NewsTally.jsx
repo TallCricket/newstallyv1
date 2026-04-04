@@ -1,8 +1,8 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import {
-  collection, getDocs, query, limit, orderBy,
+  collection, getDocs, query, limit, orderBy, startAfter,
   addDoc, updateDoc, arrayUnion, increment as fbIncrement,
-  serverTimestamp, where, getDoc, doc
+  serverTimestamp, where, getDoc, doc, onSnapshot
 } from 'firebase/firestore'
 import { db, APP_ID } from '../firebase/config'
 import { useAuth } from '../context/AuthContext'
@@ -22,67 +22,24 @@ const CAT_COLORS = {
   Sports:'#ff6d00', General:'#546e7a', Entertainment:'#ad1457'
 }
 
-// ── Resolve date from any Firestore format → ms timestamp ─────────
-function resolveMs(n) {
-  const candidates = [n.savedAt, n.timestamp, n.pubDate, n.fetchedAt, n.date]
-  for (const ts of candidates) {
-    if (!ts) continue
-    if (ts?.toDate)    return ts.toDate().getTime()
-    if (ts?.seconds)   return ts.seconds * 1000
-    const t = new Date(ts).getTime()
-    if (!isNaN(t) && t > 0) return t
-  }
-  return 0
+function getItemDate(n) {
+  // Handle Firestore Timestamps, ISO strings, and fallbacks
+  const ts = n.timestamp || n.pubDate || n.fetchedAt || n.savedAt || n.date
+  if (!ts) return 0
+  if (ts?.toDate) return ts.toDate().getTime()  // Firestore Timestamp
+  if (ts?.seconds) return ts.seconds * 1000     // Firestore Timestamp (serialized)
+  const t = new Date(ts).getTime()
+  return isNaN(t) ? 0 : t
 }
-
-function normalizeDoc(d) {
-  const n = d.data ? d.data() : d
-  const ms = resolveMs(n)
-  return {
-    id:          d.id || String(Math.random()),
-    title:       n.title || n.headline || '',
-    description: n.description || '',
-    image:       (n.image && n.image.startsWith('http')) ? n.image : '',
-    category:    n.category || 'General',
-    source:      n.source || 'NewsTally',
-    date:        ms ? new Date(ms).toISOString() : '',
-    url:         n.url || '#',
-    rank:        n.rank ?? 9999,
-    _ms:         ms,
-  }
-}
-
-// ── Sort: manager-ranked first → then purely latest first ─────────
-function sortNews(items) {
+function sortByDate(items) {
   return [...items].sort((a, b) => {
+    // Only respect rank if BOTH have a rank (manager-ranked articles)
     const aRank = (a.rank != null && a.rank < 9999) ? a.rank : null
     const bRank = (b.rank != null && b.rank < 9999) ? b.rank : null
     if (aRank !== null && bRank !== null) return aRank - bRank
-    if (aRank !== null) return -1
-    if (bRank !== null) return 1
-    return (b._ms || 0) - (a._ms || 0)
+    // Otherwise latest date first
+    return getItemDate(b) - getItemDate(a)
   })
-}
-
-// ── Fetch helpers (try multiple orderBy, always fallback) ─────────
-async function fetchNews(lim) {
-  // Try savedAt first (scraper field)
-  try {
-    const snap = await getDocs(query(collection(db, 'news'), orderBy('savedAt', 'desc'), limit(lim)))
-    if (!snap.empty) return snap.docs.map(normalizeDoc).filter(r => r.title)
-  } catch {}
-  // Try timestamp
-  try {
-    const snap = await getDocs(query(collection(db, 'news'), orderBy('timestamp', 'desc'), limit(lim)))
-    if (!snap.empty) return snap.docs.map(normalizeDoc).filter(r => r.title)
-  } catch {}
-  // Last resort — no ordering, client-side sort will fix it
-  try {
-    const snap = await getDocs(query(collection(db, 'news'), limit(lim)))
-    return snap.docs.map(normalizeDoc).filter(r => r.title)
-  } catch {
-    return []
-  }
 }
 
 // --- Skeletons ----------------------------------------------------
@@ -411,79 +368,210 @@ export default function NewsTally() {
   const { t, lang } = useTranslation()
 
   const [allNews, setAllNews]         = useState([])
+  const lastDocRef                    = useRef(null)
+  const orderFieldRef                 = useRef(null)
+  const [hasMore, setHasMore]         = useState(true)
+  const liveUnsubRef                  = useRef(null)
+
+  const [catItems, setCatItems]       = useState([])
+  const catLastDocRef                 = useRef(null)
+  const [catHasMore, setCatHasMore]   = useState(true)
+
   const [filtered, setFiltered]       = useState([])
   const [loading, setLoading]         = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError]             = useState('')
 
   const [cat, setCat]                 = useState('All')
-  const [cats, setCats]               = useState(DEFAULT_CATS)
+  const [cats, setCats]               = useState(DEFAULT_CATS) // loaded from Firestore config
   const [search, setSearch]           = useState('')
   const [showSearch, setShowSearch]   = useState(false)
   const [showAuth, setShowAuth]       = useState(false)
   const [repostItem, setRepostItem]   = useState(null)
   const [reposting, setReposting]     = useState(false)
-  const sentinelRef                   = useRef(null)
+  const sentinelRef = useRef(null)
 
   // Load category order from Firestore config
   useEffect(() => {
     getDoc(doc(db, 'config', 'rankings')).then(snap => {
       if (snap.exists() && Array.isArray(snap.data().categoryOrder)) {
         const order = snap.data().categoryOrder
-        const cricket = order.filter(c => c.toLowerCase() === 'cricket')
-        const others  = order.filter(c => c.toLowerCase() !== 'cricket')
-        setCats(['All', ...cricket, ...others])
+        setCats(['All', ...order])
       }
     }).catch(() => {})
   }, [])
 
-  // ── Load news — simple direct fetch, no cache ──────────────────
-  const loadInitial = useCallback(async () => {
-    setLoading(true)
-    setError('')
-    try {
-      // Fast: show first 20 immediately
-      const fast = await fetchNews(20)
-      if (fast.length > 0) {
-        setAllNews(sortNews(fast))
-        setLoading(false)
+  // KEY FIX: No orderBy in Firestore query -> returns ALL sources (not just DD News)
+  // Sort is done client-side so all news from all platforms appears latest-first
+  const fetchBatch = useCallback(async (isFirst = false) => {
+    // Try with orderBy first (requires Firestore index), fallback without
+    const makeQuery = (withOrder) => {
+      const base = collection(db, 'news')
+      if (isFirst) {
+        return withOrder
+          ? query(base, orderBy('timestamp', 'desc'), limit(PAGE_SIZE * 2))
+          : query(base, limit(PAGE_SIZE * 2))
       }
-      // Full: load all in background
-      const full = await fetchNews(300)
-      if (full.length > 0) {
-        setAllNews(sortNews(full))
-        // Build categories from actual data
-        const allCats = [...new Set(full.map(n => n.category).filter(Boolean))]
-        const cricket = allCats.filter(c => c.toLowerCase() === 'cricket')
-        const others  = allCats.filter(c => c.toLowerCase() !== 'cricket').sort()
-        setCats(['All', ...cricket, ...others])
-      }
-      if (fast.length === 0 && full.length === 0) {
-        setError('No news articles found. Please check back later.')
-      }
-    } catch (e) {
-      setError('Could not load news. Please try again.')
-    } finally {
-      setLoading(false)
+      if (!lastDocRef.current) return null
+      return withOrder
+        ? query(base, orderBy('timestamp', 'desc'), startAfter(lastDocRef.current), limit(PAGE_SIZE * 2))
+        : query(base, startAfter(lastDocRef.current), limit(PAGE_SIZE * 2))
     }
+    let snap
+    try {
+      const q = makeQuery(true)
+      if (!q) return []
+      snap = await getDocs(q)
+    } catch {
+      // Fallback: no orderBy (index may not exist)
+      const q = makeQuery(false)
+      if (!q) return []
+      snap = await getDocs(q)
+    }
+    if (snap.empty) { setHasMore(false); return [] }
+    if (snap.docs.length < PAGE_SIZE) setHasMore(false)
+    lastDocRef.current = snap.docs[snap.docs.length - 1]
+    return snap.docs.map(d => ({ id:d.id, ...d.data() })).filter(n => n.title)
   }, [])
 
-  useEffect(() => { loadInitial() }, [loadInitial])
+  const fetchCategoryBatch = useCallback(async (category, isFirst = false) => {
+    const make = (withOrder) => {
+      const base = [where('category', '==', category)]
+      if (!isFirst && catLastDocRef.current) base.push(startAfter(catLastDocRef.current))
+      if (withOrder) base.splice(1, 0, orderBy('timestamp', 'desc'))
+      base.push(limit(PAGE_SIZE * 2))
+      return query(collection(db, 'news'), ...base)
+    }
+    let snap
+    try {
+      snap = await getDocs(make(true))
+    } catch {
+      snap = await getDocs(make(false))
+    }
+    if (snap.empty) { setCatHasMore(false); return [] }
+    if (snap.docs.length < PAGE_SIZE) setCatHasMore(false)
+    catLastDocRef.current = snap.docs[snap.docs.length - 1]
+    return snap.docs.map(d => ({ id:d.id, ...d.data() })).filter(n => n.title)
+  }, [])
+
+  const loadInitial = useCallback(() => {
+    // Cancel any previous listener
+    if (liveUnsubRef.current) { liveUnsubRef.current(); liveUnsubRef.current = null }
+    setLoading(true); setError(''); setHasMore(true); lastDocRef.current = null
+
+    // Try real-time listener with orderBy, fallback to one-time fetch
+    const liveQ = query(collection(db, 'news'), orderBy('timestamp', 'desc'), limit(PAGE_SIZE * 2))
+    liveUnsubRef.current = onSnapshot(liveQ,
+      (snap) => {
+        if (snap.empty) {
+          // Try fallback without orderBy (index may not exist yet)
+          getDocs(query(collection(db, 'news'), limit(PAGE_SIZE * 2)))
+            .then(fbSnap => {
+              const items = fbSnap.docs.map(d => ({ id:d.id, ...d.data() })).filter(n => n.title)
+              if (items.length) {
+                lastDocRef.current = fbSnap.docs[fbSnap.docs.length - 1]
+                setAllNews(sortByDate(items))
+                setError('')
+              } else {
+                setError('No news articles found. Please check back later.')
+              }
+              setLoading(false)
+            })
+            .catch(e => { setError(e.message); setLoading(false) })
+          return
+        }
+        const items = snap.docs.map(d => ({ id:d.id, ...d.data() })).filter(n => n.title)
+        lastDocRef.current = snap.docs[snap.docs.length - 1]
+        if (snap.docs.length < PAGE_SIZE) setHasMore(false)
+        setAllNews(sortByDate(items))
+        setError('')
+        setLoading(false)
+      },
+      (err) => {
+        // Listener error — fallback to one-time fetch without orderBy
+        getDocs(query(collection(db, 'news'), limit(PAGE_SIZE * 2)))
+          .then(fbSnap => {
+            const items = fbSnap.docs.map(d => ({ id:d.id, ...d.data() })).filter(n => n.title)
+            if (items.length) {
+              lastDocRef.current = fbSnap.docs[fbSnap.docs.length - 1]
+              setAllNews(sortByDate(items))
+              setError('')
+            } else {
+              setError(err.message || 'No news articles found.')
+            }
+            setLoading(false)
+          })
+          .catch(() => { setError(err.message); setLoading(false) })
+      }
+    )
+  }, []) // eslint-disable-line
+
+  const loadCategoryInitial = useCallback(async (category) => {
+    setLoading(true); setError(''); setCatItems([]); setCatHasMore(true); catLastDocRef.current = null
+    try { setCatItems(sortByDate(await fetchCategoryBatch(category, true))) }
+    catch(e) { setError(e.message) }
+    finally { setLoading(false) }
+  }, [fetchCategoryBatch])
+
+  const loadMoreAll = useCallback(async () => {
+    if (loadingMore || !hasMore) return
+    setLoadingMore(true)
+    try {
+      const items = await fetchBatch(false)
+      if (items.length) setAllNews(prev => {
+        const ids = new Set(prev.map(n => n.id))
+        return sortByDate([...prev, ...items.filter(n => !ids.has(n.id))])
+      })
+    } catch(e) { console.error(e) }
+    finally { setLoadingMore(false) }
+  }, [loadingMore, hasMore, fetchBatch])
+
+  const loadMoreCat = useCallback(async () => {
+    if (loadingMore || !catHasMore || cat === 'All') return
+    setLoadingMore(true)
+    try {
+      const items = await fetchCategoryBatch(cat, false)
+      if (items.length) setCatItems(prev => {
+        const ids = new Set(prev.map(n => n.id))
+        return sortByDate([...prev, ...items.filter(n => !ids.has(n.id))])
+      })
+    } catch(e) { console.error(e) }
+    finally { setLoadingMore(false) }
+  }, [loadingMore, catHasMore, cat, fetchCategoryBatch])
+
+  const loadMore = useCallback(() => {
+    if (search.trim()) return
+    return cat === 'All' ? loadMoreAll() : loadMoreCat()
+  }, [cat, search, loadMoreAll, loadMoreCat])
 
   useEffect(() => {
-    let base = cat !== 'All' ? allNews.filter(n => n.category === cat) : allNews
+    loadInitial()
+    return () => { if (liveUnsubRef.current) { liveUnsubRef.current(); liveUnsubRef.current = null } }
+  }, [loadInitial])
+  useEffect(() => {
+    if (cat !== 'All') loadCategoryInitial(cat)
+    window.scrollTo({ top:0, behavior:'smooth' })
+  }, [cat]) // eslint-disable-line
+
+  useEffect(() => {
+    let base = cat !== 'All' ? catItems : allNews
     if (search.trim()) {
       const q = search.toLowerCase()
-      base = base.filter(n =>
-        n.title?.toLowerCase().includes(q) ||
-        n.description?.toLowerCase().includes(q)
-      )
+      base = base.filter(n => n.title?.toLowerCase().includes(q) || n.description?.toLowerCase().includes(q))
     }
     setFiltered(base)
-  }, [cat, search, allNews])
+  }, [cat, search, allNews, catItems])
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }, [cat])
+    const sentinel = sentinelRef.current
+    if (!sentinel) return
+    const observer = new IntersectionObserver(
+      entries => { if (entries[0].isIntersecting) loadMore() },
+      { threshold:0.1, rootMargin:'300px' }
+    )
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [loadMore])
 
   const handleRepost = async (item) => {
     if (!user) return setShowAuth(true)
@@ -497,15 +585,18 @@ export default function NewsTally() {
       const existing = await getDocs(query(collection(db,'artifacts',APP_ID,'public','data','reposts'), where('newsId','==',String(item.id||item.title)), where('type','==','repost'), limit(1)))
       if (!existing.empty) {
         await updateDoc(existing.docs[0].ref, { repostCount:fbIncrement(1), repostedBy:arrayUnion(user.uid), repostedUsers:arrayUnion(myInfo) })
-        showToast('✅ Reposted!')
+        showToast('{"\u2705"} You reposted this news!')
       } else {
         await addDoc(collection(db,'artifacts',APP_ID,'public','data','reposts'), { userId:user.uid, username:myInfo.username, userAvatar:myInfo.avatar, image:item.image||'', headline:item.title, newsUrl:item.url||'', newsSource:item.source||'', newsCategory:item.category||'', newsId:String(item.id||item.title), likes:[], commentsCount:0, repostCount:1, repostedBy:[user.uid], repostedUsers:[myInfo], timestamp:serverTimestamp(), type:'repost' })
-        showToast('✅ Reposted to Socialgati!')
+        showToast('{"\u2705"} Reposted to Socialgati!')
       }
       setRepostItem(null)
     } catch(e) { console.error(e); showToast('Repost failed') }
     finally { setReposting(false) }
   }
+
+  const currentHasMore  = cat === 'All' ? hasMore : catHasMore
+  const currentTotal    = cat === 'All' ? allNews.length : catItems.length
 
   return (
     <>
@@ -703,9 +794,9 @@ export default function NewsTally() {
             <NewsLayout
               items={filtered} cat={cat}
               onRepost={setRepostItem} onSeeAll={c => setCat(c)}
-              sentinelRef={sentinelRef} loadingMore={false}
-              hasMore={false} onLoadMore={() => {}}
-              totalLoaded={filtered.length}
+              sentinelRef={sentinelRef} loadingMore={loadingMore}
+              hasMore={currentHasMore} onLoadMore={loadMore}
+              totalLoaded={currentTotal}
             />
           )}
         </div>

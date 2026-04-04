@@ -22,41 +22,6 @@ const CAT_COLORS = {
   Sports:'#ff6d00', General:'#546e7a', Entertainment:'#ad1457'
 }
 
-// ── LocalStorage 2-stage cache ────────────────────────────────────
-const NT_CACHE_KEY  = 'nt_news_cache_v4'   // bumped — clears stale v3 cache
-const NT_CACHE_TIME = 'nt_news_cache_time_v4'
-const NT_CACHE_TTL  = 5 * 60 * 1000 // 5 min
-
-function ntLoadCache() {
-  try {
-    const ts = parseInt(localStorage.getItem(NT_CACHE_TIME) || '0')
-    if (!ts || (Date.now() - ts) >= NT_CACHE_TTL) {
-      localStorage.removeItem(NT_CACHE_KEY)
-      localStorage.removeItem(NT_CACHE_TIME)
-      return null
-    }
-    const raw = localStorage.getItem(NT_CACHE_KEY)
-    return raw ? { data: JSON.parse(raw), ts } : null
-  } catch {
-    localStorage.removeItem(NT_CACHE_KEY)
-    localStorage.removeItem(NT_CACHE_TIME)
-    return null
-  }
-}
-
-function ntSaveCache(data) {
-  try {
-    localStorage.setItem(NT_CACHE_KEY, JSON.stringify(data.slice(0, 200)))
-    localStorage.setItem(NT_CACHE_TIME, String(Date.now()))
-  } catch {
-    try {
-      localStorage.removeItem(NT_CACHE_KEY)
-      localStorage.setItem(NT_CACHE_KEY, JSON.stringify(data.slice(0, 50)))
-      localStorage.setItem(NT_CACHE_TIME, String(Date.now()))
-    } catch {}
-  }
-}
-
 // ── Resolve date from any Firestore format → ms timestamp ─────────
 function resolveMs(n) {
   const candidates = [n.savedAt, n.timestamp, n.pubDate, n.fetchedAt, n.date]
@@ -74,7 +39,7 @@ function normalizeDoc(d) {
   const n = d.data ? d.data() : d
   const ms = resolveMs(n)
   return {
-    id:          d.id || n.id || String(Math.random()),
+    id:          d.id || String(Math.random()),
     title:       n.title || n.headline || '',
     description: n.description || '',
     image:       (n.image && n.image.startsWith('http')) ? n.image : '',
@@ -83,12 +48,11 @@ function normalizeDoc(d) {
     date:        ms ? new Date(ms).toISOString() : '',
     url:         n.url || '#',
     rank:        n.rank ?? 9999,
-    _ms:         ms,   // keep raw ms for sorting
+    _ms:         ms,
   }
 }
 
-// ── Sort: manager-ranked first → then purely by date desc ─────────
-// NOTE: no "images first" — that was causing old articles to appear at top
+// ── Sort: manager-ranked first → then purely latest first ─────────
 function sortNews(items) {
   return [...items].sort((a, b) => {
     const aRank = (a.rank != null && a.rank < 9999) ? a.rank : null
@@ -96,38 +60,29 @@ function sortNews(items) {
     if (aRank !== null && bRank !== null) return aRank - bRank
     if (aRank !== null) return -1
     if (bRank !== null) return 1
-    return (b._ms || 0) - (a._ms || 0)   // latest first, always
+    return (b._ms || 0) - (a._ms || 0)
   })
 }
 
-// ── 2-stage fetch ─────────────────────────────────────────────────
-async function _fetch20(db_) {
-  // Try savedAt (most reliable — what scraper saves)
+// ── Fetch helpers (try multiple orderBy, always fallback) ─────────
+async function fetchNews(lim) {
+  // Try savedAt first (scraper field)
   try {
-    const snap = await getDocs(query(collection(db_, 'news'), orderBy('savedAt', 'desc'), limit(20)))
+    const snap = await getDocs(query(collection(db, 'news'), orderBy('savedAt', 'desc'), limit(lim)))
     if (!snap.empty) return snap.docs.map(normalizeDoc).filter(r => r.title)
   } catch {}
   // Try timestamp
   try {
-    const snap = await getDocs(query(collection(db_, 'news'), orderBy('timestamp', 'desc'), limit(20)))
+    const snap = await getDocs(query(collection(db, 'news'), orderBy('timestamp', 'desc'), limit(lim)))
     if (!snap.empty) return snap.docs.map(normalizeDoc).filter(r => r.title)
   } catch {}
-  // No-order fallback
-  const snap = await getDocs(query(collection(db_, 'news'), limit(20)))
-  return snap.docs.map(normalizeDoc).filter(r => r.title)
-}
-
-async function _fetch200(db_) {
+  // Last resort — no ordering, client-side sort will fix it
   try {
-    const snap = await getDocs(query(collection(db_, 'news'), orderBy('savedAt', 'desc'), limit(300)))
-    if (!snap.empty) return snap.docs.map(normalizeDoc).filter(r => r.title)
-  } catch {}
-  try {
-    const snap = await getDocs(query(collection(db_, 'news'), orderBy('timestamp', 'desc'), limit(300)))
-    if (!snap.empty) return snap.docs.map(normalizeDoc).filter(r => r.title)
-  } catch {}
-  const snap = await getDocs(query(collection(db_, 'news'), limit(300)))
-  return snap.docs.map(normalizeDoc).filter(r => r.title)
+    const snap = await getDocs(query(collection(db, 'news'), limit(lim)))
+    return snap.docs.map(normalizeDoc).filter(r => r.title)
+  } catch {
+    return []
+  }
 }
 
 // --- Skeletons ----------------------------------------------------
@@ -468,7 +423,6 @@ export default function NewsTally() {
   const [repostItem, setRepostItem]   = useState(null)
   const [reposting, setReposting]     = useState(false)
   const sentinelRef                   = useRef(null)
-  const fetchingRef                   = useRef(false)
 
   // Load category order from Firestore config
   useEffect(() => {
@@ -482,66 +436,36 @@ export default function NewsTally() {
     }).catch(() => {})
   }, [])
 
-  // ── processData: normalize + sort + set state ──────────────────
-  const processData = useCallback((data) => {
-    const sorted = sortNews(data.filter(n => n.title))
-    setAllNews(sorted)
-    // Rebuild category list from actual data
-    const allCats = [...new Set(sorted.map(n => n.category).filter(Boolean))]
-    const cricket = allCats.filter(c => c.toLowerCase() === 'cricket')
-    const others  = allCats.filter(c => c.toLowerCase() !== 'cricket').sort()
-    setCats(['All', ...cricket, ...others])
-    setError('')
-  }, [])
-
-  // ── 2-stage load matching reference pattern ────────────────────
-  const loadInitial = useCallback(async (force = false) => {
-    // STAGE A: show cache instantly if fresh
-    if (!force) {
-      const cached = ntLoadCache()
-      if (cached?.data?.length) {
-        processData(cached.data)
-        setLoading(false)
-        if ((Date.now() - cached.ts) < NT_CACHE_TTL) return  // still fresh
-        // Stale → background refresh
-        setTimeout(async () => {
-          if (fetchingRef.current) return
-          fetchingRef.current = true
-          try {
-            const all = await _fetch200(db)
-            ntSaveCache(all)
-            processData(all)
-          } catch {} finally { fetchingRef.current = false }
-        }, 100)
-        return
-      }
-    }
-
-    // STAGE B: no cache — show 20 fast, then load 200 in background
+  // ── Load news — simple direct fetch, no cache ──────────────────
+  const loadInitial = useCallback(async () => {
     setLoading(true)
     setError('')
-    fetchingRef.current = true
     try {
-      const first20 = await _fetch20(db)
-      if (!first20.length) throw new Error('No news found')
-      processData(first20)
-      setLoading(false)
-      // Background: load full dataset
-      setTimeout(async () => {
-        try {
-          const all = await _fetch200(db)
-          ntSaveCache(all)
-          if (all.length > first20.length) processData(all)
-          else ntSaveCache(first20)
-        } catch { ntSaveCache(first20) }
-        finally { fetchingRef.current = false }
-      }, 60)
+      // Fast: show first 20 immediately
+      const fast = await fetchNews(20)
+      if (fast.length > 0) {
+        setAllNews(sortNews(fast))
+        setLoading(false)
+      }
+      // Full: load all in background
+      const full = await fetchNews(300)
+      if (full.length > 0) {
+        setAllNews(sortNews(full))
+        // Build categories from actual data
+        const allCats = [...new Set(full.map(n => n.category).filter(Boolean))]
+        const cricket = allCats.filter(c => c.toLowerCase() === 'cricket')
+        const others  = allCats.filter(c => c.toLowerCase() !== 'cricket').sort()
+        setCats(['All', ...cricket, ...others])
+      }
+      if (fast.length === 0 && full.length === 0) {
+        setError('No news articles found. Please check back later.')
+      }
     } catch (e) {
       setError('Could not load news. Please try again.')
+    } finally {
       setLoading(false)
-      fetchingRef.current = false
     }
-  }, [processData]) // eslint-disable-line
+  }, [])
 
   useEffect(() => { loadInitial() }, [loadInitial])
 
@@ -549,12 +473,14 @@ export default function NewsTally() {
     let base = cat !== 'All' ? allNews.filter(n => n.category === cat) : allNews
     if (search.trim()) {
       const q = search.toLowerCase()
-      base = base.filter(n => n.title?.toLowerCase().includes(q) || n.description?.toLowerCase().includes(q))
+      base = base.filter(n =>
+        n.title?.toLowerCase().includes(q) ||
+        n.description?.toLowerCase().includes(q)
+      )
     }
     setFiltered(base)
   }, [cat, search, allNews])
 
-  // Scroll to top on category change
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [cat])
@@ -571,7 +497,7 @@ export default function NewsTally() {
       const existing = await getDocs(query(collection(db,'artifacts',APP_ID,'public','data','reposts'), where('newsId','==',String(item.id||item.title)), where('type','==','repost'), limit(1)))
       if (!existing.empty) {
         await updateDoc(existing.docs[0].ref, { repostCount:fbIncrement(1), repostedBy:arrayUnion(user.uid), repostedUsers:arrayUnion(myInfo) })
-        showToast('✅ You reposted this news!')
+        showToast('✅ Reposted!')
       } else {
         await addDoc(collection(db,'artifacts',APP_ID,'public','data','reposts'), { userId:user.uid, username:myInfo.username, userAvatar:myInfo.avatar, image:item.image||'', headline:item.title, newsUrl:item.url||'', newsSource:item.source||'', newsCategory:item.category||'', newsId:String(item.id||item.title), likes:[], commentsCount:0, repostCount:1, repostedBy:[user.uid], repostedUsers:[myInfo], timestamp:serverTimestamp(), type:'repost' })
         showToast('✅ Reposted to Socialgati!')
@@ -644,7 +570,7 @@ export default function NewsTally() {
               <div style={{ textAlign:'center', padding:'60px 20px' }}>
                 <i className="fas fa-exclamation-circle" style={{ fontSize:36, color:'#ea4335', marginBottom:12, display:'block' }}/>
                 <p style={{ fontWeight:600, marginBottom:8, color:'var(--ink)' }}>Could not load news</p>
-                <button onClick={() => loadInitial(true)} style={{ padding:'10px 24px', background:'#1a73e8', color:'#fff', border:'none', borderRadius:8, fontSize:14, fontWeight:600, cursor:'pointer' }}>{"\u21ba"} Retry</button>
+                <button onClick={loadInitial} style={{ padding:'10px 24px', background:'#1a73e8', color:'#fff', border:'none', borderRadius:8, fontSize:14, fontWeight:600, cursor:'pointer' }}>{"\u21ba"} Retry</button>
               </div>
             ) : search.trim() ? (
               <div>
@@ -763,7 +689,7 @@ export default function NewsTally() {
               <i className="fas fa-exclamation-circle" style={{ fontSize:36, color:'#ea4335', marginBottom:12, display:'block' }}/>
               <p style={{ fontWeight:600, marginBottom:8, color:'var(--ink)' }}>Could not load news</p>
               <p style={{ fontSize:12, color:'var(--muted)', marginBottom:16 }}>{error}</p>
-              <button onClick={() => loadInitial(true)} style={{ padding:'10px 24px', background:'#1a73e8', color:'#fff', border:'none', borderRadius:8, fontSize:14, fontWeight:600, cursor:'pointer' }}>{"\u21ba"} Retry</button>
+              <button onClick={loadInitial} style={{ padding:'10px 24px', background:'#1a73e8', color:'#fff', border:'none', borderRadius:8, fontSize:14, fontWeight:600, cursor:'pointer' }}>{"\u21ba"} Retry</button>
             </div>
           ) : search.trim() ? (
             <div style={{ padding:'8px 16px', background:'var(--bg)' }}>

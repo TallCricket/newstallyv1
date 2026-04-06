@@ -19,11 +19,11 @@ const PAGE_SIZE = 20
 const CAT_COLORS = {
   National:'#e53935', World:'#1a73e8', Business:'#34a853',
   Technology:'#9334e6', Health:'#f4a261', Education:'#0077b6',
-  Sports:'#ff6d00', General:'#546e7a', Entertainment:'#ad1457'
+  Sports:'#ff6d00', General:'#546e7a', Entertainment:'#ad1457',
+  Cricket:'#00bcd4', NewsTally:'#1a73e8'
 }
 
 function getItemDate(n) {
-  // Priority: savedAt (when scraper saved) → timestamp → pubDate → fetchedAt → date
   const ts = n.savedAt || n.timestamp || n.pubDate || n.fetchedAt || n.date
   if (!ts) return 0
   if (ts?.toDate) return ts.toDate().getTime()
@@ -34,7 +34,6 @@ function getItemDate(n) {
 function sortByDate(items) {
   // Pure latest-saved-first — no rank, no image priority
   return [...items].sort((a, b) => getItemDate(b) - getItemDate(a))
-}
 
 // --- Skeletons ----------------------------------------------------
 function HeroSkeleton() {
@@ -382,59 +381,77 @@ export default function NewsTally() {
   useEffect(() => {
     getDoc(doc(db, 'config', 'rankings')).then(snap => {
       if (snap.exists() && Array.isArray(snap.data().categoryOrder)) {
-        setCats(['All', ...snap.data().categoryOrder])
+        setCats(['All', 'NewsTally', ...snap.data().categoryOrder])
       }
     }).catch(() => {})
   }, [])
 
-  // ── Single fetch: try savedAt → timestamp → no-order ─────────
-  const doFetch = useCallback(async (lim) => {
+  // ── Fetch news collection ─────────────────────────────────────
+  const fetchNews = useCallback(async (lim) => {
     try {
       const snap = await getDocs(query(collection(db, 'news'), orderBy('savedAt', 'desc'), limit(lim)))
       if (!snap.empty) {
         lastDocRef.current = snap.docs[snap.docs.length - 1]
-        return snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(n => n.title)
+        return snap.docs.map(d => ({ id:d.id, ...d.data() })).filter(n => n.title)
       }
     } catch {}
     try {
       const snap = await getDocs(query(collection(db, 'news'), orderBy('timestamp', 'desc'), limit(lim)))
       if (!snap.empty) {
         lastDocRef.current = snap.docs[snap.docs.length - 1]
-        return snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(n => n.title)
+        return snap.docs.map(d => ({ id:d.id, ...d.data() })).filter(n => n.title)
       }
     } catch {}
     const snap = await getDocs(query(collection(db, 'news'), limit(lim)))
-    lastDocRef.current = snap.docs[snap.docs.length - 1]
-    return snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(n => n.title)
+    if (!snap.empty) lastDocRef.current = snap.docs[snap.docs.length - 1]
+    return snap.docs.map(d => ({ id:d.id, ...d.data() })).filter(n => n.title)
+  }, [])
+
+  // ── Fetch author_posts (Shivank/NewsTally articles) ───────────
+  const fetchAuthorPosts = useCallback(async () => {
+    try {
+      const snap = await getDocs(query(collection(db, 'author_posts'), orderBy('savedAt', 'desc'), limit(100)))
+      if (!snap.empty) return snap.docs.map(d => ({ id:`ap_${d.id}`, ...d.data(), _isAuthor: true })).filter(n => n.title)
+    } catch {}
+    try {
+      const snap = await getDocs(query(collection(db, 'author_posts'), limit(100)))
+      return snap.docs.map(d => ({ id:`ap_${d.id}`, ...d.data(), _isAuthor: true })).filter(n => n.title)
+    } catch {}
+    return []
   }, [])
 
   function buildCats(items) {
     const allCats = [...new Set(items.map(n => n.category).filter(Boolean))]
-    const cricket = allCats.filter(c => c.toLowerCase() === 'cricket')
-    const others  = allCats.filter(c => c.toLowerCase() !== 'cricket').sort()
-    setCats(['All', ...cricket, ...others])
+    const cricket   = allCats.filter(c => c.toLowerCase() === 'cricket')
+    const newstally = allCats.filter(c => c.toLowerCase() === 'newstally')
+    const others    = allCats.filter(c => c.toLowerCase() !== 'cricket' && c.toLowerCase() !== 'newstally').sort()
+    setCats(['All', ...newstally, ...cricket, ...others])
   }
 
-  // ── Initial load: fast 20 → then full 300 ────────────────────
+  // ── Initial load: fast → full, merge author_posts ─────────────
   const loadInitial = useCallback(async () => {
     setLoading(true)
     setError('')
     lastDocRef.current = null
     try {
-      const fast = await doFetch(20)
-      if (fast.length > 0) {
-        const sorted = sortByDate(fast)
-        setAllNews(sorted)
-        buildCats(sorted)
+      // Stage 1: fast 20 news articles
+      const [fast, authorPosts] = await Promise.all([fetchNews(20), fetchAuthorPosts()])
+      const merged = sortByDate([...fast, ...authorPosts])
+      if (merged.length > 0) {
+        setAllNews(merged)
+        buildCats(merged)
         setLoading(false)
       }
-      const full = await doFetch(300)
+      // Stage 2: full news + re-merge
+      const full = await fetchNews(300)
       if (full.length > 0) {
-        const sorted = sortByDate(full)
-        setAllNews(sorted)
-        buildCats(sorted)
+        const ids = new Set(authorPosts.map(n => n.id))
+        const deduped = full.filter(n => !ids.has(n.id))
+        const final = sortByDate([...deduped, ...authorPosts])
+        setAllNews(final)
+        buildCats(final)
         if (full.length >= 300) setHasMore(true)
-      } else if (fast.length === 0) {
+      } else if (fast.length === 0 && authorPosts.length === 0) {
         setError('No news articles found. Please check back later.')
       }
     } catch {
@@ -442,9 +459,9 @@ export default function NewsTally() {
     } finally {
       setLoading(false)
     }
-  }, [doFetch]) // eslint-disable-line
+  }, [fetchNews, fetchAuthorPosts]) // eslint-disable-line
 
-  // ── Load more (pagination) ────────────────────────────────────
+  // ── Load more ─────────────────────────────────────────────────
   const loadMore = useCallback(async () => {
     if (loadingMore || !hasMore || !lastDocRef.current || search.trim()) return
     setLoadingMore(true)
@@ -461,7 +478,7 @@ export default function NewsTally() {
       }
       if (!snap.empty) {
         lastDocRef.current = snap.docs[snap.docs.length - 1]
-        const items = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(n => n.title)
+        const items = snap.docs.map(d => ({ id:d.id, ...d.data() })).filter(n => n.title)
         if (items.length > 0) {
           setAllNews(prev => {
             const ids = new Set(prev.map(n => n.id))
@@ -469,16 +486,14 @@ export default function NewsTally() {
           })
         }
         if (snap.docs.length < PAGE_SIZE) setHasMore(false)
-      } else {
-        setHasMore(false)
-      }
+      } else { setHasMore(false) }
     } catch {}
     finally { setLoadingMore(false) }
   }, [loadingMore, hasMore, search]) // eslint-disable-line
 
   useEffect(() => { loadInitial() }, [loadInitial])
 
-  // ── Client-side filter: ALL categories handled here ──────────
+  // ── Client-side filter (category + search) ────────────────────
   useEffect(() => {
     let base = cat !== 'All' ? allNews.filter(n => n.category === cat) : allNews
     if (search.trim()) {
@@ -491,16 +506,14 @@ export default function NewsTally() {
     setFiltered(base)
   }, [cat, search, allNews])
 
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }, [cat])
+  useEffect(() => { window.scrollTo({ top:0, behavior:'smooth' }) }, [cat])
 
   useEffect(() => {
     const sentinel = sentinelRef.current
     if (!sentinel) return
     const observer = new IntersectionObserver(
       entries => { if (entries[0].isIntersecting) loadMore() },
-      { threshold: 0.1, rootMargin: '300px' }
+      { threshold:0.1, rootMargin:'300px' }
     )
     observer.observe(sentinel)
     return () => observer.disconnect()
@@ -528,8 +541,6 @@ export default function NewsTally() {
     finally { setReposting(false) }
   }
 
-  const currentHasMore = hasMore
-  const currentTotal   = allNews.length
 
   return (
     <>
@@ -728,8 +739,8 @@ export default function NewsTally() {
               items={filtered} cat={cat}
               onRepost={setRepostItem} onSeeAll={c => setCat(c)}
               sentinelRef={sentinelRef} loadingMore={loadingMore}
-              hasMore={currentHasMore} onLoadMore={loadMore}
-              totalLoaded={currentTotal}
+              hasMore={hasMore} onLoadMore={loadMore}
+              totalLoaded={allNews.length}
             />
           )}
         </div>

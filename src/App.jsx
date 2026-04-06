@@ -3,6 +3,7 @@ import Socialgati            from './pages/Socialgati'
 import NewsTally             from './pages/NewsTally'
 import Shorts                from './pages/Shorts'
 import LiveNews              from './pages/LiveNews'
+import RedditCommunity       from './pages/RedditCommunity'
 import NewsOpen              from './pages/NewsOpen'
 import CategoryPage          from './pages/CategoryPage'
 import NotificationsFullPage from './pages/NotificationsFullPage'
@@ -30,6 +31,9 @@ export default function App() {
 
       {/* Live News */}
       <Route path="/live"                   element={<LiveNews />} />
+
+      {/* Reddit Community */}
+      <Route path="/community"              element={<RedditCommunity />} />
 
       {/* Alerts */}
       <Route path="/alerts"                 element={<NotificationsFullPage />} />

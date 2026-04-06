@@ -23,7 +23,7 @@ const CAT_COLORS = {
 }
 
 function getItemDate(n) {
-  // savedAt = when scraper saved it (most reliable for "latest")
+  // Priority: savedAt (when scraper saved) → timestamp → pubDate → fetchedAt → date
   const ts = n.savedAt || n.timestamp || n.pubDate || n.fetchedAt || n.date
   if (!ts) return 0
   if (ts?.toDate) return ts.toDate().getTime()
@@ -32,14 +32,8 @@ function getItemDate(n) {
   return isNaN(t) ? 0 : t
 }
 function sortByDate(items) {
-  return [...items].sort((a, b) => {
-    // Only respect rank if BOTH have a rank (manager-ranked articles)
-    const aRank = (a.rank != null && a.rank < 9999) ? a.rank : null
-    const bRank = (b.rank != null && b.rank < 9999) ? b.rank : null
-    if (aRank !== null && bRank !== null) return aRank - bRank
-    // Otherwise latest date first
-    return getItemDate(b) - getItemDate(a)
-  })
+  // Pure latest-saved-first — no rank, no image priority
+  return [...items].sort((a, b) => getItemDate(b) - getItemDate(a))
 }
 
 // --- Skeletons ----------------------------------------------------

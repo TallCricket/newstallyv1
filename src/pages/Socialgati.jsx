@@ -166,10 +166,11 @@ function HamburgerDrawer({ open, onClose, feedType, setFeedType, user, onSignIn 
           <p style={{ fontSize:10, fontWeight:800, color:'var(--muted)', textTransform:'uppercase',
             letterSpacing:'.06em', padding:'4px 20px 8px' }}>Navigate</p>
           {[
-            { icon:'fas fa-newspaper',   label:'News',       path:'/news'   },
-            { icon:'fas fa-circle-play', label:'Shorts',     path:'/shorts' },
-            { icon:'fas fa-tower-broadcast', label:'Live News', path:'/live' },
-            { icon:'fas fa-bell',        label:'Alerts',     path:'/alerts' },
+            { icon:'fas fa-newspaper',       label:'News',            path:'/news'      },
+            { icon:'fas fa-circle-play',     label:'Shorts',          path:'/shorts'    },
+            { icon:'fas fa-tower-broadcast', label:'Live News',       path:'/live'      },
+            { icon:'fas fa-bell',            label:'Alerts',          path:'/alerts'    },
+            { icon:'fab fa-reddit-alien',    label:'r/NewsTally',     path:'/community' },
           ].map(item => (
             <button key={item.path} onClick={() => { navigate(item.path); onClose() }}
               style={{ width:'100%', display:'flex', alignItems:'center', gap:14,
